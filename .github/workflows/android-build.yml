@@ -3,11 +3,15 @@ name: Build Rock QR Code APK
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -50,3 +54,14 @@ jobs:
         with:
           name: RockQRCode-release-aab
           path: app/build/outputs/bundle/release/*-release.aab
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/build/outputs/apk/debug/*-debug.apk
+            app/build/outputs/bundle/release/*-release.aab
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
