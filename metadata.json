@@ -1,0 +1,6 @@
+{
+  "name": "Rock QR Code",
+  "description": "An offline-first, professional Material 3 QR Code Scanner and Custom QR Generator featuring stylish rock patterns.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

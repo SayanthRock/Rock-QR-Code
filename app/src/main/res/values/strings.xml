@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Rock QR Code</string>
+    <string name="tab_scan">Scanner</string>
+    <string name="tab_generate">Generator</string>
+    <string name="tab_history">History</string>
+    
+    <string name="format_text">Text</string>
+    <string name="format_url">Web URL</string>
+    <string name="format_wifi">Wi-Fi</string>
+    <string name="format_phone">Phone Dialer</string>
+    <string name="format_email">Email</string>
+
+    <string name="style_classic">Classic</string>
+    <string name="style_rounded">Rounded Pebbles</string>
+    <string name="style_rock">Crystal Rock</string>
+    
+    <string name="lbl_custom_styles">QR Code Style</string>
+    <string name="lbl_custom_colors">Accent Color</string>
+</resources>
