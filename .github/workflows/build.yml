@@ -84,14 +84,15 @@ jobs:
                       try:
                           tree = ET.parse(os.path.join(results_dir, file))
                           root = tree.getroot()
-                          # Support nested test suites/cases
-                          for testsuite in [root] + root.findall('.//testsuite'):
+                          # Support single testsuite as root or nested testsuites
+                          suites = [root] if root.tag == 'testsuite' else root.findall('.//testsuite')
+                          for testsuite in suites:
                               total_tests += int(testsuite.attrib.get('tests', 0))
                               total_failures += int(testsuite.attrib.get('failures', 0))
                               total_errors += int(testsuite.attrib.get('errors', 0))
                               total_skipped += int(testsuite.attrib.get('skipped', 0))
                               
-                              for testcase in testcase_list if (testcase_list := testsuite.findall('.//testcase')) else []:
+                              for testcase in testsuite.findall('.//testcase'):
                                   classname = testcase.attrib.get('classname', 'Unknown')
                                   name = testcase.attrib.get('name', 'Unknown')
                                   failure = testcase.find('failure')
