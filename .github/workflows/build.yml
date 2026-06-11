@@ -40,10 +40,19 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
-      - name: Grant Execute Permission to Gradlew
-        run: chmod +x gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate or Regenerate Gradle Wrapper
+        run: |
+          echo "🔍 Checking Gradle Wrapper integrity..."
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || ! java -jar gradle/wrapper/gradle-wrapper.jar --version > /dev/null 2>&1; then
+            echo "⚠️ Corrupt or missing gradle-wrapper.jar detected! Regenerating using pre-installed system Gradle..."
+            gradle wrapper --gradle-version 9.3.1
+          fi
+          echo "✅ Gradle Wrapper is ready. Setting execute permissions..."
+          chmod +x ./gradlew
 
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest
