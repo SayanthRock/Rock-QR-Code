@@ -44,6 +44,9 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                 text.startsWith("WIFI:", ignoreCase = true) -> "WIFI"
                 text.startsWith("tel:", ignoreCase = true) -> "PHONE"
                 text.startsWith("mailto:", ignoreCase = true) -> "EMAIL"
+                text.startsWith("smsto:", ignoreCase = true) || text.startsWith("sms:", ignoreCase = true) -> "SMS"
+                text.startsWith("upi://", ignoreCase = true) -> "UPI"
+                text.contains("BEGIN:VCARD", ignoreCase = true) -> "CONTACT"
                 else -> "TEXT"
             }
             
@@ -53,6 +56,15 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                 "WIFI" -> "Wi-Fi: " + text.substringAfter("S:").substringBefore(";")
                 "PHONE" -> "Call: " + text.substringAfter("tel:")
                 "EMAIL" -> "Email " + text.substringAfter("mailto:").substringBefore("?")
+                "SMS" -> "SMS: " + text.substringAfter("SMSTO:").substringBefore(":")
+                "UPI" -> {
+                    val payee = text.substringAfter("pa=").substringBefore("&")
+                    "UPI Payee: $payee"
+                }
+                "CONTACT" -> {
+                    val contactName = text.substringAfter("N:").substringBefore("\n")
+                    "Contact: $contactName"
+                }
                 else -> if (text.length > 25) text.take(22) + "..." else text
             }
 
@@ -82,7 +94,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
 
     // ------------------ GENERATION LAYER ------------------
     val genContentRaw = MutableStateFlow("")
-    val genFormat = MutableStateFlow("TEXT") // TEXT, URL, WIFI, PHONE, EMAIL
+    val genFormat = MutableStateFlow("TEXT") // TEXT, URL, WIFI, PHONE, EMAIL, SMS, UPI, CONTACT
     val genStyle = MutableStateFlow(QrStyle.CLASSIC)
     val genFgColor = MutableStateFlow("#0A0A0A") // Default modern black
     val genBgColor = MutableStateFlow("#FFFFFF") // Default white
@@ -106,6 +118,24 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     // Plain text content
     val plainText = MutableStateFlow("")
 
+    // SMS helper parameters
+    val smsPhone = MutableStateFlow("")
+    val smsBody = MutableStateFlow("")
+
+    // UPI helper parameters
+    val upiVpa = MutableStateFlow("")
+    val upiName = MutableStateFlow("")
+    val upiAmount = MutableStateFlow("")
+
+    // CONTACT (vCard) helper parameters
+    val contactName = MutableStateFlow("")
+    val contactPhone = MutableStateFlow("")
+    val contactEmail = MutableStateFlow("")
+    val contactOrg = MutableStateFlow("")
+
+    // Logo embed style (NONE, CRYSTAL, SPARK, DIAMOND)
+    val embedLogo = MutableStateFlow("NONE")
+
     private val _generatedBitmap = MutableStateFlow<Bitmap?>(null)
     val generatedBitmap: StateFlow<Bitmap?> = _generatedBitmap.asStateFlow()
 
@@ -117,7 +147,11 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
             wifiSsid, wifiPassword, wifiSecurity,
             phoneNum,
             emailRecipient, emailSubject, emailBody,
-            urlLink, plainText
+            urlLink, plainText,
+            smsPhone, smsBody,
+            upiVpa, upiName, upiAmount,
+            contactName, contactPhone, contactEmail, contactOrg,
+            embedLogo
         )
 
         viewModelScope.launch {
@@ -128,7 +162,8 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                         content = content,
                         foregroundHexColor = genFgColor.value,
                         backgroundHexColor = genBgColor.value,
-                        style = genStyle.value
+                        style = genStyle.value,
+                        embedLogo = embedLogo.value
                     )
                 } else {
                     null
@@ -164,6 +199,36 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                 if (recipient.isEmpty()) ""
                 else "mailto:$recipient?subject=${android.net.Uri.encode(subject)}&body=${android.net.Uri.encode(body)}"
             }
+            "SMS" -> {
+                val phone = smsPhone.value.trim()
+                val body = smsBody.value.trim()
+                if (phone.isEmpty()) "" else "SMTO:$phone:$body"
+            }
+            "UPI" -> {
+                val vpa = upiVpa.value.trim()
+                val name = upiName.value.trim()
+                val amount = upiAmount.value.trim()
+                if (vpa.isEmpty()) "" 
+                else {
+                    var uri = "upi://pay?pa=$vpa"
+                    if (name.isNotEmpty()) uri += "&pn=${android.net.Uri.encode(name)}"
+                    if (amount.isNotEmpty()) uri += "&am=${android.net.Uri.encode(amount)}"
+                    uri
+                }
+            }
+            "CONTACT" -> {
+                val name = contactName.value.trim()
+                val phone = contactPhone.value.trim()
+                val email = contactEmail.value.trim()
+                val org = contactOrg.value.trim()
+                if (name.isEmpty() && phone.isEmpty()) ""
+                else {
+                    "BEGIN:VCARD\nVERSION:3.0\nN:$name\nTEL:$phone" +
+                            (if (email.isNotEmpty()) "\nEMAIL:$email" else "") +
+                            (if (org.isNotEmpty()) "\nORG:$org" else "") +
+                            "\nEND:VCARD"
+                }
+            }
             else -> plainText.value
         }
     }
@@ -179,6 +244,9 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                 "WIFI" -> "Wi-Fi: " + wifiSsid.value
                 "PHONE" -> "Phone: " + phoneNum.value
                 "EMAIL" -> "Email: " + emailRecipient.value
+                "SMS" -> "SMS to " + smsPhone.value
+                "UPI" -> "UPI Payee: " + (if (upiName.value.isNotEmpty()) upiName.value else upiVpa.value)
+                "CONTACT" -> "Contact: " + contactName.value
                 else -> if (plainText.value.length > 25) plainText.value.take(22) + "..." else plainText.value
             }
 

@@ -100,76 +100,105 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
     val activeTab by viewModel.activeTab.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
+    val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val useDarkTheme = when (themeMode) {
+        "DARK" -> true
+        "LIGHT" -> false
+        else -> isSystemDark
+    }
+    
     val context = LocalContext.current
     var showSettingsDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            NavigationBar(
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
-            ) {
-                NavigationBarItem(
-                    selected = activeTab == "SCAN",
-                    onClick = { viewModel.selectTab("SCAN") },
-                    icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = "Scanner Tab") },
-                    label = { Text(stringResource(R.string.tab_scan), fontWeight = FontWeight.Bold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
-                )
-                NavigationBarItem(
-                    selected = activeTab == "GENERATE",
-                    onClick = { viewModel.selectTab("GENERATE") },
-                    icon = { Icon(Icons.Default.QrCode, contentDescription = "Generator Tab") },
-                    label = { Text(stringResource(R.string.tab_generate), fontWeight = FontWeight.Bold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
-                )
-                NavigationBarItem(
-                    selected = activeTab == "HISTORY",
-                    onClick = { viewModel.selectTab("HISTORY") },
-                    icon = { Icon(Icons.Default.History, contentDescription = "History Tab") },
-                    label = { Text(stringResource(R.string.tab_history), fontWeight = FontWeight.Bold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
-                )
-            }
-        },
-        contentWindowInsets = WindowInsets.safeDrawing
-    ) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            AnimatedContent(
-                targetState = activeTab,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                },
-                label = "TabTransition"
-            ) { targetTab ->
-                when (targetTab) {
-                    "SCAN" -> ScanScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
-                    "GENERATE" -> GenerateScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
-                    "HISTORY" -> HistoryScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
-                }
-            }
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Dynamic floating liquid orbit backdrop
+        LiquidGlassBackground(useDarkTheme = useDarkTheme)
 
-            SettingsDialog(
-                showDialog = showSettingsDialog,
-                onDismiss = { showSettingsDialog = false },
-                viewModel = viewModel
-            )
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            bottomBar = {
+                // Floating glass style bottom navigation
+                NavigationBar(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                        .windowInsetsPadding(WindowInsets.navigationBars),
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                    tonalElevation = 8.dp
+                ) {
+                    NavigationBarItem(
+                        selected = activeTab == "SCAN",
+                        onClick = { viewModel.selectTab("SCAN") },
+                        icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = "Scanner Tab") },
+                        label = { Text(stringResource(R.string.tab_scan), fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == "GENERATE",
+                        onClick = { viewModel.selectTab("GENERATE") },
+                        icon = { Icon(Icons.Default.QrCode, contentDescription = "Generator Tab") },
+                        label = { Text(stringResource(R.string.tab_generate), fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == "HISTORY",
+                        onClick = { viewModel.selectTab("HISTORY") },
+                        icon = { Icon(Icons.Default.History, contentDescription = "History Tab") },
+                        label = { Text(stringResource(R.string.tab_history), fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    )
+                }
+            },
+            contentWindowInsets = WindowInsets.safeDrawing
+        ) { innerPadding ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                color = Color.Transparent
+            ) {
+                AnimatedContent(
+                    targetState = activeTab,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                    label = "TabTransition"
+                ) { targetTab ->
+                    when (targetTab) {
+                        "SCAN" -> ScanScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                        "GENERATE" -> GenerateScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                        "HISTORY" -> HistoryScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                    }
+                }
+
+                SettingsDialog(
+                    showDialog = showSettingsDialog,
+                    onDismiss = { showSettingsDialog = false },
+                    viewModel = viewModel
+                )
+            }
         }
     }
 }
@@ -207,74 +236,62 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        // App Launcher Title Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            RockChiseledHeader(
-                title = "Rock QR Code",
-                subtitle = "Instant, offline secure scanning",
-                modifier = Modifier.weight(1f)
+        // --- 1. FULL SCREEN CAMERA PREVIEW WITH TRANSLUCENT OVERLAYS ---
+        if (hasCameraPermission && isScanning) {
+            CameraPreview(
+                onQrScanned = { text ->
+                    viewModel.setScannedText(text)
+                },
+                modifier = Modifier.fillMaxSize()
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            IconButton(
-                onClick = { launcher.launch(Manifest.permission.CAMERA) },
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                ),
-                modifier = Modifier.glassTouchFeedback { launcher.launch(Manifest.permission.CAMERA) }
+        } else {
+            // Elegant placeholder matching deep slate
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF0F1115)),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (hasCameraPermission) Icons.Default.CameraAlt else Icons.Default.NoPhotography,
-                    contentDescription = "Permission Status indicator",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = onSettingsClick,
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                ),
-                modifier = Modifier.glassTouchFeedback { onSettingsClick() }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LinkedCamera,
+                        contentDescription = "Camera Standby",
+                        modifier = Modifier.size(72.dp),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Camera Live Feed Ready",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Standard Android permission dialog can be unlocked using the security indicator, or insert a mock QR payload below.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Scanner Area Frame Box
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            if (hasCameraPermission && isScanning) {
-                CameraPreview(
-                    onQrScanned = { text ->
-                        viewModel.setScannedText(text)
-                    }
-                )
-
-                // Beautiful HUD Scan corners overlay
+        // --- 2. GLASS DETECTING HUD OVERLAY (CENTERED) ---
+        if (isScanning) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 val activePrimary = MaterialTheme.colorScheme.primary
-                val activeTertiary = MaterialTheme.colorScheme.tertiary
+                
                 Canvas(
                     modifier = Modifier
                         .size(240.dp)
@@ -282,26 +299,26 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 ) {
                     val stroke = 6.dp.toPx()
                     val sizeLn = 36.dp.toPx()
-                    val fgColor = activePrimary
+                    val fgColor = if (hasCameraPermission) activePrimary else Color(0xFF00FFCC)
 
-                    // Top Left
+                    // Top Left Corner
                     drawLine(fgColor, Offset(0f, 0f), Offset(sizeLn, 0f), strokeWidth = stroke)
                     drawLine(fgColor, Offset(0f, 0f), Offset(0f, sizeLn), strokeWidth = stroke)
 
-                    // Top Right
+                    // Top Right Corner
                     drawLine(fgColor, Offset(size.width, 0f), Offset(size.width - sizeLn, 0f), strokeWidth = stroke)
                     drawLine(fgColor, Offset(size.width, 0f), Offset(size.width, sizeLn), strokeWidth = stroke)
 
-                    // Bottom Left
+                    // Bottom Left Corner
                     drawLine(fgColor, Offset(0f, size.height), Offset(sizeLn, size.height), strokeWidth = stroke)
                     drawLine(fgColor, Offset(0f, size.height), Offset(0f, size.height - sizeLn), strokeWidth = stroke)
 
-                    // Bottom Right
+                    // Bottom Right Corner
                     drawLine(fgColor, Offset(size.width, size.height), Offset(size.width - sizeLn, size.height), strokeWidth = stroke)
                     drawLine(fgColor, Offset(size.width, size.height), Offset(size.width, size.height - sizeLn), strokeWidth = stroke)
                 }
 
-                // Smoothly pulsating scanner laser guides
+                // Pulsating laser sweeping indicator
                 var animationState by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
                     while (true) {
@@ -310,8 +327,8 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     }
                 }
                 val animVerticalOffset by animateFloatAsState(
-                    targetValue = if (animationState) 230f else 10f,
-                    animationSpec = spring(stiffness = Spring.StiffnessLow),
+                    targetValue = if (animationState) 110f else -110f,
+                    animationSpec = tween(durationMillis = 1800, easing = LinearEasing),
                     label = "LaserGuide"
                 )
                 Box(
@@ -321,94 +338,129 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         .offset(y = animVerticalOffset.dp)
                         .background(
                             Brush.horizontalGradient(
-                                colors = listOf(Color.Transparent, activeTertiary, activePrimary, Color.Transparent)
+                                colors = listOf(Color.Transparent, Color(0xFF00FFCC), activePrimary, Color.Transparent)
                             )
                         )
                 )
-            } else {
-                // Friendly emulator fallback state (when permission is denied or running in headless sandbox)
-                Column(
+            }
+        }
+
+        // --- 3. FLOATING GLASS HEADER (TOP) ---
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp)
+        ) {
+            GlassCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.LinkedCamera,
-                        contentDescription = "Camera unavailable graphic",
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Camera Live Preview Stopped",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Unlock using security button header, or enter test input string below to scan in simulation mode.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "AURA PARSER",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 1.5.sp
+                        )
+                        Text(
+                            text = "Chiseled Lens",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    IconButton(
+                        onClick = { launcher.launch(Manifest.permission.CAMERA) },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.glassTouchFeedback { launcher.launch(Manifest.permission.CAMERA) }
+                    ) {
+                        Icon(
+                            imageVector = if (hasCameraPermission) Icons.Default.CameraAlt else Icons.Default.NoPhotography,
+                            contentDescription = "Permission Status indicator",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = onSettingsClick,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.glassTouchFeedback { onSettingsClick() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Simulated Input scanner box - CRITICAL UX for headless web previews
-        RockFacetedCard(
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+        // --- 4. FLOATING GLASS MOCK PARSER PANEL (BOTTOM) ---
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp, vertical = 24.dp)
         ) {
-            Column(
-                modifier = Modifier,
-                horizontalAlignment = Alignment.CenterHorizontally
+            GlassCard(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                var simText by remember { mutableStateOf("") }
-                Text(
-                    text = "Streaming Emulator Mock Barcode Parser",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    OutlinedTextField(
-                        value = simText,
-                        onValueChange = { simText = it },
-                        placeholder = { Text("Paste test URL, Wi-Fi configuration...", fontSize = 13.sp) },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp),
-                        trailingIcon = {
-                            if (simText.isNotEmpty()) {
-                                IconButton(onClick = { simText = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear custom input")
+                    var simText by remember { mutableStateOf("") }
+                    Text(
+                        text = "MOCK BEACON ANALYZER",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = simText,
+                            onValueChange = { simText = it },
+                            placeholder = { Text("Paste test URL, payee UPI, contact vCard...", fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            textStyle = LocalTextStyle.current.copy(fontSize = 12.sp),
+                            trailingIcon = {
+                                if (simText.isNotEmpty()) {
+                                    IconButton(onClick = { simText = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear custom input")
+                                    }
                                 }
                             }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                if (simText.isNotBlank()) {
+                                    viewModel.triggerManualScanText(simText)
+                                    simText = ""
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Mock", fontWeight = FontWeight.Bold)
                         }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            if (simText.isNotBlank()) {
-                                viewModel.triggerManualScanText(simText)
-                                simText = ""
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text("Mock", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -558,6 +610,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val genStyle by viewModel.genStyle.collectAsState()
     val genFgColor by viewModel.genFgColor.collectAsState()
     val genBgColor by viewModel.genBgColor.collectAsState()
+    val activeEmbedLogo by viewModel.embedLogo.collectAsState()
     val generatedBitmap by viewModel.generatedBitmap.collectAsState()
 
     // Parameters
@@ -570,6 +623,15 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val emailRecipient by viewModel.emailRecipient.collectAsState()
     val emailSubject by viewModel.emailSubject.collectAsState()
     val emailBody by viewModel.emailBody.collectAsState()
+    val smsPhone by viewModel.smsPhone.collectAsState()
+    val smsBody by viewModel.smsBody.collectAsState()
+    val upiVpa by viewModel.upiVpa.collectAsState()
+    val upiName by viewModel.upiName.collectAsState()
+    val upiAmount by viewModel.upiAmount.collectAsState()
+    val contactName by viewModel.contactName.collectAsState()
+    val contactPhone by viewModel.contactPhone.collectAsState()
+    val contactEmail by viewModel.contactEmail.collectAsState()
+    val contactOrg by viewModel.contactOrg.collectAsState()
 
     // Active design mode: "STANDARD" or the futuristic "MATERIAL_10"
     var isMaterial10Enabled by remember { mutableStateOf(true) }
@@ -665,6 +727,9 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 "WIFI" -> 2
                 "PHONE" -> 3
                 "EMAIL" -> 4
+                "SMS" -> 5
+                "UPI" -> 6
+                "CONTACT" -> 7
                 else -> 0
             },
             edgePadding = 0.dp,
@@ -676,6 +741,9 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     "WIFI" -> 2
                     "PHONE" -> 3
                     "EMAIL" -> 4
+                    "SMS" -> 5
+                    "UPI" -> 6
+                    "CONTACT" -> 7
                     else -> 0
                 }
                 TabRowDefaults.SecondaryIndicator(
@@ -691,7 +759,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     shape = RoundedCornerShape(12.dp)
                 )
         ) {
-            val formats = listOf("TEXT", "URL", "WIFI", "PHONE", "EMAIL")
+            val formats = listOf("TEXT", "URL", "WIFI", "PHONE", "EMAIL", "SMS", "UPI", "CONTACT")
             formats.forEach { format ->
                 Tab(
                     selected = genFormat == format,
@@ -906,6 +974,124 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             )
                         )
                     }
+                    "SMS" -> {
+                        OutlinedTextField(
+                            value = smsPhone,
+                            onValueChange = { viewModel.smsPhone.value = it },
+                            label = { Text("Recipient Phone") },
+                            placeholder = { Text("e.g. +15551234567") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = smsBody,
+                            onValueChange = { viewModel.smsBody.value = it },
+                            label = { Text("SMS Message Body") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 2,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    }
+                    "UPI" -> {
+                        OutlinedTextField(
+                            value = upiVpa,
+                            onValueChange = { viewModel.upiVpa.value = it },
+                            label = { Text("Payee UPI ID (VPA)") },
+                            placeholder = { Text("e.g. merchant@upi") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null, tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = upiName,
+                            onValueChange = { viewModel.upiName.value = it },
+                            label = { Text("Payee Merchant Name") },
+                            placeholder = { Text("e.g. Acme Stores") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = upiAmount,
+                            onValueChange = { viewModel.upiAmount.value = it },
+                            label = { Text("Transaction Amount (Optional)") },
+                            placeholder = { Text("e.g. 150.00") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    }
+                    "CONTACT" -> {
+                        OutlinedTextField(
+                            value = contactName,
+                            onValueChange = { viewModel.contactName.value = it },
+                            label = { Text("Full Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = contactPhone,
+                            onValueChange = { viewModel.contactPhone.value = it },
+                            label = { Text("Phone Number") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = contactEmail,
+                            onValueChange = { viewModel.contactEmail.value = it },
+                            label = { Text("Email Address") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = contactOrg,
+                            onValueChange = { viewModel.contactOrg.value = it },
+                            label = { Text("Organization / Company") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -971,6 +1157,69 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         } else {
                             MaterialTheme.colorScheme.onBackground
                         }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Step 2: Choose brand overlay shield
+        Text(
+            text = "2. Customize Branding Shield Logo",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onBackground
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val logoOptions = listOf(
+                "NONE" to "Direct Classic",
+                "CRYSTAL" to "Chiseled Gem",
+                "SPARK" to "Star Spark",
+                "DIAMOND" to "Cyber Diamond"
+            )
+            logoOptions.forEach { (option, label) ->
+                val isSel = activeEmbedLogo == option
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isSel) {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            } else {
+                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                            }
+                        )
+                        .border(
+                            1.dp,
+                            if (isSel) {
+                                Color.Transparent
+                            } else {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                            },
+                            RoundedCornerShape(12.dp)
+                        )
+                        .clickable { viewModel.embedLogo.value = option }
+                        .testTag("logo_style_$option"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        color = if (isSel) {
+                            if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onBackground
+                        },
+                        textAlign = TextAlign.Center
                     )
                 }
             }
