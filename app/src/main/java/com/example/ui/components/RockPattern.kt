@@ -5,9 +5,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.Canvas
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,10 +32,22 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import android.widget.Toast
+import android.content.Intent
+import android.net.Uri
 
 /**
  * A modifier that draws subtle, procedural geometric fracture facets and geode lines.
@@ -375,4 +391,312 @@ fun Modifier.glassTouchFeedback(
             indication = null, // Implements tactile movement instead of simple flat color ripple
             onClick = onClick
         )
+}
+
+/**
+ * A highly styled, interactive 'Liquid Glass' card that displays QR code scan results.
+ * It features translucent glass backing, diagonal specular gloss highlights,
+ * glowing Material-based gradient borders, distinct parsed type layouts (URLs, Wifi, Plain text, UPI),
+ * and a tactile actionable design that stays responsive across all sizes.
+ */
+@Composable
+fun LiquidGlassScannerResultCard(
+    scannedText: String,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+
+    var isCopied by remember { mutableStateOf(false) }
+    LaunchedEffect(isCopied) {
+        if (isCopied) {
+            delay(2000)
+            isCopied = false
+        }
+    }
+
+    // Parse the QR content type
+    val isUrl = scannedText.startsWith("http", ignoreCase = true)
+    val isUpi = scannedText.startsWith("upi:", ignoreCase = true)
+    val isWifi = scannedText.startsWith("WIFI:", ignoreCase = true)
+    val isVcard = scannedText.contains("BEGIN:VCARD", ignoreCase = true)
+
+    val (badgeText, icon, badgeColor) = when {
+        isUrl -> Triple("HYPERLINK CONTEXT", Icons.Default.Language, Color(0xFF33CCFF))
+        isUpi -> Triple("UPI TRANSACTION BEACON", Icons.Default.AccountBalanceWallet, Color(0xFF00FFCC))
+        isWifi -> Triple("WIRELESS NODAL POINT", Icons.Default.Wifi, Color(0xFF9D4EED))
+        isVcard -> Triple("DIGITAL IDENTITY VECTORS", Icons.Default.ContactPage, Color(0xFFFF9E00))
+        else -> Triple("ALPHANUMERIC METAMORPHIC BEACON", Icons.Default.Description, MaterialTheme.colorScheme.primary)
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.28f))
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+                    )
+                ),
+                shape = RoundedCornerShape(24.dp)
+            )
+    ) {
+        // Frosted shine gloss reflection overlay
+        Canvas(modifier = Modifier.matchParentSize()) {
+            // Draw a subtle gloss diagonal swipe across the glass
+            drawRect(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.08f),
+                        Color.White.copy(alpha = 0.01f),
+                        Color.Transparent
+                    ),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, size.height)
+                )
+            )
+            
+            // Draw subtle matrix glass noise particles representing coordinate scans
+            val points = listOf(
+                Offset(size.width * 0.15f, size.height * 0.25f),
+                Offset(size.width * 0.85f, size.height * 0.15f),
+                Offset(size.width * 0.45f, size.height * 0.75f),
+                Offset(size.width * 0.75f, size.height * 0.65f),
+                Offset(size.width * 0.25f, size.height * 0.85f)
+            )
+            points.forEach { pt ->
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.2f),
+                    radius = 1.5.dp.toPx(),
+                    center = pt
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header bar containing parsed badge and close control button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = badgeText,
+                        tint = badgeColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = badgeText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = badgeColor,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.07f))
+                        .clickable { onDismiss() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Dismiss",
+                        tint = Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Large center scanner target/decoded emblem
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape)
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.QrCodeScanner,
+                    contentDescription = "Code Diagnostic Successful",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "DECODER INTEGRATED",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.primary,
+                letterSpacing = 1.5.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Main output text container with deep liquid-molded gloss background
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .liquidGlass(RoundedCornerShape(16.dp), bgAlpha = 0.15f)
+                    .padding(14.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Decoded Coordinates Block:",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = badgeColor.copy(alpha = 0.8f),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        text = scannedText,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Highly responsive and tactile action buttons list
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Tactical Copy Button
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .glassTouchFeedback {
+                            clipboardManager.setText(AnnotatedString(scannedText))
+                            isCopied = true
+                            Toast.makeText(context, "Copied payload to clipboard", Toast.LENGTH_SHORT).show()
+                        }
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isCopied) Color(0xFF00FFCC).copy(alpha = 0.15f)
+                            else Color.White.copy(alpha = 0.08f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isCopied) Color(0xFF00FFCC) else Color.White.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
+                            contentDescription = "Copy text",
+                            tint = if (isCopied) Color(0xFF00FFCC) else Color.White,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isCopied) "Copied!" else "Copy",
+                            fontWeight = FontWeight.Bold,
+                            color = if (isCopied) Color(0xFF00FFCC) else Color.White,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // Interactive Smart Action Button (Browse Link, Initiate Pay, Import, or Share)
+                val destText = when {
+                    isUrl -> "Browse"
+                    isUpi -> "Transfer"
+                    isWifi -> "Connect"
+                    isVcard -> "Save Bio"
+                    else -> "Share"
+                }
+                
+                val destIcon = when {
+                    isUrl -> Icons.Default.Language
+                    isUpi -> Icons.Default.AccountBalanceWallet
+                    isWifi -> Icons.Default.Wifi
+                    isVcard -> Icons.Default.ContactPage
+                    else -> Icons.Default.Share
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .glassTouchFeedback {
+                            when {
+                                isUrl -> {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(scannedText))
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Cannot open web page", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                isUpi -> {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(scannedText))
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "No app found to process payment url", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                else -> {
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, scannedText)
+                                    }
+                                    context.startActivity(Intent.createChooser(intent, "Share QR Payload"))
+                                }
+                            }
+                        }
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = destIcon,
+                            contentDescription = "Context action icon",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = destText,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

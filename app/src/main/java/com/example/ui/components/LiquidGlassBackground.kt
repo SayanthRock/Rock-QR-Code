@@ -71,8 +71,8 @@ fun LiquidGlassBackground(
     val baseBgColor = if (useDarkTheme) Color(0xFF0D0F12) else Color(0xFFF3F5F9)
     val dotColor = if (useDarkTheme) Color(0xFF00FFCC).copy(alpha = 0.05f) else Color(0xFF00BD9D).copy(alpha = 0.07f)
     
-    val colorBlob1 = if (useDarkTheme) Color(0xFF00BD9D).copy(alpha = 0.18f) else Color(0xFF33CCFF).copy(alpha = 0.18f)
-    val colorBlob2 = if (useDarkTheme) Color(0xFF8A2BE2).copy(alpha = 0.15f) else Color(0xFFFF66CC).copy(alpha = 0.14f)
+    val colorBlob1 = MaterialTheme.colorScheme.primary.copy(alpha = if (useDarkTheme) 0.16f else 0.10f)
+    val colorBlob2 = MaterialTheme.colorScheme.secondary.copy(alpha = if (useDarkTheme) 0.14f else 0.08f)
 
     Box(
         modifier = modifier

@@ -176,18 +176,27 @@ fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
                     .padding(innerPadding),
                 color = Color.Transparent
             ) {
-                AnimatedContent(
-                    targetState = activeTab,
-                    transitionSpec = {
-                        fadeIn() togetherWith fadeOut()
-                    },
-                    label = "TabTransition"
-                ) { targetTab ->
-                    when (targetTab) {
-                        "SCAN" -> ScanScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
-                        "GENERATE" -> GenerateScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
-                        "HISTORY" -> HistoryScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AnimatedContent(
+                        targetState = activeTab,
+                        transitionSpec = {
+                            fadeIn() togetherWith fadeOut()
+                        },
+                        label = "TabTransition"
+                    ) { targetTab ->
+                        when (targetTab) {
+                            "SCAN" -> ScanScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                            "GENERATE" -> GenerateScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                            "HISTORY" -> HistoryScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                        }
                     }
+
+                    // Draggable or fixed-position floating action bar (switches views & cycles themes)
+                    DraggableFloatingActionBar(
+                        viewModel = viewModel,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                    )
                 }
 
                 SettingsDialog(
@@ -464,134 +473,22 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
         }
     }
 
-    // SCANNED DIALOG RESULT VIEWER
+    // SCANNED DIALOG RESULT VIEWER (Uses premium, high-blur Liquid Glass custom container card)
     if (showDetailDialog && scannedText != null) {
         Dialog(onDismissRequest = {
             showDetailDialog = false
             viewModel.resetScanner()
         }) {
-            GlassCard(
+            LiquidGlassScannerResultCard(
+                scannedText = scannedText ?: "",
+                onDismiss = {
+                    showDetailDialog = false
+                    viewModel.resetScanner()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
-                            contentDescription = "Code Scanned Icon",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Decoder Successful!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .liquidGlass(RoundedCornerShape(12.dp), bgAlpha = 0.2f)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "Parsed Content Payload:",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = scannedText ?: "",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Dialog Actions list
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                clipboardManager.setText(AnnotatedString(scannedText ?: ""))
-                                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy text")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy", fontWeight = FontWeight.Bold)
-                        }
-
-                        val isUrl = scannedText?.startsWith("http", ignoreCase = true) == true
-                        val btnText = if (isUrl) "Browse" else "Share"
-                        Button(
-                            onClick = {
-                                if (isUrl) {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(scannedText))
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, "Cannot open browser", Toast.LENGTH_SHORT).show()
-                                    }
-                                } else {
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, scannedText)
-                                    }
-                                    context.startActivity(Intent.createChooser(intent, "Share QR Content"))
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Icon(
-                                imageVector = if (isUrl) Icons.Default.OpenInBrowser else Icons.Default.Share,
-                                contentDescription = "Action button icon"
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(btnText, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    TextButton(
-                        onClick = {
-                            showDetailDialog = false
-                            viewModel.resetScanner()
-                        }
-                    ) {
-                        Text("Dismiss and Reset Analyzer", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
+            )
         }
     }
 }
