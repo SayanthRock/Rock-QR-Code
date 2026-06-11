@@ -236,4 +236,20 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
             repository.deleteAllRecords()
         }
     }
+
+    // ------------------ SETTINGS & THEMING PERSISTENCE ------------------
+    private val prefs = application.getSharedPreferences("rock_qr_settings", android.content.Context.MODE_PRIVATE)
+
+    val themeMode = MutableStateFlow(prefs.getString("theme_mode", "SYSTEM") ?: "SYSTEM")
+    val dynamicColorEnabled = MutableStateFlow(prefs.getBoolean("dynamic_color", false))
+
+    fun setThemeMode(mode: String) {
+        themeMode.value = mode
+        prefs.edit().putString("theme_mode", mode).apply()
+    }
+
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        dynamicColorEnabled.value = enabled
+        prefs.edit().putBoolean("dynamic_color", enabled).apply()
+    }
 }

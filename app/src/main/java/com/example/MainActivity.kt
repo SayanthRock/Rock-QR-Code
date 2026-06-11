@@ -49,7 +49,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.QrRecord
-import com.example.ui.components.CameraPreview
+import com.example.ui.components.*
 import com.example.ui.theme.MyApplicationTheme
 import com.example.utils.QrStyle
 import com.example.utils.QrCodeGenerator
@@ -67,13 +67,27 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
+            val viewModel: QrViewModel = viewModel()
+            val themeMode by viewModel.themeMode.collectAsState()
+            val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
+
+            val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val useDarkTheme = when (themeMode) {
+                "DARK" -> true
+                "LIGHT" -> false
+                else -> isSystemDark
+            }
+
+            MyApplicationTheme(
+                darkTheme = useDarkTheme,
+                dynamicColor = dynamicColorEnabled
+            ) {
                 var showSplash by remember { mutableStateOf(true) }
                 
                 if (showSplash) {
                     RockQrSplashScreen(onSplashFinished = { showSplash = false })
                 } else {
-                    QrMainDashboard()
+                    QrMainDashboard(viewModel)
                 }
             }
         }
@@ -85,6 +99,7 @@ class MainActivity : ComponentActivity() {
 fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
     val activeTab by viewModel.activeTab.collectAsState()
     val context = LocalContext.current
+    var showSettingsDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -142,18 +157,24 @@ fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
                 label = "TabTransition"
             ) { targetTab ->
                 when (targetTab) {
-                    "SCAN" -> ScanScreen(viewModel)
-                    "GENERATE" -> GenerateScreen(viewModel)
-                    "HISTORY" -> HistoryScreen(viewModel)
+                    "SCAN" -> ScanScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                    "GENERATE" -> GenerateScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
+                    "HISTORY" -> HistoryScreen(viewModel, onSettingsClick = { showSettingsDialog = true })
                 }
             }
+
+            SettingsDialog(
+                showDialog = showSettingsDialog,
+                onDismiss = { showSettingsDialog = false },
+                viewModel = viewModel
+            )
         }
     }
 }
 
 // ------------------ SCANNER COMPOSABLE ------------------
 @Composable
-fun ScanScreen(viewModel: QrViewModel) {
+fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val scannedText by viewModel.scannedText.collectAsState()
@@ -196,28 +217,36 @@ fun ScanScreen(viewModel: QrViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                Text(
-                    text = "Rock QR Code",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Instant, offline secure scanning",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-            }
+            RockChiseledHeader(
+                title = "Rock QR Code",
+                subtitle = "Instant, offline secure scanning",
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
             IconButton(
                 onClick = { launcher.launch(Manifest.permission.CAMERA) },
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                )
+                ),
+                modifier = Modifier.glassTouchFeedback { launcher.launch(Manifest.permission.CAMERA) }
             ) {
                 Icon(
                     imageVector = if (hasCameraPermission) Icons.Default.CameraAlt else Icons.Default.NoPhotography,
                     contentDescription = "Permission Status indicator",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = onSettingsClick,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                ),
+                modifier = Modifier.glassTouchFeedback { onSettingsClick() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -242,6 +271,8 @@ fun ScanScreen(viewModel: QrViewModel) {
                 )
 
                 // Beautiful HUD Scan corners overlay
+                val activePrimary = MaterialTheme.colorScheme.primary
+                val activeTertiary = MaterialTheme.colorScheme.tertiary
                 Canvas(
                     modifier = Modifier
                         .size(240.dp)
@@ -249,7 +280,7 @@ fun ScanScreen(viewModel: QrViewModel) {
                 ) {
                     val stroke = 6.dp.toPx()
                     val sizeLn = 36.dp.toPx()
-                    val fgColor = Color(0xFF00BDD6)
+                    val fgColor = activePrimary
 
                     // Top Left
                     drawLine(fgColor, Offset(0f, 0f), Offset(sizeLn, 0f), strokeWidth = stroke)
@@ -288,7 +319,7 @@ fun ScanScreen(viewModel: QrViewModel) {
                         .offset(y = animVerticalOffset.dp)
                         .background(
                             Brush.horizontalGradient(
-                                colors = listOf(Color.Transparent, Color(0xFFE040FB), Color(0xFF00BDD6), Color.Transparent)
+                                colors = listOf(Color.Transparent, activeTertiary, activePrimary, Color.Transparent)
                             )
                         )
                 )
@@ -329,13 +360,13 @@ fun ScanScreen(viewModel: QrViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Simulated Input scanner box - CRITICAL UX for headless web previews
-        Card(
+        RockFacetedCard(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-            shape = RoundedCornerShape(16.dp)
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
         ) {
             Column(
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 var simText by remember { mutableStateOf("") }
@@ -518,7 +549,7 @@ fun ScanScreen(viewModel: QrViewModel) {
 
 // ------------------ GENERATOR COMPOSABLE ------------------
 @Composable
-fun GenerateScreen(viewModel: QrViewModel) {
+fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val genFormat by viewModel.genFormat.collectAsState()
@@ -539,12 +570,12 @@ fun GenerateScreen(viewModel: QrViewModel) {
 
     // Predefined stylish color preset combinations
     val colorSwatches = listOf(
-        Pair("#0A0A0A", "Midnight"),
-        Pair("#00BDD6", "Neon Teal"),
-        Pair("#FFA000", "Sunfire Core"),
-        Pair("#7A1C1C", "Red Lava"),
-        Pair("#4A148C", "Amethyst"),
-        Pair("#1A5F20", "Forest Emerald")
+        Pair("#0B0C0E", "Obsidian"),
+        Pair("#00BD9D", "Malachite"),
+        Pair("#EAA21D", "Pyrite Gold"),
+        Pair("#5E6D75", "Basalt Slate"),
+        Pair("#7F8C8D", "Quartz"),
+        Pair("#C41E3A", "Garnet Ruby")
     )
 
     Column(
@@ -553,17 +584,31 @@ fun GenerateScreen(viewModel: QrViewModel) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text(
-            text = "QR Builder Studio",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = "Generate pebbles, rocks, or classic styled coordinates",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            RockChiseledHeader(
+                title = "QR Builder Studio",
+                subtitle = "Generate pebbles, rocks, or classic styled coordinates",
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            IconButton(
+                onClick = onSettingsClick,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                ),
+                modifier = Modifier.glassTouchFeedback { onSettingsClick() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -796,14 +841,13 @@ fun GenerateScreen(viewModel: QrViewModel) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Step 5: Live QR Rendering output
-        Card(
+        RockFacetedCard(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-            shape = RoundedCornerShape(24.dp)
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -824,7 +868,7 @@ fun GenerateScreen(viewModel: QrViewModel) {
                         text = "Real-time Styled QR Ready",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF00BDD6)
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -897,7 +941,7 @@ fun GenerateScreen(viewModel: QrViewModel) {
 
 // ------------------ HISTORY COMPOSABLE ------------------
 @Composable
-fun HistoryScreen(viewModel: QrViewModel) {
+fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val historyRecords by viewModel.historyRecords.collectAsState()
@@ -919,22 +963,19 @@ fun HistoryScreen(viewModel: QrViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                Text(
-                    text = "Locker History",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Manage your scanned and built coordinates",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-            }
+            RockChiseledHeader(
+                title = "Locker History",
+                subtitle = "Manage scanned/built coordinates",
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
             if (historyRecords.isNotEmpty()) {
                 IconButton(
                     onClick = {
+                        viewModel.clearAllHistory()
+                        Toast.makeText(context, "Cleared history", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.glassTouchFeedback {
                         viewModel.clearAllHistory()
                         Toast.makeText(context, "Cleared history", Toast.LENGTH_SHORT).show()
                     }
@@ -945,6 +986,20 @@ fun HistoryScreen(viewModel: QrViewModel) {
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+            IconButton(
+                onClick = onSettingsClick,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                ),
+                modifier = Modifier.glassTouchFeedback { onSettingsClick() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
 
@@ -1190,17 +1245,15 @@ fun HistoryItemCard(
     onDelete: () -> Unit,
     onSelectCard: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelectCard() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(1.dp)
+            .glassTouchFeedback { onSelectCard() },
+        backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
+        borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
     ) {
         Row(
             modifier = Modifier
-                .padding(14.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1301,6 +1354,10 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
     var startTextFade by remember { mutableStateOf(false) }
     var startColorPulse by remember { mutableStateOf(false) }
 
+    val activePrimary = MaterialTheme.colorScheme.primary
+    val activeTertiary = MaterialTheme.colorScheme.tertiary
+    val activeBackground = MaterialTheme.colorScheme.background
+
     LaunchedEffect(Unit) {
         startPulse = true
         kotlinx.coroutines.delay(200)
@@ -1341,14 +1398,15 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F1113)), // Deep luxury Obsidian Black
+            .background(activeBackground) // Volcanic Obsidian Black Background
+            .rockFractureBackground(color = activePrimary, alpha = 0.15f), // Shaded mineral fissures
         contentAlignment = Alignment.Center
     ) {
         // Crystalline ambient back-glow
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF00BDD6).copy(alpha = 0.22f * gemGlowAlpha), Color.Transparent),
+                    colors = listOf(activePrimary.copy(alpha = 0.22f * gemGlowAlpha), Color.Transparent),
                     center = center,
                     radius = size.minDimension * 0.75f
                 ),
@@ -1388,7 +1446,7 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
                     drawPath(
                         path = path,
                         brush = Brush.sweepGradient(
-                            colors = listOf(Color(0xFFFFA000), Color(0xFF00BDD6), Color(0xFFFFA000))
+                            colors = listOf(activeTertiary, activePrimary, activeTertiary)
                         ),
                         style = Stroke(width = strokeWidthPx)
                     )
@@ -1407,30 +1465,30 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFF00BDD6))
+                                .clip(ChiseledOctagonShape)
+                                .background(activePrimary)
                                 .padding(5.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(Color(0xFF0F1113))
+                                    .clip(ChiseledOctagonShape)
+                                    .background(activeBackground)
                             )
                         }
 
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFFFA000))
+                                .clip(ChiseledOctagonShape)
+                                .background(activeTertiary)
                                 .padding(5.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(Color(0xFF0F1113))
+                                    .clip(ChiseledOctagonShape)
+                                    .background(activeBackground)
                             )
                         }
                     }
@@ -1443,23 +1501,23 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFF00BDD6))
+                                .clip(ChiseledOctagonShape)
+                                .background(activePrimary)
                                 .padding(5.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(Color(0xFF0F1113))
+                                    .clip(ChiseledOctagonShape)
+                                    .background(activeBackground)
                             )
                         }
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Box(modifier = Modifier.size(6.dp).background(Color.White, RoundedCornerShape(1f)))
-                            Box(modifier = Modifier.size(6.dp).background(Color(0xFF00BDD6), RoundedCornerShape(1f)))
+                            Box(modifier = Modifier.size(6.dp).clip(ChiseledOctagonShape).background(Color.White))
+                            Box(modifier = Modifier.size(6.dp).clip(ChiseledOctagonShape).background(activePrimary))
                         }
                     }
                 }
@@ -1475,7 +1533,7 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
                 Text(
                     text = "ROCK QR CODE",
                     fontSize = 24.sp,
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
                     letterSpacing = 4.sp
@@ -1485,9 +1543,10 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
 
                 Text(
                     text = "SECURE  •  OFFLINE  •  INSTANT",
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF00BDD6),
+                    color = activePrimary,
                     letterSpacing = 2.sp
                 )
 
@@ -1522,9 +1581,261 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
                             .offset(x = progressOffset.dp)
                             .background(
                                 Brush.horizontalGradient(
-                                    colors = listOf(Color.Transparent, Color(0xFF00BDD6), Color(0xFFFFA000), Color.Transparent)
+                                    colors = listOf(Color.Transparent, activePrimary, activeTertiary, Color.Transparent)
                                 )
                             )
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A beautiful, futuristic, highly polished settings and about screen with glass card theme options.
+ */
+@Composable
+fun SettingsDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    viewModel: QrViewModel
+) {
+    if (!showDialog) return
+
+    val themeMode by viewModel.themeMode.collectAsState()
+    val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
+
+    Dialog(onDismissRequest = onDismiss) {
+        GlassCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "SETTINGS & CO",
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp,
+                        letterSpacing = 1.5.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.glassTouchFeedback { onDismiss() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close dialog",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                // Line Separator
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                        .height(1.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                )
+
+                // Section 1: Themes
+                Text(
+                    text = "THEME SETTINGS",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val modes = listOf(
+                        Triple("LIGHT", "Light", Icons.Default.LightMode),
+                        Triple("DARK", "Dark", Icons.Default.DarkMode),
+                        Triple("SYSTEM", "System", Icons.Default.SettingsSuggest)
+                    )
+
+                    modes.forEach { (mode, label, icon) ->
+                        val isSelected = themeMode == mode
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .glassTouchFeedback {
+                                    viewModel.setThemeMode(mode)
+                                }
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = label,
+                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Section 2: Dynamic Colors (Material You)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Dynamic Colors",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Futuristic Material You colors",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+
+                    Switch(
+                        checked = dynamicColorEnabled,
+                        onCheckedChange = { viewModel.setDynamicColorEnabled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Line Separator
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .height(0.5.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+                )
+
+                // Section 3: About
+                Text(
+                    text = "ABOUT THE APP",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(Alignment.Start).padding(bottom = 6.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f))
+                        .border(
+                            width = 0.5.dp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(14.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Rock QR Engine Pro",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Offline-first, tactile, metamorphic coordinates scanning & building toolkit.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Developer Badge: Created by @sayanthRock
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "Created by @sayanthRock",
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Done Button
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .glassTouchFeedback { onDismiss() },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text(
+                        text = "DONE",
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
                 }
             }

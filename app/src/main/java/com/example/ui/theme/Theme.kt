@@ -12,37 +12,39 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme =
   darkColorScheme(
-    primary = OceanTeal,
-    secondary = StoneGrey,
-    tertiary = EarthAmber,
+    primary = MalachitePrimary,
+    secondary = ChippedBasalt,
+    tertiary = PyriteGold,
     background = ObsidianBlack,
-    surface = DarkGranite,
-    surfaceVariant = ShaleGrey,
+    surface = DeepGranite,
+    surfaceVariant = ChippedBasalt,
     onPrimary = ObsidianBlack,
-    onSecondary = LightStoneSurface,
-    onBackground = LightStoneBg,
-    onSurface = LightStoneBg
+    onSecondary = PolishedCalcite,
+    onBackground = QuartzAlabaster,
+    onSurface = QuartzAlabaster,
+    outline = MineralOreSlate
   )
 
 private val LightColorScheme =
   lightColorScheme(
-    primary = OceanTeal,
-    secondary = HeavySlate,
-    tertiary = EarthAmber,
-    background = LightStoneBg,
-    surface = LightStoneSurface,
-    surfaceVariant = LightStoneBg,
-    onPrimary = LightStoneSurface,
-    onSecondary = ObsidianBlack,
-    onBackground = ObsidianBlack,
-    onSurface = ObsidianBlack
+    primary = MalachitePrimary,
+    secondary = SlateSurface,
+    tertiary = IronTerracotta,
+    background = QuartzAlabaster,
+    surface = PolishedCalcite,
+    surfaceVariant = SlateSurface,
+    onPrimary = PolishedCalcite,
+    onSecondary = FossilCharcoal,
+    onBackground = FossilCharcoal,
+    onSurface = FossilCharcoal,
+    outline = PolishedCalcite
   )
 
 @Composable
 fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  // Set dynamic color to false by default to preserve custom rock-branding identity
+  dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
 ) {
   val colorScheme =
