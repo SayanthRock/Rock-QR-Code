@@ -555,6 +555,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val genFormat by viewModel.genFormat.collectAsState()
     val genStyle by viewModel.genStyle.collectAsState()
     val genFgColor by viewModel.genFgColor.collectAsState()
+    val genBgColor by viewModel.genBgColor.collectAsState()
     val generatedBitmap by viewModel.generatedBitmap.collectAsState()
 
     // Parameters
@@ -807,34 +808,191 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Step 4: Color Picker Presets
-        Text(
-            text = "2. Customize Obsidian Accents",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Row(
+        // Step 4: Color Customizer (Foreground and Background)
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            colorSwatches.forEach { (hex, name) ->
-                val isSel = genFgColor.equals(hex, ignoreCase = true)
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(Color(android.graphics.Color.parseColor(hex)))
-                        .border(
-                            width = if (isSel) 3.dp else 1.dp,
-                            color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.2f),
-                            shape = CircleShape
-                        )
-                        .clickable { viewModel.genFgColor.value = hex }
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "2. Customize QR Colors",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Foreground Section
+                Text(
+                    text = "Foreground Pattern Color",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Foreground Row of Circular Presets
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val fgColorPresets = listOf(
+                        Pair("#0B0C0E", "Obsidian"),
+                        Pair("#00BD9D", "Malachite"),
+                        Pair("#EAA21D", "Pyrite Gold"),
+                        Pair("#1A73E8", "Sapphire"),
+                        Pair("#C41E3A", "Garnet Ruby"),
+                        Pair("#8A2BE2", "Amethyst"),
+                        Pair("#E91E63", "Rose Quartz")
+                    )
+
+                    fgColorPresets.forEach { (hex, name) ->
+                        val isSel = genFgColor.equals(hex, ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(android.graphics.Color.parseColor(hex)))
+                                .border(
+                                    width = if (isSel) 3.dp else 1.dp,
+                                    color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
+                                .clickable { viewModel.genFgColor.value = hex }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Custom Foreground Hex Input
+                var customFgHex by remember { mutableStateOf(genFgColor) }
+                LaunchedEffect(genFgColor) {
+                    customFgHex = genFgColor
+                }
+                OutlinedTextField(
+                    value = customFgHex,
+                    onValueChange = { newValue ->
+                        val cleanVal = newValue.trim()
+                        customFgHex = cleanVal
+                        if (cleanVal.length == 7 && cleanVal.startsWith("#")) {
+                            try {
+                                android.graphics.Color.parseColor(cleanVal)
+                                viewModel.genFgColor.value = cleanVal
+                            } catch (e: Exception) {
+                                // ignore invalid color values until complete
+                            }
+                        }
+                    },
+                    label = { Text("Custom Foreground Hex") },
+                    placeholder = { Text("#000000") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Background Section
+                Text(
+                    text = "Background Canvas Color",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Background Row of Circular Presets
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val bgColorPresets = listOf(
+                        Pair("#FFFFFF", "Moonlight White"),
+                        Pair("#F4F6F9", "Frost Grey"),
+                        Pair("#FFFDD0", "Cream Pearl"),
+                        Pair("#E8F0FE", "Ice Blue"),
+                        Pair("#E2F9E9", "Mint Breeze"),
+                        Pair("#FFEBEE", "Rose Pearl"),
+                        Pair("#15181F", "Cosmic Slate")
+                    )
+
+                    bgColorPresets.forEach { (hex, name) ->
+                        val isSel = genBgColor.equals(hex, ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(android.graphics.Color.parseColor(hex)))
+                                .border(
+                                    width = if (isSel) 3.dp else 1.dp,
+                                    color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
+                                .clickable { viewModel.genBgColor.value = hex }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Custom Background Hex Input
+                var customBgHex by remember { mutableStateOf(genBgColor) }
+                LaunchedEffect(genBgColor) {
+                    customBgHex = genBgColor
+                }
+                OutlinedTextField(
+                    value = customBgHex,
+                    onValueChange = { newValue ->
+                        val cleanVal = newValue.trim()
+                        customBgHex = cleanVal
+                        if (cleanVal.length == 7 && cleanVal.startsWith("#")) {
+                            try {
+                                android.graphics.Color.parseColor(cleanVal)
+                                viewModel.genBgColor.value = cleanVal
+                            } catch (e: Exception) {
+                                // ignore invalid color values until complete
+                            }
+                        }
+                    },
+                    label = { Text("Custom Background Hex") },
+                    placeholder = { Text("#FFFFFF") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                )
+
+                // Contrast warning
+                val isLowContrast = remember(genFgColor, genBgColor) {
+                    try {
+                        val fg = android.graphics.Color.parseColor(genFgColor)
+                        val bg = android.graphics.Color.parseColor(genBgColor)
+                        val fgColor = Color(fg)
+                        val bgColor = Color(bg)
+                        val fgLum = 0.299f * fgColor.red + 0.587f * fgColor.green + 0.114f * fgColor.blue
+                        val bgLum = 0.299f * bgColor.red + 0.587f * bgColor.green + 0.114f * bgColor.blue
+                        Math.abs(fgLum - bgLum) < 0.22f
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+
+                if (isLowContrast) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "⚠️ Warning: Foreground and Background colors are highly similar. Ensure sufficient contrast so scanner camera can decode your code properly.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
 
@@ -852,14 +1010,15 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (generatedBitmap != null) {
+                    val finalBgCol = try { Color(android.graphics.Color.parseColor(genBgColor)) } catch (e: Exception) { Color.White }
                     Image(
                         bitmap = generatedBitmap!!.asImageBitmap(),
                         contentDescription = "Live code generation template",
                         modifier = Modifier
                             .size(200.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .border(6.dp, Color.White, RoundedCornerShape(16.dp))
-                            .background(Color.White)
+                            .border(6.dp, finalBgCol, RoundedCornerShape(16.dp))
+                            .background(finalBgCol)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1132,24 +1291,28 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Regenerate Bitmap on demand in popup!
-                    val fgColorHex = record.customColorHex ?: "#0A0A0A"
+                    val colors = (record.customColorHex ?: "#0A0A0A").split("|")
+                    val fgColorHex = colors.getOrNull(0) ?: "#0A0A0A"
+                    val bgColorHex = colors.getOrNull(1) ?: "#FFFFFF"
                     val bmap: Bitmap? = remember(record.content) {
                         QrCodeGenerator.generateQrCode(
                             content = record.content,
                             foregroundHexColor = fgColorHex,
+                            backgroundHexColor = bgColorHex,
                             style = QrStyle.ROUNDED_DOT
                         )
                     }
 
                     if (bmap != null) {
+                        val finalBgCol = try { Color(android.graphics.Color.parseColor(bgColorHex)) } catch (e: Exception) { Color.White }
                         Image(
                             bitmap = bmap.asImageBitmap(),
                             contentDescription = "Regenerated code",
                             modifier = Modifier
                                 .size(180.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White)
-                                .border(4.dp, Color.White, RoundedCornerShape(12.dp))
+                                .background(finalBgCol)
+                                .border(4.dp, finalBgCol, RoundedCornerShape(12.dp))
                         )
                     }
 

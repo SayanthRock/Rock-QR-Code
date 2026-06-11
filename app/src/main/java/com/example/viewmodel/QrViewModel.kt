@@ -188,7 +188,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                     format = format,
                     content = finalContent,
                     title = title,
-                    customColorHex = genFgColor.value
+                    customColorHex = "${genFgColor.value}|${genBgColor.value}"
                 )
             )
         }
