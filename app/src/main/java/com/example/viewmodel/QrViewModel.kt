@@ -310,6 +310,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
 
     val themeMode = MutableStateFlow(prefs.getString("theme_mode", "SYSTEM") ?: "SYSTEM")
     val dynamicColorEnabled = MutableStateFlow(prefs.getBoolean("dynamic_color", false))
+    val colorPreset = MutableStateFlow(prefs.getString("color_preset", "MIDNIGHT") ?: "MIDNIGHT")
 
     fun setThemeMode(mode: String) {
         themeMode.value = mode
@@ -319,5 +320,10 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     fun setDynamicColorEnabled(enabled: Boolean) {
         dynamicColorEnabled.value = enabled
         prefs.edit().putBoolean("dynamic_color", enabled).apply()
+    }
+
+    fun setColorPreset(preset: String) {
+        colorPreset.value = preset
+        prefs.edit().putString("color_preset", preset).apply()
     }
 }

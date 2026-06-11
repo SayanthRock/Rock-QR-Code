@@ -30,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.alpha
 
 /**
  * A modifier that draws subtle, procedural geometric fracture facets and geode lines.
@@ -238,22 +240,103 @@ fun RockChiseledHeader(
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
-    borderColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+    backgroundColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
+    borderColor: Color = MaterialTheme.colorScheme.primary,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val borderBrush = Brush.linearGradient(
+        colors = listOf(
+            borderColor.copy(alpha = 0.45f),
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+            borderColor.copy(alpha = 0.6f)
+        )
+    )
+
     Box(
         modifier = modifier
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
             .background(backgroundColor)
             .border(
                 width = 1.dp,
-                color = borderColor,
+                brush = borderBrush,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
             )
             .padding(20.dp)
     ) {
         Column {
+            content()
+        }
+    }
+}
+
+/**
+ * A multipurpose Liquid Glass modifier that applies a semi-transparent frosted card background,
+ * soft organic borders with glossy gradient refractions, and responsive clipping.
+ */
+fun Modifier.liquidGlass(
+    shape: androidx.compose.ui.graphics.Shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+    borderAlphaStart: Float = 0.45f,
+    borderAlphaEnd: Float = 0.15f,
+    bgAlpha: Float = 0.35f
+) = composed {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    
+    val borderBrush = Brush.linearGradient(
+        colors = listOf(
+            primaryColor.copy(alpha = borderAlphaStart),
+            secondaryColor.copy(alpha = borderAlphaEnd),
+            primaryColor.copy(alpha = borderAlphaStart * 1.3f)
+        )
+    )
+    
+    this
+        .clip(shape)
+        .background(surfaceColor.copy(alpha = bgAlpha))
+        .border(
+            width = 1.dp,
+            brush = borderBrush,
+            shape = shape
+        )
+}
+
+/**
+ * A frosted Glassmorphism Button featuring responsive physics tactile click states
+ * and a premium, multi-tonal glowing chiseled outline.
+ */
+@Composable
+fun GlassButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable RowScope.() -> Unit
+) {
+    val alphaVal = if (enabled) 1.0f else 0.5f
+    Box(
+        modifier = modifier
+            .alpha(alphaVal)
+            .glassTouchFeedback(onClick = { if (enabled) onClick() })
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+            .border(
+                width = 1.5.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    )
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            )
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
             content()
         }
     }

@@ -8,6 +8,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme =
@@ -45,6 +46,7 @@ fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
   // Set dynamic color to false by default to preserve custom rock-branding identity
   dynamicColor: Boolean = false,
+  colorPresetName: String = "MIDNIGHT",
   content: @Composable () -> Unit,
 ) {
   val colorScheme =
@@ -54,8 +56,147 @@ fun MyApplicationTheme(
         if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
       }
 
-      darkTheme -> DarkColorScheme
-      else -> LightColorScheme
+      darkTheme -> {
+        when (colorPresetName.uppercase()) {
+          "MIDNIGHT" -> darkColorScheme(
+            primary = MidnightPrimary,
+            secondary = MidnightSecondary,
+            tertiary = MidnightTertiary,
+            background = MidnightBackground,
+            surface = Color(0xFF121021),
+            surfaceVariant = Color(0xFF1A172E),
+            onPrimary = Color.White,
+            onSecondary = Color(0xFF080711),
+            onBackground = Color(0xFFECE6F5),
+            onSurface = Color(0xFFECE6F5),
+            outline = MidnightSecondary.copy(alpha = 0.35f)
+          )
+          "ARCTIC" -> darkColorScheme(
+            primary = ArcticPrimary,
+            secondary = ArcticSecondary,
+            tertiary = ArcticTertiary,
+            background = ArcticBackground,
+            surface = Color(0xFF151B21),
+            surfaceVariant = Color(0xFF1C242C),
+            onPrimary = Color(0xFF1E262E),
+            onSecondary = Color.White,
+            onBackground = Color(0xFFEAF3F7),
+            onSurface = Color(0xFFEAF3F7),
+            outline = ArcticSecondary.copy(alpha = 0.35f)
+          )
+          "OCEAN" -> darkColorScheme(
+            primary = OceanPrimary,
+            secondary = OceanSecondary,
+            tertiary = OceanTertiary,
+            background = OceanBackground,
+            surface = Color(0xFF0B1724),
+            surfaceVariant = Color(0xFF122438),
+            onPrimary = Color.White,
+            onSecondary = Color(0xFF050B14),
+            onBackground = Color(0xFFE1F4F8),
+            onSurface = Color(0xFFE1F4F8),
+            outline = OceanSecondary.copy(alpha = 0.35f)
+          )
+          "AURORA" -> darkColorScheme(
+            primary = AuroraPrimary,
+            secondary = AuroraSecondary,
+            tertiary = AuroraTertiary,
+            background = AuroraBackground,
+            surface = Color(0xFF0A1C18),
+            surfaceVariant = Color(0xFF122E28),
+            onPrimary = Color(0xFF050E0C),
+            onSecondary = Color.White,
+            onBackground = Color(0xFFE5FAF4),
+            onSurface = Color(0xFFE5FAF4),
+            outline = AuroraSecondary.copy(alpha = 0.35f)
+          )
+          "EMERALD" -> darkColorScheme(
+            primary = EmeraldPrimary,
+            secondary = EmeraldSecondary,
+            tertiary = EmeraldTertiary,
+            background = EmeraldBackground,
+            surface = Color(0xFF0F1715),
+            surfaceVariant = Color(0xFF172421),
+            onPrimary = Color.White,
+            onSecondary = Color(0xFF080C0B),
+            onBackground = Color(0xFFECEEF2),
+            onSurface = Color(0xFFECEEF2),
+            outline = EmeraldSecondary.copy(alpha = 0.35f)
+          )
+          else -> DarkColorScheme
+        }
+      }
+
+      else -> {
+        when (colorPresetName.uppercase()) {
+          "MIDNIGHT" -> lightColorScheme(
+            primary = MidnightPrimary,
+            secondary = MidnightSecondary,
+            tertiary = MidnightTertiary,
+            background = Color(0xFFF7F5FA),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFEFEBF6),
+            onPrimary = Color.White,
+            onSecondary = Color.Black,
+            onBackground = Color(0xFF1A172E),
+            onSurface = Color(0xFF1A172E),
+            outline = MidnightPrimary.copy(alpha = 0.3f)
+          )
+          "ARCTIC" -> lightColorScheme(
+            primary = ArcticPrimary,
+            secondary = ArcticSecondary,
+            tertiary = ArcticTertiary,
+            background = Color(0xFFF0F5F8),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFE3EFF5),
+            onPrimary = Color(0xFF0F151B),
+            onSecondary = Color(0xFF0F151B),
+            onBackground = Color(0xFF0F151B),
+            onSurface = Color(0xFF0F151B),
+            outline = ArcticSecondary.copy(alpha = 0.3f)
+          )
+          "OCEAN" -> lightColorScheme(
+            primary = OceanPrimary,
+            secondary = OceanSecondary,
+            tertiary = OceanTertiary,
+            background = Color(0xFFEFF7FA),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFE0F1F7),
+            onPrimary = Color.White,
+            onSecondary = Color(0xFF050B14),
+            onBackground = Color(0xFF050B14),
+            onSurface = Color(0xFF050B14),
+            outline = OceanPrimary.copy(alpha = 0.3f)
+          )
+          "AURORA" -> lightColorScheme(
+            primary = AuroraPrimary,
+            secondary = AuroraSecondary,
+            tertiary = AuroraTertiary,
+            background = Color(0xFFEFFBF8),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFE0FAF2),
+            onPrimary = Color(0xFF050E0C),
+            onSecondary = Color(0xFF050E0C),
+            onBackground = Color(0xFF050E0C),
+            onSurface = Color(0xFF050E0C),
+            outline = AuroraPrimary.copy(alpha = 0.3f)
+          )
+          "EMERALD" -> lightColorScheme(
+            primary = EmeraldPrimary,
+            secondary = EmeraldSecondary,
+            tertiary = EmeraldTertiary,
+            background = Color(0xFFEFFBF8),
+            surface = Color(0xFFFFFFFF),
+            surfaceVariant = Color(0xFFE0FAF4),
+            onPrimary = Color.White,
+            onSecondary = Color(0xFF080C0B),
+            onBackground = Color(0xFF080C0B),
+            onSurface = Color(0xFF080C0B),
+            outline = EmeraldPrimary.copy(alpha = 0.3f)
+          )
+          else -> LightColorScheme
+        }
+      }
     }
 
   MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)

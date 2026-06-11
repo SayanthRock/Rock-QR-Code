@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
             val viewModel: QrViewModel = viewModel()
             val themeMode by viewModel.themeMode.collectAsState()
             val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
+            val colorPreset by viewModel.colorPreset.collectAsState()
 
             val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
             val useDarkTheme = when (themeMode) {
@@ -82,7 +83,8 @@ class MainActivity : ComponentActivity() {
 
             MyApplicationTheme(
                 darkTheme = useDarkTheme,
-                dynamicColor = dynamicColorEnabled
+                dynamicColor = dynamicColorEnabled,
+                colorPresetName = colorPreset
             ) {
                 var showSplash by remember { mutableStateOf(true) }
                 
@@ -123,15 +125,10 @@ fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
                 NavigationBar(
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                            shape = RoundedCornerShape(24.dp)
-                        )
+                        .liquidGlass(shape = RoundedCornerShape(24.dp))
                         .windowInsetsPadding(WindowInsets.navigationBars),
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                    tonalElevation = 8.dp
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp
                 ) {
                     NavigationBarItem(
                         selected = activeTab == "SCAN",
@@ -473,16 +470,13 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             showDetailDialog = false
             viewModel.resetScanner()
         }) {
-            Card(
+            GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(12.dp)
+                    .padding(8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
@@ -510,9 +504,10 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    OutlinedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .liquidGlass(RoundedCornerShape(12.dp), bgAlpha = 0.2f)
                     ) {
                         Column(
                             modifier = Modifier
@@ -733,7 +728,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 else -> 0
             },
             edgePadding = 0.dp,
-            containerColor = if (isMaterial10Enabled) Color.Black.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            containerColor = Color.Transparent,
             indicator = { tabPositions ->
                 val currIndex = when (genFormat) {
                     "TEXT" -> 0
@@ -752,12 +747,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 )
             },
             modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .border(
-                    width = if (isMaterial10Enabled) 1.dp else 0.dp,
-                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.3f) else Color.Transparent,
-                    shape = RoundedCornerShape(12.dp)
-                )
+                .liquidGlass(RoundedCornerShape(12.dp), bgAlpha = 0.25f)
         ) {
             val formats = listOf("TEXT", "URL", "WIFI", "PHONE", "EMAIL", "SMS", "UPI", "CONTACT")
             formats.forEach { format ->
@@ -1895,7 +1885,13 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f)
+                )
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -1905,10 +1901,10 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 onCheckedChange = { viewModel.isOnlyFavorites.value = it },
                 modifier = Modifier
                     .size(48.dp)
-                    .background(
-                        if (isOnlyFavorites) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        else MaterialTheme.colorScheme.surfaceVariant,
-                        RoundedCornerShape(12.dp)
+                    .liquidGlass(
+                        shape = RoundedCornerShape(12.dp),
+                        bgAlpha = if (isOnlyFavorites) 0.35f else 0.18f,
+                        borderAlphaStart = if (isOnlyFavorites) 0.6f else 0.3f
                     )
             ) {
                 Icon(
@@ -2494,6 +2490,7 @@ fun SettingsDialog(
 
     val themeMode by viewModel.themeMode.collectAsState()
     val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
+    val colorPreset by viewModel.colorPreset.collectAsState()
 
     Dialog(onDismissRequest = onDismiss) {
         GlassCard(
@@ -2634,6 +2631,78 @@ fun SettingsDialog(
                             checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                         )
                     )
+                }
+
+                if (!dynamicColorEnabled) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "LIQUID GLASS PRESET COLOR",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val presets = listOf(
+                            "MIDNIGHT" to Triple("Midnight", com.example.ui.theme.MidnightPrimary, com.example.ui.theme.MidnightSecondary),
+                            "ARCTIC" to Triple("Arctic", com.example.ui.theme.ArcticPrimary, com.example.ui.theme.ArcticSecondary),
+                            "OCEAN" to Triple("Ocean", com.example.ui.theme.OceanPrimary, com.example.ui.theme.OceanSecondary),
+                            "AURORA" to Triple("Aurora", com.example.ui.theme.AuroraPrimary, com.example.ui.theme.AuroraSecondary),
+                            "EMERALD" to Triple("Emerald", com.example.ui.theme.EmeraldPrimary, com.example.ui.theme.EmeraldSecondary)
+                        )
+
+                        presets.forEach { (key, info) ->
+                            val (name, col1, col2) = info
+                            val isSel = colorPreset == key
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                                    )
+                                    .border(
+                                        width = if (isSel) 1.5.dp else 1.dp,
+                                        brush = Brush.linearGradient(
+                                            colors = if (isSel) listOf(col1, col2) else listOf(col1.copy(alpha = 0.3f), col2.copy(alpha = 0.1f))
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .glassTouchFeedback {
+                                        viewModel.setColorPreset(key)
+                                    }
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    // Circular color representation bubble
+                                    Box(
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    colors = listOf(col1, col2)
+                                                )
+                                            )
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 9.sp,
+                                        color = if (isSel) col1 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
