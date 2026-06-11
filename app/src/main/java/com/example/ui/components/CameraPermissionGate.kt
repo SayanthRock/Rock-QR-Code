@@ -57,6 +57,7 @@ fun CameraPermissionGate(
     onPermissionGranted: () -> Unit,
     onPermissionStatusChanged: ((Boolean) -> Unit)? = null,
     onShowTestPayloadPrompt: @Composable (() -> Unit)? = null,
+    onShowToast: ((String, com.example.viewmodel.CustomToastType) -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -185,7 +186,11 @@ fun CameraPermissionGate(
                     }
                     context.startActivity(intent)
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Redirect failed. Please open settings manually.", Toast.LENGTH_SHORT).show()
+                    if (onShowToast != null) {
+                        onShowToast("Redirect failed. Please open settings manually.", com.example.viewmodel.CustomToastType.ERROR)
+                    } else {
+                        Toast.makeText(context, "Redirect failed. Please open settings manually.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } else {
                 permissionLauncher.launch(Manifest.permission.CAMERA)

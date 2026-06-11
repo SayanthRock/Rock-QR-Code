@@ -9,6 +9,7 @@ import com.example.data.QrRecord
 import com.example.data.QrRepository
 import com.example.utils.QrCodeGenerator
 import com.example.utils.QrStyle
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -136,6 +137,44 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     // Logo embed style (NONE, CRYSTAL, SPARK, DIAMOND)
     val embedLogo = MutableStateFlow("NONE")
 
+    // Error Correction Level (L, M, Q, H)
+    val errorCorrectionLevel = MutableStateFlow(ErrorCorrectionLevel.H)
+
+    // URL validation error stream
+    val urlValidationError: StateFlow<String?> = urlLink.map { link ->
+        val trimmed = link.trim()
+        if (trimmed.isEmpty()) {
+            null
+        } else {
+            val cleanLink = if (trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true)) {
+                trimmed
+            } else {
+                "https://$trimmed"
+            }
+            if (!isValidUrlFormat(cleanLink)) {
+                "Invalid URL format. Please format like: example.com"
+            } else {
+                null
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+    fun isValidUrlFormat(url: String): Boolean {
+        // Broad yet accurate regex matching valid domain and protocol names
+        val rawPattern = "^(https?://)?([a-zA-Z0-9]([a-zA-Z0-9\\-]*[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}(:\\d+)?(/.*)?$"
+        val regex = rawPattern.toRegex(RegexOption.IGNORE_CASE)
+        val isStandardUrl = url.matches(regex)
+        val isLocalhost = url.startsWith("http://localhost", ignoreCase = true) || 
+                          url.startsWith("https://localhost", ignoreCase = true) || 
+                          url.equals("localhost", ignoreCase = true) || 
+                          url.startsWith("localhost:", ignoreCase = true)
+        return isStandardUrl || isLocalhost
+    }
+
     private val _generatedBitmap = MutableStateFlow<Bitmap?>(null)
     val generatedBitmap: StateFlow<Bitmap?> = _generatedBitmap.asStateFlow()
 
@@ -151,19 +190,22 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
             smsPhone, smsBody,
             upiVpa, upiName, upiAmount,
             contactName, contactPhone, contactEmail, contactOrg,
-            embedLogo
+            embedLogo, errorCorrectionLevel
         )
 
         viewModelScope.launch {
             combine(flowsToObserve) { _ ->
                 val content = getFormattedContent()
-                if (content.isNotEmpty()) {
+                val isUrlFormat = genFormat.value == "URL"
+                val isValidUrl = !isUrlFormat || content.isEmpty() || isValidUrlFormat(content)
+                if (content.isNotEmpty() && isValidUrl) {
                     QrCodeGenerator.generateQrCode(
                         content = content,
                         foregroundHexColor = genFgColor.value,
                         backgroundHexColor = genBgColor.value,
                         style = genStyle.value,
-                        embedLogo = embedLogo.value
+                        embedLogo = embedLogo.value,
+                        errorCorrection = errorCorrectionLevel.value
                     )
                 } else {
                     null
@@ -326,4 +368,28 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
         colorPreset.value = preset
         prefs.edit().putString("color_preset", preset).apply()
     }
+
+    // ------------------ CUSTOM TOAST SYSTEM ------------------
+    private val _toastEvent = MutableStateFlow<CustomToastMessage?>(null)
+    val toastEvent: StateFlow<CustomToastMessage?> = _toastEvent.asStateFlow()
+
+    fun showToast(message: String, type: CustomToastType = CustomToastType.INFO, durationMs: Long = 2500L) {
+        _toastEvent.value = CustomToastMessage(message, type, durationMs, System.currentTimeMillis())
+    }
+
+    fun clearToast() {
+        _toastEvent.value = null
+    }
 }
+
+enum class CustomToastType {
+    SUCCESS, INFO, ERROR, WARNING
+}
+
+data class CustomToastMessage(
+    val message: String,
+    val type: CustomToastType = CustomToastType.INFO,
+    val durationMs: Long = 2500L,
+    val id: Long = System.currentTimeMillis()
+)
+

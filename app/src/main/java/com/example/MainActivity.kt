@@ -55,6 +55,7 @@ import com.example.utils.QrStyle
 import com.example.utils.QrCodeGenerator
 import com.example.utils.ShareUtils
 import com.example.viewmodel.QrViewModel
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -91,9 +92,20 @@ class MainActivity : ComponentActivity() {
                     it.key == colorPreset.uppercase()
                 } ?: com.example.ui.components.AndroidPresetsInfo[0]
 
+                val animatedGlassPrimary by androidx.compose.animation.animateColorAsState(
+                    targetValue = activePresetDetails.primaryColor,
+                    animationSpec = androidx.compose.animation.core.tween(500),
+                    label = "glass_primary_fade"
+                )
+                val animatedGlassSecondary by androidx.compose.animation.animateColorAsState(
+                    targetValue = activePresetDetails.secondaryColor,
+                    animationSpec = androidx.compose.animation.core.tween(500),
+                    label = "glass_secondary_fade"
+                )
+
                 val glassConfig = com.example.ui.theme.LiquidGlassThemeConfig(
-                    primaryColor = activePresetDetails.primaryColor,
-                    secondaryColor = activePresetDetails.secondaryColor,
+                    primaryColor = animatedGlassPrimary,
+                    secondaryColor = animatedGlassSecondary,
                     glassBlur = 16.dp,
                     glassOpacity = 0.28f,
                     borderAlphaStart = 0.45f,
@@ -128,6 +140,7 @@ fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
     
     val context = LocalContext.current
     var showSettingsDialog by remember { mutableStateOf(false) }
+    val toastMessage by viewModel.toastEvent.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Dynamic floating liquid orbit backdrop
@@ -136,54 +149,7 @@ fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
-            bottomBar = {
-                // Floating glass style bottom navigation
-                NavigationBar(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .liquidGlass(shape = RoundedCornerShape(24.dp))
-                        .windowInsetsPadding(WindowInsets.navigationBars),
-                    containerColor = Color.Transparent,
-                    tonalElevation = 0.dp
-                ) {
-                    NavigationBarItem(
-                        selected = activeTab == "SCAN",
-                        onClick = { viewModel.selectTab("SCAN") },
-                        icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = "Scanner Tab") },
-                        label = { Text(stringResource(R.string.tab_scan), fontWeight = FontWeight.Bold) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                    )
-                    NavigationBarItem(
-                        selected = activeTab == "GENERATE",
-                        onClick = { viewModel.selectTab("GENERATE") },
-                        icon = { Icon(Icons.Default.QrCode, contentDescription = "Generator Tab") },
-                        label = { Text(stringResource(R.string.tab_generate), fontWeight = FontWeight.Bold) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                    )
-                    NavigationBarItem(
-                        selected = activeTab == "HISTORY",
-                        onClick = { viewModel.selectTab("HISTORY") },
-                        icon = { Icon(Icons.Default.History, contentDescription = "History Tab") },
-                        label = { Text(stringResource(R.string.tab_history), fontWeight = FontWeight.Bold) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                    )
-                }
-            },
+            bottomBar = {}, // Empty bottomBar: using our primary fixed glass floating deck instead for streamlined visuals
             contentWindowInsets = WindowInsets.safeDrawing
         ) { innerPadding ->
             Surface(
@@ -222,6 +188,12 @@ fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
                 )
             }
         }
+
+        // Custom toast overlay floating above all content
+        com.example.ui.components.CustomToastOverlay(
+            toastMessage = toastMessage,
+            onDismiss = { viewModel.clearToast() }
+        )
     }
 }
 
@@ -293,6 +265,7 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     var showDetailDialog by remember { mutableStateOf(false) }
     LaunchedEffect(scannedText) {
         if (scannedText != null) {
+            com.example.utils.HapticUtils.vibratePattern(context, longArrayOf(0, 80, 50, 80))
             showDetailDialog = true
         }
     }
@@ -308,6 +281,7 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             onPermissionStatusChanged = { granted ->
                 hasCameraPermission = granted
             },
+            onShowToast = { msg, type -> viewModel.showToast(msg, type) },
             onShowTestPayloadPrompt = {
                 if (permissionRequestedOnce) {
                     Spacer(modifier = Modifier.height(12.dp))
@@ -527,7 +501,8 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
+                    .padding(8.dp),
+                onShowToast = { msg, type -> viewModel.showToast(msg, type) }
             )
         }
     }
@@ -543,11 +518,13 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val genFgColor by viewModel.genFgColor.collectAsState()
     val genBgColor by viewModel.genBgColor.collectAsState()
     val activeEmbedLogo by viewModel.embedLogo.collectAsState()
+    val errorCorrectionLevel by viewModel.errorCorrectionLevel.collectAsState()
     val generatedBitmap by viewModel.generatedBitmap.collectAsState()
 
     // Parameters
     val plainText by viewModel.plainText.collectAsState()
     val urlLink by viewModel.urlLink.collectAsState()
+    val urlValidationError by viewModel.urlValidationError.collectAsState()
     val wifiSsid by viewModel.wifiSsid.collectAsState()
     val wifiPassword by viewModel.wifiPassword.collectAsState()
     val wifiSecurity by viewModel.wifiSecurity.collectAsState()
@@ -711,26 +688,14 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Step 2: Input fields conditional rendering
+        // Step 2: Responsive input fields inside dynamic 'Liquid Glass' card
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(
-                    if (isMaterial10Enabled) {
-                        Brush.verticalGradient(
-                            colors = listOf(Color(0xFF161A22), Color(0xFF0C0E14))
-                        )
-                    } else {
-                        Brush.verticalGradient(
-                            colors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface)
-                        )
-                    }
-                )
-                .border(
-                    width = 1.dp,
-                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.35f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(16.dp)
+                .testTag("generator_form_liquid_glass_card")
+                .liquidGlass(
+                    shape = RoundedCornerShape(20.dp),
+                    bgAlpha = 0.35f
                 )
                 .padding(16.dp)
         ) {
@@ -764,17 +729,32 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                 .fillMaxWidth()
                                 .testTag("qr_url_input"),
                             singleLine = true,
+                            isError = urlValidationError != null,
                             shape = RoundedCornerShape(12.dp),
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Language,
                                     contentDescription = null,
-                                    tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                    tint = if (isMaterial10Enabled) {
+                                        if (urlValidationError != null) Color(0xFFFF5555) else Color(0xFF00FFCC)
+                                    } else {
+                                        if (urlValidationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                    }
                                 )
                             },
+                            supportingText = if (urlValidationError != null) {
+                                {
+                                    Text(
+                                        text = urlValidationError!!,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isMaterial10Enabled) Color(0xFFFF5555) else MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            } else null,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
+                                errorBorderColor = if (isMaterial10Enabled) Color(0xFFFF5555) else MaterialTheme.colorScheme.error
                             )
                         )
                     }
@@ -1518,16 +1498,150 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Step 5: Error Correction Level Control
+        Text(
+            text = "5. Adjust Error Correction Security",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Choose level of redundancy to survive surface scratches or heavy center logo embedding.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val ecOptions = listOf(
+                ErrorCorrectionLevel.L to "Low (7%)",
+                ErrorCorrectionLevel.M to "Medium (15%)",
+                ErrorCorrectionLevel.Q to "Quarter (25%)",
+                ErrorCorrectionLevel.H to "High (30%)"
+            )
+            ecOptions.forEach { (option, label) ->
+                val isSel = errorCorrectionLevel == option
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isSel) {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            } else {
+                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                            }
+                        )
+                        .border(
+                            1.dp,
+                            if (isSel) {
+                                Color.Transparent
+                            } else {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                            },
+                            RoundedCornerShape(12.dp)
+                        )
+                        .clickable { viewModel.errorCorrectionLevel.value = option }
+                        .testTag("error_correction_$option"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        color = if (isSel) {
+                            if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onBackground
+                        },
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+
+        // Informative card detailing correct level utilization
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    if (isMaterial10Enabled) Color(0xFF15181F) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                )
+                .border(
+                    1.dp,
+                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                    RoundedCornerShape(12.dp)
+                )
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                val (ecTitle, ecDesc, ecColor) = when (errorCorrectionLevel) {
+                    ErrorCorrectionLevel.L -> Triple(
+                        "Level L (Low Redundancy)",
+                        "Fewer data dots generated. Clearest aesthetic looks but cannot withstand much occlusion. Highly recommended for purely classical or plain minimalist text/URLs without any center branding.",
+                        if (isMaterial10Enabled) Color(0xFF00FF66) else MaterialTheme.colorScheme.primary
+                    )
+                    ErrorCorrectionLevel.M -> Triple(
+                        "Level M (Standard Balance)",
+                        "A well-rounded classic setting that can withstand minor damage or debris. Ideal standard for business cards and flyers.",
+                        if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                    )
+                    ErrorCorrectionLevel.Q -> Triple(
+                        "Level Q (Quarter Shield)",
+                        "Strong 25% data reconstruction capability. Capable of surviving center logos or moderate surface degradation without scannability loss.",
+                        if (isMaterial10Enabled) Color(0xFFCC33FF) else MaterialTheme.colorScheme.primary
+                    )
+                    ErrorCorrectionLevel.H -> Triple(
+                        "Level H (High Shield Redundancy)",
+                        "Ultimate 30% restoration. Crucial for heavy branding overlay emblems (e.g. Star Spark, Gemstone). Ensures scanning continues in hostile physical states.",
+                        if (isMaterial10Enabled) Color(0xFFFF3366) else MaterialTheme.colorScheme.primary
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(ecColor)
+                    )
+                    Text(
+                        text = ecTitle,
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = ecColor
+                    )
+                }
+                Text(
+                    text = ecDesc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                    lineHeight = 15.sp
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         // Step 5: Live QR Rendering output with Material 10 3D emission, glowing borders, and holographic sweep
         val animationStateScale by animateFloatAsState(
-            targetValue = if (generatedBitmap != null) 1.0f else 0.85f,
+            targetValue = 1.0f,
             animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
             label = "qr_scale_pop"
         )
         val qrAlphaState by animateFloatAsState(
-            targetValue = if (generatedBitmap != null) 1.0f else 0.0f,
+            targetValue = 1.0f,
             animationSpec = tween(500),
             label = "qr_alpha_fade"
         )
@@ -1759,7 +1873,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                 onClick = {
                                     val content = viewModel.getFormattedContent()
                                     clipboardManager.setText(AnnotatedString(content))
-                                    Toast.makeText(context, "Copied content payload", Toast.LENGTH_SHORT).show()
+                                    viewModel.showToast("Copied content payload", com.example.viewmodel.CustomToastType.SUCCESS)
                                 },
                                 modifier = Modifier.weight(1f),
                                 border = BorderStroke(
@@ -1792,11 +1906,17 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                         foregroundHexColor = genFgColor,
                                         backgroundHexColor = genBgColor,
                                         style = styleEnum,
-                                        embedLogo = activeEmbedLogo
+                                        embedLogo = activeEmbedLogo,
+                                        errorCorrection = errorCorrectionLevel
                                     )
                                     highResBmap?.let { bitmap ->
                                         val ext = if (exportFormat == "PNG") "png" else "jpg"
-                                        ShareUtils.shareBitmap(context, bitmap, "shared_qr_${size}.$ext")
+                                        ShareUtils.shareBitmap(
+                                            context = context, 
+                                            bitmap = bitmap, 
+                                            fileName = "shared_qr_${size}.$ext",
+                                            onShowToast = { msg, type -> viewModel.showToast(msg, type) }
+                                        )
                                     }
                                 },
                                 modifier = Modifier
@@ -1830,7 +1950,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             Button(
                                 onClick = {
                                     viewModel.saveGeneratedCodeInHistory()
-                                    Toast.makeText(context, "Saved to history library", Toast.LENGTH_SHORT).show()
+                                    viewModel.showToast("Saved to history library", com.example.viewmodel.CustomToastType.SUCCESS)
                                 },
                                 modifier = Modifier
                                     .weight(1f)
@@ -1860,7 +1980,8 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                         foregroundHexColor = genFgColor,
                                         backgroundHexColor = genBgColor,
                                         style = styleEnum,
-                                        embedLogo = activeEmbedLogo
+                                        embedLogo = activeEmbedLogo,
+                                        errorCorrection = errorCorrectionLevel
                                     )
                                     highResBmap?.let { bitmap ->
                                         val prefix = if (isMaterial10Enabled) "Material10_QR_" else "Rock_QR_"
@@ -1868,7 +1989,8 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                             context = context,
                                             bitmap = bitmap,
                                             displayName = prefix,
-                                            isPng = (exportFormat == "PNG")
+                                            isPng = (exportFormat == "PNG"),
+                                            onShowToast = { msg, type -> viewModel.showToast(msg, type) }
                                         )
                                     }
                                 },
@@ -1889,39 +2011,92 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             }
                         }
                     } else {
+                        val isUrlFormat = genFormat == "URL"
+                        val isUrlNotEmptyAndInvalid = isUrlFormat && urlLink.trim().isNotEmpty() && urlValidationError != null
+                        
                         Box(
                             modifier = Modifier
-                                .size(200.dp)
+                                .size(220.dp)
                                 .clip(RoundedCornerShape(24.dp))
-                                .background(if (isMaterial10Enabled) Color.Black.copy(alpha = 0.4f) else MaterialTheme.colorScheme.background)
+                                .background(
+                                    if (isUrlNotEmptyAndInvalid) {
+                                        if (isMaterial10Enabled) Color(0xFF1F0D10) else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
+                                    } else {
+                                        if (isMaterial10Enabled) Color.Black.copy(alpha = 0.4f) else MaterialTheme.colorScheme.background
+                                    }
+                                )
                                 .border(
                                     width = 1.dp,
-                                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                                    color = if (isUrlNotEmptyAndInvalid) {
+                                        if (isMaterial10Enabled) Color(0xFFFF3366).copy(alpha = 0.7f) else MaterialTheme.colorScheme.error
+                                    } else {
+                                        if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                                    },
                                     shape = RoundedCornerShape(24.dp)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.QrCode,
-                                    contentDescription = "Draft setup icon",
-                                    tint = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
-                                    modifier = Modifier.size(56.dp)
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    "Input text or URLs above.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                                    modifier = Modifier.padding(horizontal = 20.dp)
-                                )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                if (isUrlNotEmptyAndInvalid) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = "Url validate error",
+                                        tint = if (isMaterial10Enabled) Color(0xFFFF3366) else MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = "Invalid URL Address",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isMaterial10Enabled) Color(0xFFFF3366) else MaterialTheme.colorScheme.error
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = urlValidationError ?: "Please check format",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                        textAlign = TextAlign.Center
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.QrCode,
+                                        contentDescription = "Draft setup icon",
+                                        tint = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(56.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = "Input text or URLs above.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isMaterial10Enabled) Color.White.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                                        modifier = Modifier.padding(horizontal = 20.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Web Share & Canvas API Portal Section
+        val activePayloadText = viewModel.getFormattedContent()
+        com.example.ui.components.WebQrSandboxPanel(
+            payloadText = activePayloadText,
+            fgColorHex = genFgColor,
+            bgColorHex = genBgColor,
+            ecLevel = errorCorrectionLevel.name,
+            isMaterial10Enabled = isMaterial10Enabled,
+            modifier = Modifier.padding(bottom = 96.dp),
+            onShowToast = { msg, type -> viewModel.showToast(msg, type) }
+        )
     }
 }
 
@@ -1959,11 +2134,11 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 IconButton(
                     onClick = {
                         viewModel.clearAllHistory()
-                        Toast.makeText(context, "Cleared history", Toast.LENGTH_SHORT).show()
+                        viewModel.showToast("Cleared history", com.example.viewmodel.CustomToastType.INFO)
                     },
                     modifier = Modifier.glassTouchFeedback {
                         viewModel.clearAllHistory()
-                        Toast.makeText(context, "Cleared history", Toast.LENGTH_SHORT).show()
+                        viewModel.showToast("Cleared history", com.example.viewmodel.CustomToastType.INFO)
                     }
                 ) {
                     Icon(
@@ -2183,7 +2358,7 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         OutlinedButton(
                             onClick = {
                                 clipboardManager.setText(AnnotatedString(record.content))
-                                Toast.makeText(context, "Copied payload text", Toast.LENGTH_SHORT).show()
+                                viewModel.showToast("Copied payload text", com.example.viewmodel.CustomToastType.SUCCESS)
                             },
                             modifier = Modifier.weight(1f)
                         ) {
@@ -2195,7 +2370,11 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         if (bmap != null) {
                             OutlinedButton(
                                 onClick = {
-                                    ShareUtils.shareBitmap(context, bmap)
+                                    ShareUtils.shareBitmap(
+                                        context = context, 
+                                        bitmap = bmap,
+                                        onShowToast = { msg, type -> viewModel.showToast(msg, type) }
+                                    )
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
@@ -2206,7 +2385,11 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                             OutlinedButton(
                                 onClick = {
-                                    ShareUtils.saveBitmapToGallery(context, bmap)
+                                    ShareUtils.saveBitmapToGallery(
+                                        context = context, 
+                                        bitmap = bmap,
+                                        onShowToast = { msg, type -> viewModel.showToast(msg, type) }
+                                    )
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
@@ -2227,7 +2410,7 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(record.content))
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
+                                    viewModel.showToast("Cannot open link", com.example.viewmodel.CustomToastType.ERROR)
                                 }
                             } else {
                                 val intent = Intent(Intent.ACTION_SEND).apply {

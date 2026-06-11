@@ -24,13 +24,14 @@ object QrCodeGenerator {
         foregroundHexColor: String = "#0A0A0A",
         backgroundHexColor: String = "#FFFFFF",
         style: QrStyle = QrStyle.CLASSIC,
-        embedLogo: String = "NONE" // NONE, CRYSTAL, SPARK, DIAMOND
+        embedLogo: String = "NONE", // NONE, CRYSTAL, SPARK, DIAMOND
+        errorCorrection: ErrorCorrectionLevel = ErrorCorrectionLevel.H
     ): Bitmap? {
         if (content.isEmpty()) return null
         return try {
             val writer = MultiFormatWriter()
             val hints = mapOf(
-                EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.H,
+                EncodeHintType.ERROR_CORRECTION to errorCorrection,
                 EncodeHintType.CHARACTER_SET to "UTF-8",
                 EncodeHintType.MARGIN to 1
             )

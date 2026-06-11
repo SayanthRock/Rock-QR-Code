@@ -408,7 +408,8 @@ fun Modifier.glassTouchFeedback(
 fun LiquidGlassScannerResultCard(
     scannedText: String,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShowToast: ((String, com.example.viewmodel.CustomToastType) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -601,7 +602,11 @@ fun LiquidGlassScannerResultCard(
                         .glassTouchFeedback {
                             clipboardManager.setText(AnnotatedString(scannedText))
                             isCopied = true
-                            Toast.makeText(context, "Copied payload to clipboard", Toast.LENGTH_SHORT).show()
+                            if (onShowToast != null) {
+                                onShowToast("Copied payload to clipboard", com.example.viewmodel.CustomToastType.SUCCESS)
+                            } else {
+                                Toast.makeText(context, "Copied payload to clipboard", Toast.LENGTH_SHORT).show()
+                            }
                         }
                         .clip(RoundedCornerShape(12.dp))
                         .background(
@@ -660,7 +665,11 @@ fun LiquidGlassScannerResultCard(
                                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(scannedText))
                                         context.startActivity(intent)
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "Cannot open web page", Toast.LENGTH_SHORT).show()
+                                        if (onShowToast != null) {
+                                            onShowToast("Cannot open web page", com.example.viewmodel.CustomToastType.ERROR)
+                                        } else {
+                                            Toast.makeText(context, "Cannot open web page", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                 }
                                 isUpi -> {
@@ -668,7 +677,11 @@ fun LiquidGlassScannerResultCard(
                                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(scannedText))
                                         context.startActivity(intent)
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "No app found to process payment url", Toast.LENGTH_SHORT).show()
+                                        if (onShowToast != null) {
+                                            onShowToast("No app found to process payment url", com.example.viewmodel.CustomToastType.ERROR)
+                                        } else {
+                                            Toast.makeText(context, "No app found to process payment url", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                 }
                                 else -> {

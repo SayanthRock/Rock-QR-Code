@@ -5,7 +5,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,279 +18,234 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.viewmodel.QrViewModel
-import kotlin.math.roundToInt
 
 @Composable
 fun DraggableFloatingActionBar(
     viewModel: QrViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val activeTab by viewModel.activeTab.collectAsState()
     val activePreset by viewModel.colorPreset.collectAsState()
 
-    val currentDetail = AndroidPresetsInfo.find { it.key == activePreset.uppercase() } ?: AndroidPresetsInfo[0]
+    // Access colors dynamically from the React-like Liquid Glass Theme Context
+    val themeConfig = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val primaryColor = themeConfig.primaryColor
+    val secondaryColor = themeConfig.secondaryColor
 
-    // Toggle state: Locked (fixed position at bottom-center) vs Unlocked (free draggable floating)
-    var isLocked by remember { mutableStateOf(true) }
-
-    // User-drag offsets when unlocked
-    var dragOffsetX by remember { mutableStateOf(0f) }
-    var dragOffsetY by remember { mutableStateOf(0f) }
-
-    // Spring animation for smooth snap integration
-    val animatedOffsetX by animateFloatAsState(
-        targetValue = if (isLocked) 0f else dragOffsetX,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "drag_snap_x"
-    )
-    val animatedOffsetY by animateFloatAsState(
-        targetValue = if (isLocked) 0f else dragOffsetY,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "drag_snap_y"
-    )
-
-    // Interactive preset changer rotation state
+    // Rotate the paint/palette icon smoothly on tap
     var isRotating by remember { mutableStateOf(0f) }
     val rotationAnimation by animateFloatAsState(
         targetValue = isRotating,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessLow),
-        label = "theme_wheel_rotation"
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessLow),
+        label = "fixed_palette_spin"
     )
 
-    BoxWithConstraints(
-        modifier = modifier.fillMaxSize()
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(bottom = 16.dp),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        val widthPx = with(LocalDensity.current) { constraints.maxWidth.toFloat() }
-        val heightPx = with(LocalDensity.current) { constraints.maxHeight.toFloat() }
-
-        Box(
+        // Futuristic Glassmorphic translucent control capsule
+        Row(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 86.dp) // Offset above standard tab navigator layout
-                .offset {
-                    IntOffset(
-                        animatedOffsetX.roundToInt(),
-                        animatedOffsetY.roundToInt()
-                    )
-                }
-                .pointerInput(isLocked) {
-                    if (!isLocked) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            // Bind drag offset to screen boundary cushions (so it does not get dragged off-screen)
-                            dragOffsetX = (dragOffsetX + dragAmount.x).coerceIn(-widthPx / 2.2f, widthPx / 2.2f)
-                            dragOffsetY = (dragOffsetY + dragAmount.y).coerceIn(-heightPx / 1.15f, heightPx / 12f)
-                        }
-                    }
-                }
+                .wrapContentSize()
+                .testTag("fixed_floating_action_bar")
+                .liquidGlass(shape = RoundedCornerShape(28.dp), bgAlpha = 0.40f)
+                .border(
+                    width = 1.5.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            primaryColor.copy(alpha = 0.70f),
+                            secondaryColor.copy(alpha = 0.20f),
+                            primaryColor.copy(alpha = 0.60f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Main Glass Cockpit Floating Control Deck
+            // Segmented interactive deck
             Row(
                 modifier = Modifier
-                    .wrapContentSize()
-                    .liquidGlass(shape = RoundedCornerShape(32.dp), bgAlpha = 0.38f)
-                    .border(
-                        width = 1.6.dp,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                currentDetail.primaryColor.copy(alpha = 0.7f),
-                                currentDetail.secondaryColor.copy(alpha = 0.15f),
-                                Color.White.copy(alpha = 0.22f)
-                            )
-                        ),
-                        shape = RoundedCornerShape(32.dp)
-                    )
-                    .padding(horizontal = 8.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(Color.Black.copy(alpha = 0.25f))
+                    .padding(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Tactile Drag Indicator Grip & Lock/Unlock Smart Button
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                // SCAN TAB
+                val isScanSelected = activeTab == "SCAN"
+                Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color.White.copy(alpha = if (isLocked) 0.04f else 0.12f))
+                        .testTag("fab_tab_scan")
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            if (isScanSelected) primaryColor.copy(alpha = 0.22f)
+                            else Color.Transparent
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isScanSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .height(48.dp)
                         .clickable {
-                            isLocked = !isLocked
-                            if (isLocked) {
-                                // Reset position with snap animation when locked back
-                                dragOffsetX = 0f
-                                dragOffsetY = 0f
-                            }
+                            com.example.utils.HapticUtils.vibrate(context, 35)
+                            viewModel.selectTab("SCAN")
                         }
-                        .padding(horizontal = 8.dp, vertical = 6.dp)
-                ) {
-                    // Pull Handle dots
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.padding(end = 4.dp)
-                    ) {
-                        repeat(3) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(1.5.dp)) {
-                                repeat(2) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(3.dp)
-                                            .background(
-                                                if (isLocked) Color.White.copy(alpha = 0.3f)
-                                                else currentDetail.primaryColor,
-                                                CircleShape
-                                            )
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(2.dp))
-
-                    Icon(
-                        imageVector = if (isLocked) Icons.Default.Lock else Icons.Default.LockOpen,
-                        contentDescription = "Control bar locking status indicator",
-                        tint = if (isLocked) Color.White.copy(alpha = 0.5f) else currentDetail.primaryColor,
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
-
-                // Tiny glowing dividing element
-                Box(
-                    modifier = Modifier
-                        .height(20.dp)
-                        .width(1.dp)
-                        .background(Color.White.copy(alpha = 0.12f))
-                )
-
-                // Views control toggler: Segmented Glass Selector Pill
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color.Black.copy(alpha = 0.18f))
-                        .padding(3.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // SCAN mode option tag
-                    val isScanSelected = activeTab == "SCAN"
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isScanSelected) currentDetail.primaryColor.copy(alpha = 0.22f)
-                                else Color.Transparent
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = if (isScanSelected) currentDetail.primaryColor.copy(alpha = 0.45f) else Color.Transparent,
-                                shape = RoundedCornerShape(20.dp)
-                            )
-                            .clickable { viewModel.selectTab("SCAN") }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.QrCodeScanner,
-                                contentDescription = "Active scanning environment lens",
-                                tint = if (isScanSelected) currentDetail.primaryColor else Color.White.copy(alpha = 0.5f),
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = "SCANNER",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isScanSelected) Color.White else Color.White.copy(alpha = 0.5f)
-                            )
-                        }
-                    }
-
-                    // GENERATE mode option tag
-                    val isGenSelected = activeTab == "GENERATE"
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isGenSelected) currentDetail.primaryColor.copy(alpha = 0.22f)
-                                else Color.Transparent
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = if (isGenSelected) currentDetail.primaryColor.copy(alpha = 0.45f) else Color.Transparent,
-                                shape = RoundedCornerShape(20.dp)
-                            )
-                            .clickable { viewModel.selectTab("GENERATE") }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.QrCode,
-                                contentDescription = "Qr generator engine tag",
-                                tint = if (isGenSelected) currentDetail.primaryColor else Color.White.copy(alpha = 0.5f),
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = "GENERATOR",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isGenSelected) Color.White else Color.White.copy(alpha = 0.5f)
-                            )
-                        }
-                    }
-                }
-
-                // Tiny glowing dividing element
-                Box(
-                    modifier = Modifier
-                        .height(20.dp)
-                        .width(1.dp)
-                        .background(Color.White.copy(alpha = 0.12f))
-                )
-
-                // Themes quick cycle selector wheel button
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(currentDetail.primaryColor.copy(alpha = 0.12f))
-                        .border(1.dp, currentDetail.primaryColor.copy(alpha = 0.35f), CircleShape)
-                        .clickable {
-                            // Cycle to the next preset color theme
-                            isRotating += 72f // play smooth rotating visual action
-                            val currIdx = AndroidPresetsInfo.indexOfFirst { it.key == activePreset.uppercase() }
-                            val nextIdx = if (currIdx == -1) 0 else (currIdx + 1) % AndroidPresetsInfo.size
-                            viewModel.setColorPreset(AndroidPresetsInfo[nextIdx].key)
-                        },
+                        .padding(horizontal = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Palette,
-                        contentDescription = "Cycle custom color themes preset option",
-                        tint = currentDetail.primaryColor,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .scale(rotationAnimation.let { 1f + (it % 72f) / 180f }) // dynamic micro-bounce
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCodeScanner,
+                            contentDescription = "Navigate to Scanner",
+                            tint = if (isScanSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "SCANNER",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isScanSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
                 }
+
+                // GENERATE TAB
+                val isGenSelected = activeTab == "GENERATE"
+                Box(
+                    modifier = Modifier
+                        .testTag("fab_tab_generate")
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            if (isGenSelected) primaryColor.copy(alpha = 0.22f)
+                            else Color.Transparent
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isGenSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .height(48.dp)
+                        .clickable {
+                            com.example.utils.HapticUtils.vibrate(context, 35)
+                            viewModel.selectTab("GENERATE")
+                        }
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = "Navigate to Generator",
+                            tint = if (isGenSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "GENERATOR",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isGenSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+
+                // HISTORY TAB
+                val isHistorySelected = activeTab == "HISTORY"
+                Box(
+                    modifier = Modifier
+                        .testTag("fab_tab_history")
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            if (isHistorySelected) primaryColor.copy(alpha = 0.22f)
+                            else Color.Transparent
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isHistorySelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .height(48.dp)
+                        .clickable {
+                            com.example.utils.HapticUtils.vibrate(context, 35)
+                            viewModel.selectTab("HISTORY")
+                        }
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Navigate to History Log",
+                            tint = if (isHistorySelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "HISTORY",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isHistorySelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+            }
+
+            // Divider spacer
+            Box(
+                modifier = Modifier
+                    .height(24.dp)
+                    .width(1.dp)
+                    .background(Color.White.copy(alpha = 0.15f))
+            )
+
+            // Dynamic preset quick cycle wheel
+            Box(
+                modifier = Modifier
+                    .testTag("fab_theme_cycler")
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(primaryColor.copy(alpha = 0.15f))
+                    .border(1.dp, primaryColor.copy(alpha = 0.40f), CircleShape)
+                    .clickable {
+                        com.example.utils.HapticUtils.vibrate(context, 50)
+                        isRotating += 72f
+                        val currIdx = AndroidPresetsInfo.indexOfFirst { it.key == activePreset.uppercase() }
+                        val nextIdx = if (currIdx == -1) 0 else (currIdx + 1) % AndroidPresetsInfo.size
+                        viewModel.setColorPreset(AndroidPresetsInfo[nextIdx].key)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Palette,
+                    contentDescription = "Cycle color options",
+                    tint = primaryColor,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .scale(rotationAnimation.let { 1f + (it % 72f) / 180f })
+                )
             }
         }
     }

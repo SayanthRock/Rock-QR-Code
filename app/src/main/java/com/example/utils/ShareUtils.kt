@@ -17,7 +17,12 @@ object ShareUtils {
     /**
      * Shares a [Bitmap] to other applications via Android FileProvider.
      */
-    fun shareBitmap(context: Context, bitmap: Bitmap, fileName: String = "shared_qr_code.png") {
+    fun shareBitmap(
+        context: Context, 
+        bitmap: Bitmap, 
+        fileName: String = "shared_qr_code.png",
+        onShowToast: ((String, com.example.viewmodel.CustomToastType) -> Unit)? = null
+    ) {
         try {
             // Establish the shared images cache subdirectory
             val cachePath = File(context.cacheDir, "shared_images")
@@ -55,18 +60,34 @@ object ShareUtils {
                 
                 context.startActivity(Intent.createChooser(intent, "Share QR Code Image"))
             } else {
-                Toast.makeText(context, "Failed to prepare sharing content", Toast.LENGTH_SHORT).show()
+                val errorMsg = "Failed to prepare sharing content"
+                if (onShowToast != null) {
+                    onShowToast(errorMsg, com.example.viewmodel.CustomToastType.ERROR)
+                } else {
+                    Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "Error sharing QR code: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            val errorMsg = "Error sharing QR code: ${e.localizedMessage}"
+            if (onShowToast != null) {
+                onShowToast(errorMsg, com.example.viewmodel.CustomToastType.ERROR)
+            } else {
+                Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     /**
      * Saves a [Bitmap] directly to the device photos gallery / downloads.
      */
-    fun saveBitmapToGallery(context: Context, bitmap: Bitmap, displayName: String = "RockQR_", isPng: Boolean = true) {
+    fun saveBitmapToGallery(
+        context: Context, 
+        bitmap: Bitmap, 
+        displayName: String = "RockQR_", 
+        isPng: Boolean = true,
+        onShowToast: ((String, com.example.viewmodel.CustomToastType) -> Unit)? = null
+    ) {
         val resolver = context.contentResolver
         val ext = if (isPng) "png" else "jpg"
         val mime = if (isPng) "image/png" else "image/jpeg"
@@ -84,7 +105,12 @@ object ShareUtils {
         
         val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         if (imageUri == null) {
-            Toast.makeText(context, "Failed to create save destination in Gallery", Toast.LENGTH_SHORT).show()
+            val errorMsg = "Failed to create save destination in Gallery"
+            if (onShowToast != null) {
+                onShowToast(errorMsg, com.example.viewmodel.CustomToastType.ERROR)
+            } else {
+                Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+            }
             return
         }
         
@@ -104,11 +130,21 @@ object ShareUtils {
                 resolver.update(imageUri, contentValues, null, null)
             }
             
-            Toast.makeText(context, "Downloaded successfully to Gallery (Pictures/RockQR)", Toast.LENGTH_LONG).show()
+            val successMsg = "Downloaded successfully to Gallery (Pictures/RockQR)"
+            if (onShowToast != null) {
+                onShowToast(successMsg, com.example.viewmodel.CustomToastType.SUCCESS)
+            } else {
+                Toast.makeText(context, successMsg, Toast.LENGTH_LONG).show()
+            }
         } catch (e: Exception) {
             resolver.delete(imageUri, null, null)
             e.printStackTrace()
-            Toast.makeText(context, "Error saving QR code: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            val errorMsg = "Error saving QR code: ${e.localizedMessage}"
+            if (onShowToast != null) {
+                onShowToast(errorMsg, com.example.viewmodel.CustomToastType.ERROR)
+            } else {
+                Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

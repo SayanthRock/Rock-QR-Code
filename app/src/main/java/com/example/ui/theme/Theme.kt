@@ -1,13 +1,18 @@
 package com.example.ui.theme
 
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -199,5 +204,44 @@ fun MyApplicationTheme(
       }
     }
 
-  MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+  val animatedColorScheme = animateColorScheme(colorScheme)
+
+  MaterialTheme(colorScheme = animatedColorScheme, typography = Typography, content = content)
+}
+
+@Composable
+fun animateColorScheme(targetColorScheme: ColorScheme): ColorScheme {
+  val primary by animateColorAsState(targetValue = targetColorScheme.primary, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "primary")
+  val secondary by animateColorAsState(targetValue = targetColorScheme.secondary, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "secondary")
+  val tertiary by animateColorAsState(targetValue = targetColorScheme.tertiary, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "tertiary")
+  val background by animateColorAsState(targetValue = targetColorScheme.background, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "background")
+  val surface by animateColorAsState(targetValue = targetColorScheme.surface, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "surface")
+  val surfaceVariant by animateColorAsState(targetValue = targetColorScheme.surfaceVariant, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "surfaceVariant")
+  val onPrimary by animateColorAsState(targetValue = targetColorScheme.onPrimary, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "onPrimary")
+  val onSecondary by animateColorAsState(targetValue = targetColorScheme.onSecondary, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "onSecondary")
+  val onBackground by animateColorAsState(targetValue = targetColorScheme.onBackground, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "onBackground")
+  val onSurface by animateColorAsState(targetValue = targetColorScheme.onSurface, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "onSurface")
+  val outline by animateColorAsState(targetValue = targetColorScheme.outline, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "outline")
+  val error by animateColorAsState(targetValue = targetColorScheme.error, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "error")
+  val onError by animateColorAsState(targetValue = targetColorScheme.onError, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "onError")
+  val errorContainer by animateColorAsState(targetValue = targetColorScheme.errorContainer, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "errorContainer")
+  val onErrorContainer by animateColorAsState(targetValue = targetColorScheme.onErrorContainer, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "onErrorContainer")
+  
+  return targetColorScheme.copy(
+    primary = primary,
+    secondary = secondary,
+    tertiary = tertiary,
+    background = background,
+    surface = surface,
+    surfaceVariant = surfaceVariant,
+    onPrimary = onPrimary,
+    onSecondary = onSecondary,
+    onBackground = onBackground,
+    onSurface = onSurface,
+    outline = outline,
+    error = error,
+    onError = onError,
+    errorContainer = errorContainer,
+    onErrorContainer = onErrorContainer
+  )
 }
