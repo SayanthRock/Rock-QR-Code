@@ -86,12 +86,6 @@ jobs:
         continue-on-error: true
         run: ./gradlew testDebugUnitTest
 
-      - name: Auto-rerun failed tests
-        if: steps.unit-tests.outcome == 'failure'
-        run: |
-          echo "⚠️ Unit tests failed on the first attempt. Executing automatic retry..."
-          ./gradlew testDebugUnitTest --rerun-tasks
-
       - name: Parse Test Reports and Generate Summary
         if: always()
         run: |

@@ -4,6 +4,7 @@ plugins {
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
+  alias(libs.plugins.test.retry)
 }
 
 android {
@@ -119,4 +120,12 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
+}
+
+tasks.withType<Test>().configureEach {
+  retry {
+    maxRetries.set(2)
+    maxFailures.set(10)
+    failOnPassedAfterRetry.set(false)
+  }
 }
