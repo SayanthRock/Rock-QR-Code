@@ -71,6 +71,16 @@ jobs:
           echo "✅ Gradle Wrapper is ready. Setting execute permissions..."
           chmod +x ./gradlew
 
+      - name: Decode or Generate Debug Keystore
+        run: |
+          if [ -f debug.keystore.base64 ]; then
+            echo "🔑 Decoding debug.keystore.base64 to debug.keystore..."
+            base64 --decode debug.keystore.base64 > debug.keystore
+          else
+            echo "⚠️ debug.keystore.base64 not found! Generating fresh temporary debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Run Unit Tests
         id: unit-tests
         continue-on-error: true
