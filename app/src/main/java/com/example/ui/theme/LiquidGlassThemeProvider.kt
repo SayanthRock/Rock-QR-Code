@@ -21,7 +21,8 @@ data class LiquidGlassThemeConfig(
     val borderAlphaStart: Float = 0.45f,
     val borderAlphaEnd: Float = 0.15f,
     val isGlowEnabled: Boolean = true,
-    val cornerRadius: Dp = 16.dp
+    val cornerRadius: Dp = 16.dp,
+    val borderThickness: Dp = 1.5.dp
 )
 
 /**

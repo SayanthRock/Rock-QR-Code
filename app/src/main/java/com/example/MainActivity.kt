@@ -75,6 +75,12 @@ class MainActivity : ComponentActivity() {
             val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
             val colorPreset by viewModel.colorPreset.collectAsState()
 
+            // Real-time custom glassmorphism & blur parameters
+            val glassBlurVal by viewModel.glassBlurRadius.collectAsState()
+            val glassOpacityVal by viewModel.glassOpacity.collectAsState()
+            val glassBorderThicknessVal by viewModel.glassBorderThickness.collectAsState()
+            val glassGlowEnabledVal by viewModel.glassGlowEnabled.collectAsState()
+
             val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
             val useDarkTheme = when (themeMode) {
                 "DARK" -> true
@@ -106,10 +112,12 @@ class MainActivity : ComponentActivity() {
                 val glassConfig = com.example.ui.theme.LiquidGlassThemeConfig(
                     primaryColor = animatedGlassPrimary,
                     secondaryColor = animatedGlassSecondary,
-                    glassBlur = 16.dp,
-                    glassOpacity = 0.28f,
-                    borderAlphaStart = 0.45f,
-                    borderAlphaEnd = 0.15f
+                    glassBlur = glassBlurVal.dp,
+                    glassOpacity = glassOpacityVal,
+                    borderAlphaStart = if (glassGlowEnabledVal) 0.45f else 0.15f,
+                    borderAlphaEnd = if (glassGlowEnabledVal) 0.15f else 0.05f,
+                    isGlowEnabled = glassGlowEnabledVal,
+                    borderThickness = glassBorderThicknessVal.dp
                 )
 
                 com.example.ui.theme.LiquidGlassThemeProvider(config = glassConfig) {
@@ -663,7 +671,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 )
             },
             modifier = Modifier
-                .liquidGlass(RoundedCornerShape(12.dp), bgAlpha = 0.25f)
+                .liquidGlass(RoundedCornerShape(12.dp))
         ) {
             val formats = listOf("TEXT", "URL", "WIFI", "PHONE", "EMAIL", "SMS", "UPI", "CONTACT")
             formats.forEach { format ->
@@ -694,8 +702,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 .fillMaxWidth()
                 .testTag("generator_form_liquid_glass_card")
                 .liquidGlass(
-                    shape = RoundedCornerShape(20.dp),
-                    bgAlpha = 0.35f
+                    shape = RoundedCornerShape(20.dp)
                 )
                 .padding(16.dp)
         ) {
@@ -3020,6 +3027,262 @@ fun SettingsDialog(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Section 3: Glassmorphism & Blur Customization Style Improvement
+                Text(
+                    text = "GLASSMOPHISM & BLUR STYLING",
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = 1.2.sp,
+                    modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+                )
+
+                // Sub-item 1: Opacity
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    val activeOpacity by viewModel.glassOpacity.collectAsState()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Glass Translucency",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${(activeOpacity * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val levels = listOf(
+                            0.12f to "Clear",
+                            0.28f to "Default",
+                            0.45f to "Frosty",
+                            0.70f to "Velvet"
+                        )
+                        levels.forEach { (level, lbl) ->
+                            val isSel = kotlin.math.abs(activeOpacity - level) < 0.05f
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .glassTouchFeedback {
+                                        viewModel.setGlassOpacity(level)
+                                    }
+                                    .padding(vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = lbl,
+                                    fontSize = 11.sp,
+                                    color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Sub-item 2: Blur Radius
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    val activeBlur by viewModel.glassBlurRadius.collectAsState()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Backdrop Orbits Blur",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${activeBlur.toInt()} dp",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val blurs = listOf(
+                            0f to "Off",
+                            8f to "Soft",
+                            16f to "Balanced",
+                            28f to "Deep"
+                        )
+                        blurs.forEach { (radius, lbl) ->
+                            val isSel = kotlin.math.abs(activeBlur - radius) < 0.5f
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .glassTouchFeedback {
+                                        viewModel.setGlassBlurRadius(radius)
+                                    }
+                                    .padding(vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = lbl,
+                                    fontSize = 11.sp,
+                                    color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Sub-item 3: Trim Border Width & Glow Switch side by side
+                val activeBorderThickness by viewModel.glassBorderThickness.collectAsState()
+                val activeGlow by viewModel.glassGlowEnabled.collectAsState()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Border Trim Segment
+                    Column(
+                        modifier = Modifier.weight(1.3f)
+                    ) {
+                        Text(
+                            text = "Border Refraction",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            val trims = listOf(
+                                0.1f to "Invisible",
+                                1.0f to "Slim",
+                                2.2f to "Thick"
+                            )
+                            trims.forEach { (trim, lbl) ->
+                                val isSel = kotlin.math.abs(activeBorderThickness - trim) < 0.2f
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(
+                                            if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                                        )
+                                        .border(
+                                            width = 1.dp,
+                                            color = if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .glassTouchFeedback {
+                                            viewModel.setGlassBorderThickness(trim)
+                                        }
+                                        .padding(vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = lbl,
+                                        fontSize = 11.sp,
+                                        color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Glow Accents Toggle
+                    Column(
+                        modifier = Modifier.weight(0.7f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Neon Glow",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (activeGlow) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                                )
+                                .clickable { viewModel.setGlassGlowEnabled(!activeGlow) }
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (activeGlow) Icons.Default.Star else Icons.Default.StarHalf,
+                                contentDescription = "Glow toggle",
+                                tint = if (activeGlow) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = if (activeGlow) "ACTIVE" else "MUTED",
+                                fontSize = 10.sp,
+                                color = if (activeGlow) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }

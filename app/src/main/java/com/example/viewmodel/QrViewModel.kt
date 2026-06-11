@@ -354,6 +354,12 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     val dynamicColorEnabled = MutableStateFlow(prefs.getBoolean("dynamic_color", false))
     val colorPreset = MutableStateFlow(prefs.getString("color_preset", "MIDNIGHT") ?: "MIDNIGHT")
 
+    // Dynamic 'Blur UI' glassmorphism settings
+    val glassBlurRadius = MutableStateFlow(prefs.getFloat("glass_blur_radius", 16f))
+    val glassOpacity = MutableStateFlow(prefs.getFloat("glass_opacity", 0.28f))
+    val glassBorderThickness = MutableStateFlow(prefs.getFloat("glass_border_thickness", 1.5f))
+    val glassGlowEnabled = MutableStateFlow(prefs.getBoolean("glass_glow_enabled", true))
+
     fun setThemeMode(mode: String) {
         themeMode.value = mode
         prefs.edit().putString("theme_mode", mode).apply()
@@ -367,6 +373,26 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     fun setColorPreset(preset: String) {
         colorPreset.value = preset
         prefs.edit().putString("color_preset", preset).apply()
+    }
+
+    fun setGlassBlurRadius(value: Float) {
+        glassBlurRadius.value = value
+        prefs.edit().putFloat("glass_blur_radius", value).apply()
+    }
+
+    fun setGlassOpacity(value: Float) {
+        glassOpacity.value = value
+        prefs.edit().putFloat("glass_opacity", value).apply()
+    }
+
+    fun setGlassBorderThickness(value: Float) {
+        glassBorderThickness.value = value
+        prefs.edit().putFloat("glass_border_thickness", value).apply()
+    }
+
+    fun setGlassGlowEnabled(enabled: Boolean) {
+        glassGlowEnabled.value = enabled
+        prefs.edit().putBoolean("glass_glow_enabled", enabled).apply()
     }
 
     // ------------------ CUSTOM TOAST SYSTEM ------------------

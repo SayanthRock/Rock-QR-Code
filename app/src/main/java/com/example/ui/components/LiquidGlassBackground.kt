@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.unit.dp
+import com.example.ui.theme.LocalLiquidGlassThemeConfig
 
 /**
  * A beautiful, premium animated "Liquid Glass / Frosted Glass" background.
@@ -25,6 +27,7 @@ fun LiquidGlassBackground(
     modifier: Modifier = Modifier,
     useDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
+    val config = LocalLiquidGlassThemeConfig.current
     val infiniteTransition = rememberInfiniteTransition(label = "liquid_glass_orbit")
 
     // Orbit coordinates for Blob 1 (Cyan/Blue neon aspect)
@@ -79,11 +82,16 @@ fun LiquidGlassBackground(
             .fillMaxSize()
             .background(baseBgColor)
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        // 1. Blurred background fluid glowing orbits
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(radius = config.glassBlur)
+        ) {
             val w = size.width
             val h = size.height
 
-            // 1. Draw glowing liquid Blur Orbit 1
+            // Draw glowing liquid Blur Orbit 1
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(colorBlob1, Color.Transparent),
@@ -94,7 +102,7 @@ fun LiquidGlassBackground(
                 center = Offset(w * blob1StateX, h * blob1StateY)
             )
 
-            // 2. Draw glowing liquid Blur Orbit 2
+            // Draw glowing liquid Blur Orbit 2
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(colorBlob2, Color.Transparent),
@@ -104,8 +112,12 @@ fun LiquidGlassBackground(
                 radius = size.minDimension * 0.5f,
                 center = Offset(w * blob2StateX, h * blob2StateY)
             )
+        }
 
-            // 3. Draw cybernetic matrix dot raster pattern representing precision coordinate tracking
+        // 2. Cybernetic matrix dot raster pattern representing precision coordinate tracking (Sharp layer)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
             val dotSpacing = 24.dp.toPx()
             val dotRadius = 1.dp.toPx()
             
