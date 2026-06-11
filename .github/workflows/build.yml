@@ -59,6 +59,74 @@ jobs:
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest
 
+      - name: Parse Test Reports and Generate Summary
+        if: always()
+        run: |
+          python3 -c "
+          import os
+          import xml.etree.ElementTree as ET
+
+          results_dir = 'app/build/test-results/testDebugUnitTest'
+          summary = []
+          summary.append('### 📊 Rock QR Code Test Summary')
+
+          if not os.path.exists(results_dir):
+              summary.append('❌ No JUnit XML test results found at ' + results_dir)
+          else:
+              total_tests = 0
+              total_failures = 0
+              total_errors = 0
+              total_skipped = 0
+              failed_details = []
+
+              for file in os.listdir(results_dir):
+                  if file.endswith('.xml'):
+                      try:
+                          tree = ET.parse(os.path.join(results_dir, file))
+                          root = tree.getroot()
+                          # Support nested test suites/cases
+                          for testsuite in [root] + root.findall('.//testsuite'):
+                              total_tests += int(testsuite.attrib.get('tests', 0))
+                              total_failures += int(testsuite.attrib.get('failures', 0))
+                              total_errors += int(testsuite.attrib.get('errors', 0))
+                              total_skipped += int(testsuite.attrib.get('skipped', 0))
+                              
+                              for testcase in testcase_list if (testcase_list := testsuite.findall('.//testcase')) else []:
+                                  classname = testcase.attrib.get('classname', 'Unknown')
+                                  name = testcase.attrib.get('name', 'Unknown')
+                                  failure = testcase.find('failure')
+                                  error = testcase.find('error')
+                                  if failure is not None or error is not None:
+                                      msg = (failure.attrib.get('message', '') if failure is not None else error.attrib.get('message', ''))
+                                      failed_details.append(f'- **{classname}** ➜ *{name}*\n  > ❌ {msg}')
+                      except Exception as e:
+                          print(f'Error parsing {file}: {e}')
+
+              passed = total_tests - total_failures - total_errors - total_skipped
+              
+              summary.append(f'**Test Status Matrix:**')
+              summary.append(f'- **Total Tests runs:** {total_tests}')
+              summary.append(f'- **Passed:** {passed} ✅')
+              summary.append(f'- **Failed / Errors:** {total_failures + total_errors} ❌')
+              summary.append(f'- **Skipped:** {total_skipped} 🦘')
+
+              if failed_details:
+                  summary.append('\n#### ❌ Failed Test Cases')
+                  summary.extend(failed_details)
+              else:
+                  summary.append('\n#### 🎉 All JVM/Robolectric unit tests passed cleanly!')
+
+          with open(os.environ.get('GITHUB_STEP_SUMMARY', 'step_summary.md'), 'w') as f:
+              f.write('\n'.join(summary))
+          "
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rock-qr-code-test-reports
+          path: app/build/reports/tests/testDebugUnitTest/
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
