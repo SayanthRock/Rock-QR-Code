@@ -811,34 +811,226 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Step 4: Color Customizer (Foreground and Background)
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
-            shape = RoundedCornerShape(16.dp)
+        RockFacetedCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "2. Customize QR Colors",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Header with custom icon and subtitle
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Color Customizer Studio",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Pick geological gems or craft raw hexadecimal parameters",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
+                }
 
-                // Foreground Section
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Subsection: Curated Gemstone Pairing
                 Text(
-                    text = "Foreground Pattern Color",
+                    text = "A. Curated Geological Pairs",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Scrollable Themes Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val gemThemes = listOf(
+                        Triple("Volcanic Jade", "#00BD9D", "#15181F"),
+                        Triple("Pyrite Core", "#EAA21D", "#15181F"),
+                        Triple("Royal Shard", "#1A73E8", "#FFFFFF"),
+                        Triple("Rose Pearl", "#C41E3A", "#FFFDD0"),
+                        Triple("Frost Amethyst", "#8A2BE2", "#F4F6F9"),
+                        Triple("Copper Clay", "#C85A32", "#FFFFFF")
+                    )
+
+                    gemThemes.forEach { (name, fg, bg) ->
+                        val isThemeActive = genFgColor.equals(fg, ignoreCase = true) && genBgColor.equals(bg, ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isThemeActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.background.copy(alpha = 0.4f))
+                                .border(
+                                    width = if (isThemeActive) 2.dp else 1.dp,
+                                    color = if (isThemeActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    viewModel.genFgColor.value = fg
+                                    viewModel.genBgColor.value = bg
+                                }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                // Small preview of the dual colors
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy((-4).dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(14.dp)
+                                            .clip(ChiseledOctagonShape)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color(android.graphics.Color.parseColor(fg)))
+                                            )
+                                        }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(14.dp)
+                                            .clip(ChiseledOctagonShape)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color(android.graphics.Color.parseColor(bg)))
+                                                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), ChiseledOctagonShape)
+                                            )
+                                        }
+                                }
+                                Text(
+                                    text = name,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                    color = if (isThemeActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Tactical action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Invert button
+                    OutlinedButton(
+                        onClick = {
+                            val temp = genFgColor
+                            viewModel.genFgColor.value = genBgColor
+                            viewModel.genBgColor.value = temp
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Autorenew,
+                            contentDescription = "Swap colors",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Invert Colors", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Randomize button
+                    OutlinedButton(
+                        onClick = {
+                            val fgColorPresets = listOf(
+                                Pair("#0B0C0E", "Obsidian"),
+                                Pair("#00BD9D", "Malachite"),
+                                Pair("#EAA21D", "Pyrite Gold"),
+                                Pair("#1A73E8", "Sapphire"),
+                                Pair("#C41E3A", "Garnet Ruby"),
+                                Pair("#8A2BE2", "Amethyst"),
+                                Pair("#E91E63", "Rose Quartz")
+                            )
+
+                            val bgColorPresets = listOf(
+                                Pair("#FFFFFF", "Moonlight"),
+                                Pair("#F4F6F9", "Frost Grey"),
+                                Pair("#FFFDD0", "Cream Pearl"),
+                                Pair("#E8F0FE", "Ice Blue"),
+                                Pair("#E2F9E9", "Mint Breeze"),
+                                Pair("#FFEBEE", "Rose Pearl"),
+                                Pair("#15181F", "Cosmic Slate")
+                            )
+
+                            val randomFg = fgColorPresets.random().first
+                            val availableBgs = bgColorPresets.filter { bg ->
+                                try {
+                                    val fgCol = Color(android.graphics.Color.parseColor(randomFg))
+                                    val bgCol = Color(android.graphics.Color.parseColor(bg.first))
+                                    val fgLum = 0.299f * fgCol.red + 0.587f * fgCol.green + 0.114f * fgCol.blue
+                                    val bgLum = 0.299f * bgCol.red + 0.587f * bgCol.green + 0.114f * bgCol.blue
+                                    Math.abs(fgLum - bgLum) >= 0.35f
+                                } catch (e: Exception) {
+                                    true
+                                }
+                            }
+                            val randomBg = if (availableBgs.isNotEmpty()) availableBgs.random().first else "#FFFFFF"
+                            viewModel.genFgColor.value = randomFg
+                            viewModel.genBgColor.value = randomBg
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Casino,
+                            contentDescription = "Randomize colors",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Resonate Gem", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // B. Foreground Pattern Section
+                Text(
+                    text = "B. Foreground Pattern Color",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Foreground Row of Circular Presets
+                // Scrollable Octagonal presets list
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val fgColorPresets = listOf(
@@ -853,24 +1045,53 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                     fgColorPresets.forEach { (hex, name) ->
                         val isSel = genFgColor.equals(hex, ignoreCase = true)
-                        Box(
+                        
+                        val mineralColor = try { Color(android.graphics.Color.parseColor(hex)) } catch (e: Exception) { Color.Gray }
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Color(android.graphics.Color.parseColor(hex)))
-                                .border(
-                                    width = if (isSel) 3.dp else 1.dp,
-                                    color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
-                                    shape = CircleShape
-                                )
                                 .clickable { viewModel.genFgColor.value = hex }
-                        )
+                                .padding(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(ChiseledOctagonShape)
+                                    .background(mineralColor)
+                                    .border(
+                                        width = if (isSel) 3.dp else 1.dp,
+                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
+                                        shape = ChiseledOctagonShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSel) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = if (hex == "#FFFFFF") Color.Black else Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 10.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                                ),
+                                color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Custom Foreground Hex Input
+                // Custom Foreground Hex Input with Real-time Preview Leading Icon
                 var customFgHex by remember { mutableStateOf(genFgColor) }
                 LaunchedEffect(genFgColor) {
                     customFgHex = genFgColor
@@ -890,31 +1111,48 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         }
                     },
                     label = { Text("Custom Foreground Hex") },
-                    placeholder = { Text("#000000") },
+                    placeholder = { Text("#00BD9D") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
+                    ),
+                    leadingIcon = {
+                        val sideColor = try { Color(android.graphics.Color.parseColor(customFgHex)) } catch (e: Exception) { Color.Gray }
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(ChiseledOctagonShape)
+                                .background(sideColor)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), ChiseledOctagonShape)
+                        )
+                    }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // Background Section
+                // C. Background Canvas Section
                 Text(
-                    text = "Background Canvas Color",
+                    text = "C. Background Canvas Color",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Background Row of Circular Presets
+                // Scrollable Octagonal background presets list
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val bgColorPresets = listOf(
-                        Pair("#FFFFFF", "Moonlight White"),
+                        Pair("#FFFFFF", "Moonlight"),
                         Pair("#F4F6F9", "Frost Grey"),
                         Pair("#FFFDD0", "Cream Pearl"),
                         Pair("#E8F0FE", "Ice Blue"),
@@ -925,24 +1163,53 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                     bgColorPresets.forEach { (hex, name) ->
                         val isSel = genBgColor.equals(hex, ignoreCase = true)
-                        Box(
+                        
+                        val mineralColor = try { Color(android.graphics.Color.parseColor(hex)) } catch (e: Exception) { Color.Gray }
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Color(android.graphics.Color.parseColor(hex)))
-                                .border(
-                                    width = if (isSel) 3.dp else 1.dp,
-                                    color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
-                                    shape = CircleShape
-                                )
                                 .clickable { viewModel.genBgColor.value = hex }
-                        )
+                                .padding(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(ChiseledOctagonShape)
+                                    .background(mineralColor)
+                                    .border(
+                                        width = if (isSel) 3.dp else 1.dp,
+                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
+                                        shape = ChiseledOctagonShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSel) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = if (hex == "#FFFFFF") Color.Black else Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 10.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                                ),
+                                color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Custom Background Hex Input
+                // Custom Background Hex Input with Real-time Preview Leading Icon
                 var customBgHex by remember { mutableStateOf(genBgColor) }
                 LaunchedEffect(genBgColor) {
                     customBgHex = genBgColor
@@ -965,12 +1232,26 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     placeholder = { Text("#FFFFFF") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
+                    ),
+                    leadingIcon = {
+                        val sideColor = try { Color(android.graphics.Color.parseColor(customBgHex)) } catch (e: Exception) { Color.Gray }
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(ChiseledOctagonShape)
+                                .background(sideColor)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), ChiseledOctagonShape)
+                        )
+                    }
                 )
 
-                // Contrast warning
-                val isLowContrast = remember(genFgColor, genBgColor) {
+                // Contrast verification and styled status card
+                val computedContrast = remember(genFgColor, genBgColor) {
                     try {
                         val fg = android.graphics.Color.parseColor(genFgColor)
                         val bg = android.graphics.Color.parseColor(genBgColor)
@@ -978,20 +1259,62 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         val bgColor = Color(bg)
                         val fgLum = 0.299f * fgColor.red + 0.587f * fgColor.green + 0.114f * fgColor.blue
                         val bgLum = 0.299f * bgColor.red + 0.587f * bgColor.green + 0.114f * bgColor.blue
-                        Math.abs(fgLum - bgLum) < 0.22f
+                        Math.abs(fgLum - bgLum)
                     } catch (e: Exception) {
-                        false
+                        1.0f
                     }
                 }
 
-                if (isLowContrast) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "⚠️ Warning: Foreground and Background colors are highly similar. Ensure sufficient contrast so scanner camera can decode your code properly.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (computedContrast < 0.22f) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Warning",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Low Mineral Contrast: These shades are too similar. Shifting colors is recommended for smooth scanning.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Success",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Geological Harmony: High contrast ensures flawless scanning coordinates.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
