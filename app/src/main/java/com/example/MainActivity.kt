@@ -54,9 +54,9 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.utils.QrStyle
 import com.example.utils.QrCodeGenerator
 import com.example.viewmodel.QrViewModel
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -68,7 +68,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
-                QrMainDashboard()
+                var showSplash by remember { mutableStateOf(true) }
+                
+                if (showSplash) {
+                    RockQrSplashScreen(onSplashFinished = { showSplash = false })
+                } else {
+                    QrMainDashboard()
+                }
             }
         }
     }
@@ -1284,6 +1290,243 @@ fun HistoryItemCard(
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
                     modifier = Modifier.size(22.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
+    var startPulse by remember { mutableStateOf(false) }
+    var startTextFade by remember { mutableStateOf(false) }
+    var startColorPulse by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        startPulse = true
+        kotlinx.coroutines.delay(200)
+        startTextFade = true
+        kotlinx.coroutines.delay(400)
+        startColorPulse = true
+        kotlinx.coroutines.delay(1800) // 2.4s total elegant loader display
+        onSplashFinished()
+    }
+
+    val pulseScale by animateFloatAsState(
+        targetValue = if (startPulse) 1f else 0.4f,
+        animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessLow),
+        label = "LogoScale"
+    )
+
+    val logoRotation by animateFloatAsState(
+        targetValue = if (startPulse) 360f else 0f,
+        animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessVeryLow),
+        label = "LogoRotation"
+    )
+
+    val textAlpha by animateFloatAsState(
+        targetValue = if (startTextFade) 1f else 0f,
+        animationSpec = tween(durationMillis = 800),
+        label = "TextAlpha"
+    )
+
+    val gemGlowAlpha by animateFloatAsState(
+        targetValue = if (startColorPulse) 0.9f else 0.4f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "GlowGlow"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F1113)), // Deep luxury Obsidian Black
+        contentAlignment = Alignment.Center
+    ) {
+        // Crystalline ambient back-glow
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF00BDD6).copy(alpha = 0.22f * gemGlowAlpha), Color.Transparent),
+                    center = center,
+                    radius = size.minDimension * 0.75f
+                ),
+                radius = size.minDimension * 0.75f,
+                center = center
+            )
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Elegant crystalline hexagon QR logo
+            Box(
+                modifier = Modifier
+                    .size(140.dp)
+                    .graphicsLayer {
+                        scaleX = pulseScale
+                        scaleY = pulseScale
+                        rotationZ = logoRotation
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val strokeWidthPx = 4.dp.toPx()
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        val w = size.width
+                        val h = size.height
+                        moveTo(w / 2f, 10f)
+                        lineTo(w - 10f, h * 0.28f)
+                        lineTo(w - 10f, h * 0.72f)
+                        lineTo(w / 2f, h - 10f)
+                        lineTo(10f, h * 0.72f)
+                        lineTo(10f, h * 0.28f)
+                        close()
+                    }
+                    drawPath(
+                        path = path,
+                        brush = Brush.sweepGradient(
+                            colors = listOf(Color(0xFFFFA000), Color(0xFF00BDD6), Color(0xFFFFA000))
+                        ),
+                        style = Stroke(width = strokeWidthPx)
+                    )
+                }
+
+                // Custom embedded QR structural code nodes
+                Row(
+                    modifier = Modifier.size(72.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxHeight(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFF00BDD6))
+                                .padding(5.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color(0xFF0F1113))
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFFFA000))
+                                .padding(5.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color(0xFF0F1113))
+                            )
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier.fillMaxHeight(),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFF00BDD6))
+                                .padding(5.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color(0xFF0F1113))
+                            )
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Box(modifier = Modifier.size(6.dp).background(Color.White, RoundedCornerShape(1f)))
+                            Box(modifier = Modifier.size(6.dp).background(Color(0xFF00BDD6), RoundedCornerShape(1f)))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Subtitle info
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.graphicsLayer { alpha = textAlpha }
+            ) {
+                Text(
+                    text = "ROCK QR CODE",
+                    fontSize = 24.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    letterSpacing = 4.sp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "SECURE  •  OFFLINE  •  INSTANT",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF00BDD6),
+                    letterSpacing = 2.sp
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Fine Loading Energy charging bar
+                Box(
+                    modifier = Modifier
+                        .width(160.dp)
+                        .height(3.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f))
+                ) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "SplashLoaderTransition")
+                    val progressOffset by infiniteTransition.animateFloat(
+                        initialValue = -160f,
+                        targetValue = 160f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(
+                                durationMillis = 1400,
+                                easing = LinearEasing
+                            ),
+                            repeatMode = RepeatMode.Restart
+                        ),
+                        label = "ProgressBarOffset"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(80.dp)
+                            .offset(x = progressOffset.dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(Color.Transparent, Color(0xFF00BDD6), Color(0xFFFFA000), Color.Transparent)
+                                )
+                            )
+                    )
+                }
             }
         }
     }

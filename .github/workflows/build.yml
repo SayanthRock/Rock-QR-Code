@@ -1,0 +1,58 @@
+name: Rock QR Code CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    name: Validate and Build Rock QR Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Properties for KSP2 Compatibility
+        run: |
+          echo "🔍 Checking gradle.properties for incompatible legacy options..."
+          
+          # Check for legacy in-process compilation strategy
+          if grep -q "kotlin.compiler.execution.strategy=in-process" gradle.properties; then
+            echo "❌ ERROR: Legacy 'kotlin.compiler.execution.strategy=in-process' found in gradle.properties!"
+            echo "KSP2's compiler frontend expects a standalone Kotlin compiler daemon. Setting this property to 'in-process' will cause NullPointerException crashes."
+            exit 1
+          fi
+          
+          # Check for legacy ksp.useKSP2=false option (which is obsolete in newer KSP releases)
+          if grep -q "ksp.useKSP2=false" gradle.properties; then
+            echo "❌ ERROR: Obsolete 'ksp.useKSP2=false' found in gradle.properties!"
+            echo "Legacy KSP1 is no longer supported with the updated Gradle/Kotlin version. KSP2 must be used."
+            exit 1
+          fi
+          
+          echo "✅ gradle.properties validation passed. Ready for KSP2-based compilation."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rock-qr-code-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
