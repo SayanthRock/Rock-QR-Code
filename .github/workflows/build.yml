@@ -3,6 +3,8 @@ name: Rock QR Code CI
 on:
   push:
     branches: [ "main", "master" ]
+    tags:
+      - 'v*'
     paths:
       - 'app/**'
       - '.github/workflows/**'
@@ -25,6 +27,8 @@ jobs:
   build:
     name: Validate and Build Rock QR Code
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -163,3 +167,25 @@ jobs:
         with:
           name: rock-qr-code-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/debug/app-debug.apk
+          name: Rock QR Code v${{ github.ref_name }}
+          body: |
+            ### 📱 Rock QR Code Release
+            We are glad to announce the newest release of Rock QR Code!
+
+            #### Key Highlights:
+            - **Tactile Material 3 Design**: Enjoy customized fluid scaling animations, tactile gemstone styling presets, and glassmorphism settings!
+            - **Robust local SQLite support (Room)**: History of scanned and generated elements kept offline-first, privately and fast.
+            - **KSP2/Gradle-native compilation**: Build pipelines are ultra-fast and fully stable.
+
+            #### 📦 Attached Artifacts:
+            - **`app-debug.apk`**: Clean, debug-signed build ready to run on any physical Android device.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
