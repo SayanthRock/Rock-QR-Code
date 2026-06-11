@@ -51,6 +51,11 @@ Clone the repository and run:
 The compiled APK will be produced at:
 `app/build/outputs/apk/debug/app-debug.apk`
 
+### 📲 Downloading the Pre-Built APK
+You do not need to compile the application locally to test it on your device:
+1. **GitHub Action Artifacts**: On every successful commit to `main` or `master`, the [Rock QR Code CI Workflows](https://github.com/SayanthRock/Rock-QR-Code/actions) run automatically. You can click on any workflow run and download the precompiled **`rock-qr-code-debug-apk`** artifact.
+2. **GitHub Releases**: Tagging your repository with a version prefix (e.g., `v1.0.0`, `v1.1.2` etc.) automatically triggers a production-grade packaging pipeline. Under the **Releases** section, a release is automatically created with the high-performance release log notes and the runnable **`app-debug.apk`** binary attached directly to the release.
+
 ### Running Unit Tests
 To execute unit test cases locally:
 ```bash
