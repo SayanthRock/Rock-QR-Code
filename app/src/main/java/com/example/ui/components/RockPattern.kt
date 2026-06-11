@@ -293,25 +293,30 @@ fun GlassCard(
  */
 fun Modifier.liquidGlass(
     shape: androidx.compose.ui.graphics.Shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-    borderAlphaStart: Float = 0.45f,
-    borderAlphaEnd: Float = 0.15f,
-    bgAlpha: Float = 0.35f
+    borderAlphaStart: Float? = null,
+    borderAlphaEnd: Float? = null,
+    bgAlpha: Float? = null
 ) = composed {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val primaryColor = config.primaryColor
+    val secondaryColor = config.secondaryColor
     val surfaceColor = MaterialTheme.colorScheme.surface
     
+    val activeBorderAlphaStart = borderAlphaStart ?: config.borderAlphaStart
+    val activeBorderAlphaEnd = borderAlphaEnd ?: config.borderAlphaEnd
+    val activeBgAlpha = bgAlpha ?: config.glassOpacity
+
     val borderBrush = Brush.linearGradient(
         colors = listOf(
-            primaryColor.copy(alpha = borderAlphaStart),
-            secondaryColor.copy(alpha = borderAlphaEnd),
-            primaryColor.copy(alpha = borderAlphaStart * 1.3f)
+            primaryColor.copy(alpha = activeBorderAlphaStart),
+            secondaryColor.copy(alpha = activeBorderAlphaEnd),
+            primaryColor.copy(alpha = activeBorderAlphaStart * 1.3f)
         )
     )
     
     this
         .clip(shape)
-        .background(surfaceColor.copy(alpha = bgAlpha))
+        .background(surfaceColor.copy(alpha = activeBgAlpha))
         .border(
             width = 1.dp,
             brush = borderBrush,

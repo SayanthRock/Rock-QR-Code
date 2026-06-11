@@ -34,8 +34,11 @@ object ShareUtils {
 
             // Write the bitmap to cache space
             val file = File(cachePath, fileName)
+            val isPng = fileName.endsWith(".png", ignoreCase = true)
+            val compressFormat = if (isPng) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
+
             FileOutputStream(file).use { outStream ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream)
+                bitmap.compress(compressFormat, 100, outStream)
                 outStream.flush()
             }
 
@@ -45,7 +48,7 @@ object ShareUtils {
 
             if (uri != null) {
                 val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "image/png"
+                    type = if (isPng) "image/png" else "image/jpeg"
                     putExtra(Intent.EXTRA_STREAM, uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
@@ -63,13 +66,15 @@ object ShareUtils {
     /**
      * Saves a [Bitmap] directly to the device photos gallery / downloads.
      */
-    fun saveBitmapToGallery(context: Context, bitmap: Bitmap, displayName: String = "RockQR_") {
+    fun saveBitmapToGallery(context: Context, bitmap: Bitmap, displayName: String = "RockQR_", isPng: Boolean = true) {
         val resolver = context.contentResolver
-        val filename = "$displayName${System.currentTimeMillis()}.png"
+        val ext = if (isPng) "png" else "jpg"
+        val mime = if (isPng) "image/png" else "image/jpeg"
+        val filename = "$displayName${System.currentTimeMillis()}.$ext"
         
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+            put(MediaStore.MediaColumns.MIME_TYPE, mime)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Save to Pictures/RockQR folder
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/RockQR")
@@ -88,7 +93,8 @@ object ShareUtils {
                 if (outStream == null) {
                     throw IOException("Could not open gallery output stream")
                 }
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream)
+                val compressFormat = if (isPng) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
+                bitmap.compress(compressFormat, 100, outStream)
                 outStream.flush()
             }
             

@@ -86,12 +86,28 @@ class MainActivity : ComponentActivity() {
                 dynamicColor = dynamicColorEnabled,
                 colorPresetName = colorPreset
             ) {
-                var showSplash by remember { mutableStateOf(true) }
-                
-                if (showSplash) {
-                    RockQrSplashScreen(onSplashFinished = { showSplash = false })
-                } else {
-                    QrMainDashboard(viewModel)
+                // Look up active dynamic preset color specifications
+                val activePresetDetails = com.example.ui.components.AndroidPresetsInfo.find {
+                    it.key == colorPreset.uppercase()
+                } ?: com.example.ui.components.AndroidPresetsInfo[0]
+
+                val glassConfig = com.example.ui.theme.LiquidGlassThemeConfig(
+                    primaryColor = activePresetDetails.primaryColor,
+                    secondaryColor = activePresetDetails.secondaryColor,
+                    glassBlur = 16.dp,
+                    glassOpacity = 0.28f,
+                    borderAlphaStart = 0.45f,
+                    borderAlphaEnd = 0.15f
+                )
+
+                com.example.ui.theme.LiquidGlassThemeProvider(config = glassConfig) {
+                    var showSplash by remember { mutableStateOf(true) }
+                    
+                    if (showSplash) {
+                        RockQrSplashScreen(onSplashFinished = { showSplash = false })
+                    } else {
+                        QrMainDashboard(viewModel)
+                    }
                 }
             }
         }
@@ -217,7 +233,23 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val scannedText by viewModel.scannedText.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
 
-    // Runtime Permission Handler
+    // Helper to find the host activity for rationale checking
+    fun android.content.Context.findActivity(): android.app.Activity? {
+        var currentContext = this
+        while (currentContext is android.content.ContextWrapper) {
+            if (currentContext is android.app.Activity) {
+                return currentContext
+            }
+            currentContext = currentContext.baseContext
+        }
+        return null
+    }
+
+    val sharedPrefs = remember {
+        context.getSharedPreferences("rock_qr_settings", android.content.Context.MODE_PRIVATE)
+    }
+
+    // Runtime Permission Handler State Engine
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -227,12 +259,35 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
         )
     }
 
+    var permissionRequestedOnce by remember {
+        mutableStateOf(sharedPrefs.getBoolean("camera_permission_requested", false))
+    }
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             hasCameraPermission = granted
+            sharedPrefs.edit().putBoolean("camera_permission_requested", true).apply()
+            permissionRequestedOnce = true
         }
     )
+
+    // Automatically check and refresh permission state when user returns from Settings
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                hasCameraPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Show scanned detail bottom dialog/sheet when detected
     var showDetailDialog by remember { mutableStateOf(false) }
@@ -245,48 +300,33 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // --- 1. FULL SCREEN CAMERA PREVIEW WITH TRANSLUCENT OVERLAYS ---
-        if (hasCameraPermission && isScanning) {
-            CameraPreview(
-                onQrScanned = { text ->
-                    viewModel.setScannedText(text)
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            // Elegant placeholder matching deep slate
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF0F1115)),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LinkedCamera,
-                        contentDescription = "Camera Standby",
-                        modifier = Modifier.size(72.dp),
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+        // --- 1. FULL SCREEN CAMERA PREVIEW OR GRACEFUL PERMISSION HANDSHAKE CARD ---
+        CameraPermissionGate(
+            onPermissionGranted = {
+                hasCameraPermission = true
+            },
+            onPermissionStatusChanged = { granted ->
+                hasCameraPermission = granted
+            },
+            onShowTestPayloadPrompt = {
+                if (permissionRequestedOnce) {
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Camera Live Feed Ready",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Standard Android permission dialog can be unlocked using the security indicator, or insert a mock QR payload below.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.6f),
+                        text = "Or insert a test payload into the Mock simulator module below.",
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.45f),
                         textAlign = TextAlign.Center
                     )
                 }
+            }
+        ) {
+            if (isScanning) {
+                CameraPreview(
+                    onQrScanned = { text ->
+                        viewModel.setScannedText(text)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
 
@@ -527,6 +567,8 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
     // Active design mode: "STANDARD" or the futuristic "MATERIAL_10"
     var isMaterial10Enabled by remember { mutableStateOf(true) }
+    var exportResolution by remember { mutableStateOf("1024") } // "512", "1024", "2048"
+    var exportFormat by remember { mutableStateOf("PNG") } // "PNG", "JPEG"
 
     // Holographic laser sweep state
     val infiniteTransition = rememberInfiniteTransition(label = "hologram_laser")
@@ -1583,6 +1625,132 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // --- EXPORT CANVAS SETTINGS PANEL ---
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = "EXPORT ENGINE PARAMETERS",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 1.sp,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            // Resolution Selectors Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Canvas Resolution",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    val resolutions = listOf("512", "1024", "2048")
+                                    resolutions.forEach { res ->
+                                        val isSelected = exportResolution == res
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(
+                                                    if (isSelected) {
+                                                        if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.2f)
+                                                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                                    } else Color.Transparent
+                                                )
+                                                .border(
+                                                    1.dp,
+                                                    if (isSelected) {
+                                                        if (isMaterial10Enabled) Color(0xFF00FFCC)
+                                                        else MaterialTheme.colorScheme.primary
+                                                    } else Color.White.copy(alpha = 0.12f),
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable { exportResolution = res }
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = if (res == "512") "512px" else if (res == "1024") "1024px (HD)" else "2048px (UHD)",
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isSelected) {
+                                                    if (isMaterial10Enabled) Color(0xFF00FFCC)
+                                                    else MaterialTheme.colorScheme.primary
+                                                } else Color.White.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // Format Selectors Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "File Encoding",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    listOf("PNG", "JPEG").forEach { fmt ->
+                                        val isSelected = exportFormat == fmt
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(
+                                                    if (isSelected) {
+                                                        if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.2f)
+                                                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                                    } else Color.Transparent
+                                                )
+                                                .border(
+                                                    1.dp,
+                                                    if (isSelected) {
+                                                        if (isMaterial10Enabled) Color(0xFF00FFCC)
+                                                        else MaterialTheme.colorScheme.primary
+                                                    } else Color.White.copy(alpha = 0.12f),
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable { exportFormat = fmt }
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = fmt,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isSelected) {
+                                                    if (isMaterial10Enabled) Color(0xFF00FFCC)
+                                                    else MaterialTheme.colorScheme.primary
+                                                } else Color.White.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1614,8 +1782,21 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                             OutlinedButton(
                                 onClick = {
-                                    generatedBitmap?.let { bitmap ->
-                                        ShareUtils.shareBitmap(context, bitmap)
+                                    val size = exportResolution.toIntOrNull() ?: 1024
+                                    val styleEnum = genStyle
+                                    val content = viewModel.getFormattedContent()
+                                    val highResBmap = QrCodeGenerator.generateQrCode(
+                                        content = content,
+                                        width = size,
+                                        height = size,
+                                        foregroundHexColor = genFgColor,
+                                        backgroundHexColor = genBgColor,
+                                        style = styleEnum,
+                                        embedLogo = activeEmbedLogo
+                                    )
+                                    highResBmap?.let { bitmap ->
+                                        val ext = if (exportFormat == "PNG") "png" else "jpg"
+                                        ShareUtils.shareBitmap(context, bitmap, "shared_qr_${size}.$ext")
                                     }
                                 },
                                 modifier = Modifier
@@ -1669,8 +1850,26 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                             Button(
                                 onClick = {
-                                    generatedBitmap?.let { bitmap ->
-                                        ShareUtils.saveBitmapToGallery(context, bitmap)
+                                    val size = exportResolution.toIntOrNull() ?: 1024
+                                    val styleEnum = genStyle
+                                    val content = viewModel.getFormattedContent()
+                                    val highResBmap = QrCodeGenerator.generateQrCode(
+                                        content = content,
+                                        width = size,
+                                        height = size,
+                                        foregroundHexColor = genFgColor,
+                                        backgroundHexColor = genBgColor,
+                                        style = styleEnum,
+                                        embedLogo = activeEmbedLogo
+                                    )
+                                    highResBmap?.let { bitmap ->
+                                        val prefix = if (isMaterial10Enabled) "Material10_QR_" else "Rock_QR_"
+                                        ShareUtils.saveBitmapToGallery(
+                                            context = context,
+                                            bitmap = bitmap,
+                                            displayName = prefix,
+                                            isPng = (exportFormat == "PNG")
+                                        )
                                     }
                                 },
                                 modifier = Modifier
