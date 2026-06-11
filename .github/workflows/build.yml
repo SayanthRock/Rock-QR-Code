@@ -19,6 +19,7 @@ on:
       - 'settings.gradle.kts'
       - 'gradle.properties'
       - 'gradle/**'
+  workflow_dispatch:
 
 jobs:
   build:
