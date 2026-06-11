@@ -242,6 +242,8 @@ fun GlassCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
     borderColor: Color = MaterialTheme.colorScheme.primary,
+    cornerRadius: Dp = 24.dp,
+    borderWidth: Dp = 1.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val borderBrush = Brush.linearGradient(
@@ -254,12 +256,12 @@ fun GlassCard(
 
     Box(
         modifier = modifier
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(cornerRadius))
             .background(backgroundColor)
             .border(
-                width = 1.dp,
+                width = borderWidth,
                 brush = borderBrush,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(cornerRadius)
             )
             .padding(20.dp)
     ) {
