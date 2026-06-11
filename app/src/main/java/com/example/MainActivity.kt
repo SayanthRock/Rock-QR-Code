@@ -53,11 +53,13 @@ import com.example.ui.components.*
 import com.example.ui.theme.MyApplicationTheme
 import com.example.utils.QrStyle
 import com.example.utils.QrCodeGenerator
+import com.example.utils.ShareUtils
 import com.example.viewmodel.QrViewModel
 import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.ui.platform.testTag
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -569,14 +571,30 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val emailSubject by viewModel.emailSubject.collectAsState()
     val emailBody by viewModel.emailBody.collectAsState()
 
-    // Predefined stylish color preset combinations
-    val colorSwatches = listOf(
-        Pair("#0B0C0E", "Obsidian"),
-        Pair("#00BD9D", "Malachite"),
-        Pair("#EAA21D", "Pyrite Gold"),
-        Pair("#5E6D75", "Basalt Slate"),
-        Pair("#7F8C8D", "Quartz"),
-        Pair("#C41E3A", "Garnet Ruby")
+    // Active design mode: "STANDARD" or the futuristic "MATERIAL_10"
+    var isMaterial10Enabled by remember { mutableStateOf(true) }
+
+    // Holographic laser sweep state
+    val infiniteTransition = rememberInfiniteTransition(label = "hologram_laser")
+    val laserSweepValue by infiniteTransition.animateFloat(
+        initialValue = -0.1f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "laser_sweep"
+    )
+
+    // Pulsing aura animation for the card representing Material 10 3D emission
+    val pulsingAuraAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulsing_aura"
     )
 
     Column(
@@ -585,17 +603,43 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        // App Header Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             RockChiseledHeader(
-                title = "QR Builder Studio",
-                subtitle = "Generate pebbles, rocks, or classic styled coordinates",
+                title = if (isMaterial10Enabled) "Material 10 QR Studio" else "QR Builder Studio",
+                subtitle = if (isMaterial10Enabled) "Ultra-expressive neon-matrix hologram engine" else "Generate classic styled coordinates",
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.width(12.dp))
+            
+            // Material 10 Interactive Toggle Badge
+            IconButton(
+                onClick = { isMaterial10Enabled = !isMaterial10Enabled },
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
+                        shape = ChiseledOctagonShape
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (isMaterial10Enabled) Color(0xFF00FFCC) else Color.Transparent,
+                        shape = ChiseledOctagonShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Flare,
+                    contentDescription = "Toggle Material 10 mode",
+                    tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            
             IconButton(
                 onClick = onSettingsClick,
                 colors = IconButtonDefaults.iconButtonColors(
@@ -615,7 +659,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
         // Step 1: Format Selector Tabs
         ScrollableTabRow(
-            selectedTabIndex = when(genFormat) {
+            selectedTabIndex = when (genFormat) {
                 "TEXT" -> 0
                 "URL" -> 1
                 "WIFI" -> 2
@@ -624,14 +668,28 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 else -> 0
             },
             edgePadding = 0.dp,
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            containerColor = if (isMaterial10Enabled) Color.Black.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
             indicator = { tabPositions ->
+                val currIndex = when (genFormat) {
+                    "TEXT" -> 0
+                    "URL" -> 1
+                    "WIFI" -> 2
+                    "PHONE" -> 3
+                    "EMAIL" -> 4
+                    else -> 0
+                }
                 TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier.tabIndicatorOffset(tabPositions[tabPositions.indexOfFirst { true }]),
-                    color = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[currIndex]),
+                    color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                 )
             },
-            modifier = Modifier.clip(RoundedCornerShape(12.dp))
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .border(
+                    width = if (isMaterial10Enabled) 1.dp else 0.dp,
+                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.3f) else Color.Transparent,
+                    shape = RoundedCornerShape(12.dp)
+                )
         ) {
             val formats = listOf("TEXT", "URL", "WIFI", "PHONE", "EMAIL")
             formats.forEach { format ->
@@ -643,7 +701,11 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             text = format,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = if (genFormat == format) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            color = if (genFormat == format) {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            }
                         )
                     }
                 )
@@ -653,35 +715,70 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Step 2: Input fields conditional rendering
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(2.dp),
-            shape = RoundedCornerShape(16.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (isMaterial10Enabled) {
+                        Brush.verticalGradient(
+                            colors = listOf(Color(0xFF161A22), Color(0xFF0C0E14))
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            colors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface)
+                        )
+                    }
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.35f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column {
                 when (genFormat) {
                     "TEXT" -> {
                         OutlinedTextField(
                             value = plainText,
                             onValueChange = { viewModel.plainText.value = it },
-                            label = { Text("Write raw text here") },
-                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Input Text Payload") },
+                            placeholder = { Text("Write any raw text data...") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("qr_content_input"),
                             minLines = 3,
                             maxLines = 5,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            )
                         )
                     }
                     "URL" -> {
                         OutlinedTextField(
                             value = urlLink,
                             onValueChange = { viewModel.urlLink.value = it },
-                            label = { Text("Enter Web URL / Link") },
+                            label = { Text("Input Web URL") },
                             placeholder = { Text("example.com") },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("qr_url_input"),
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            leadingIcon = { Icon(Icons.Default.Language, contentDescription = null) }
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Language,
+                                    contentDescription = null,
+                                    tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            )
                         )
                     }
                     "WIFI" -> {
@@ -692,7 +789,10 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            leadingIcon = { Icon(Icons.Default.Wifi, contentDescription = null) }
+                            leadingIcon = { Icon(Icons.Default.Wifi, contentDescription = null, tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         OutlinedTextField(
@@ -702,21 +802,53 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) }
+                            leadingIcon = { Icon(Icons.Default.Key, contentDescription = null, tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text("Security Mode:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(6.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             listOf("WPA", "WEP", "nopass").forEach { mode ->
-                                val selected = wifiSecurity == mode
-                                FilterChip(
-                                    selected = selected,
-                                    onClick = { viewModel.wifiSecurity.value = mode },
-                                    label = { Text(if (mode == "nopass") "None" else mode) }
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            if (wifiSecurity == mode) {
+                                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.2f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                            } else {
+                                                Color.Transparent
+                                            }
+                                        )
+                                        .border(
+                                            width = 1.dp,
+                                            color = if (wifiSecurity == mode) {
+                                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                                            },
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable { viewModel.wifiSecurity.value = mode }
+                                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = if (mode == "nopass") "None" else mode,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = if (wifiSecurity == mode) {
+                                            if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -725,10 +857,14 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             value = phoneNum,
                             onValueChange = { viewModel.phoneNum.value = it },
                             label = { Text("Phone Number") },
+                            placeholder = { Text("+1 (555) 0199") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) }
+                            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                     "EMAIL" -> {
@@ -736,10 +872,14 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             value = emailRecipient,
                             onValueChange = { viewModel.emailRecipient.value = it },
                             label = { Text("Recipient Email") },
+                            placeholder = { Text("name@example.com") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) }
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
@@ -748,7 +888,10 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             label = { Text("Subject (Optional)") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
@@ -757,7 +900,10 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             label = { Text("Body Text (Optional)") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                 }
@@ -766,11 +912,12 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Step 3: Styles Customizer
+        // Step 3: Choose QrStyle Option Coordinates
         Text(
-            text = "1. Choose Rock Coordinate Style",
+            text = "1. Choose Coordinate Geometry",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onBackground
         )
         Row(
             modifier = Modifier
@@ -781,28 +928,49 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             QrStyle.entries.forEach { style ->
                 val isSel = genStyle == style
                 val title = when (style) {
-                    QrStyle.CLASSIC -> "Classic"
-                    QrStyle.ROUNDED_DOT -> "Pebbles"
-                    QrStyle.ROCK -> "Crystals"
+                    QrStyle.CLASSIC -> "Classic Grid"
+                    QrStyle.ROUNDED_DOT -> "Fluid Pebbles"
+                    QrStyle.ROCK -> "Chiseled Gem"
+                }
+                val buttonTag = when (style) {
+                    QrStyle.CLASSIC -> "qr_style_classic"
+                    QrStyle.ROUNDED_DOT -> "qr_style_pebble"
+                    QrStyle.ROCK -> "qr_style_crystal"
                 }
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                        .background(
+                            if (isSel) {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            } else {
+                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                            }
+                        )
                         .border(
                             1.dp,
-                            if (isSel) Color.Transparent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                            if (isSel) {
+                                Color.Transparent
+                            } else {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                            },
                             RoundedCornerShape(12.dp)
                         )
-                        .clickable { viewModel.genStyle.value = style },
+                        .clickable { viewModel.genStyle.value = style }
+                        .testTag(buttonTag),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = title,
                         fontWeight = FontWeight.Bold,
-                        color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground
+                        fontSize = 11.sp,
+                        color = if (isSel) {
+                            if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onBackground
+                        }
                     )
                 }
             }
@@ -813,11 +981,10 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
         // Step 4: Color Customizer (Foreground and Background)
         RockFacetedCard(
             modifier = Modifier.fillMaxWidth(),
-            backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+            backgroundColor = if (isMaterial10Enabled) Color(0xFF15181F) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            borderColor = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Header with custom icon and subtitle
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -826,18 +993,18 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     Icon(
                         imageVector = Icons.Default.Palette,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                     Column {
                         Text(
-                            text = "Color Customizer Studio",
+                            text = "Material 10 Cosmic Dye",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "Pick geological gems or craft raw hexadecimal parameters",
+                            text = "Pick active neon resonators or type hex parameters below",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
@@ -846,16 +1013,15 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Subsection: Curated Gemstone Pairing
+                // Presets Layout
                 Text(
-                    text = "A. Curated Geological Pairs",
+                    text = "A. Material 10 Crystal Presets",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Scrollable Themes Row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -864,12 +1030,13 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val gemThemes = listOf(
-                        Triple("Volcanic Jade", "#00BD9D", "#15181F"),
-                        Triple("Pyrite Core", "#EAA21D", "#15181F"),
-                        Triple("Royal Shard", "#1A73E8", "#FFFFFF"),
-                        Triple("Rose Pearl", "#C41E3A", "#FFFDD0"),
-                        Triple("Frost Amethyst", "#8A2BE2", "#F4F6F9"),
-                        Triple("Copper Clay", "#C85A32", "#FFFFFF")
+                        Triple("Liquid Cyan", "#00FFCC", "#0B0C0E"),
+                        Triple("Laser Amethyst", "#CC33FF", "#0A0512"),
+                        Triple("Pyrite Aura", "#EAA21D", "#15181F"),
+                        Triple("Electric Jade", "#00FF66", "#051A0D"),
+                        Triple("Garnet Plasma", "#FF3366", "#150207"),
+                        Triple("Ice Pearl", "#1A73E8", "#FFFFFF"),
+                        Triple("Standard High Contrast", "#0A0A0A", "#FFFFFF")
                     )
 
                     gemThemes.forEach { (name, fg, bg) ->
@@ -877,10 +1044,20 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isThemeActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.background.copy(alpha = 0.4f))
+                                .background(
+                                    if (isThemeActive) {
+                                        if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                    } else {
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.4f)
+                                    }
+                                )
                                 .border(
                                     width = if (isThemeActive) 2.dp else 1.dp,
-                                    color = if (isThemeActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+                                    color = if (isThemeActive) {
+                                        if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                                    },
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .clickable {
@@ -893,7 +1070,6 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                // Small preview of the dual colors
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy((-4).dp),
                                     verticalAlignment = Alignment.CenterVertically
@@ -902,30 +1078,34 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                         modifier = Modifier
                                             .size(14.dp)
                                             .clip(ChiseledOctagonShape)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .background(Color(android.graphics.Color.parseColor(fg)))
-                                            )
-                                        }
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color(android.graphics.Color.parseColor(fg)))
+                                        )
+                                    }
                                     Box(
                                         modifier = Modifier
                                             .size(14.dp)
                                             .clip(ChiseledOctagonShape)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .background(Color(android.graphics.Color.parseColor(bg)))
-                                                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), ChiseledOctagonShape)
-                                            )
-                                        }
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color(android.graphics.Color.parseColor(bg)))
+                                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), ChiseledOctagonShape)
+                                        )
+                                    }
                                 }
                                 Text(
                                     text = name,
                                     style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                    color = if (isThemeActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                                    color = if (isThemeActive) {
+                                        if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onBackground
+                                    }
                                 )
                             }
                         }
@@ -934,12 +1114,11 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Tactical action buttons
+                // Action buttons row (Invert & Resonate)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Invert button
                     OutlinedButton(
                         onClick = {
                             val temp = genFgColor
@@ -949,308 +1128,144 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                        border = BorderStroke(
+                            1.dp,
+                            if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Autorenew,
                             contentDescription = "Swap colors",
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
+                            tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Invert Colors", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Invert Colors", 
+                            fontSize = 11.sp, 
+                            fontWeight = FontWeight.Bold,
+                            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                        )
                     }
 
-                    // Randomize button
                     OutlinedButton(
                         onClick = {
-                            val fgColorPresets = listOf(
-                                Pair("#0B0C0E", "Obsidian"),
-                                Pair("#00BD9D", "Malachite"),
-                                Pair("#EAA21D", "Pyrite Gold"),
-                                Pair("#1A73E8", "Sapphire"),
-                                Pair("#C41E3A", "Garnet Ruby"),
-                                Pair("#8A2BE2", "Amethyst"),
-                                Pair("#E91E63", "Rose Quartz")
-                            )
-
-                            val bgColorPresets = listOf(
-                                Pair("#FFFFFF", "Moonlight"),
-                                Pair("#F4F6F9", "Frost Grey"),
-                                Pair("#FFFDD0", "Cream Pearl"),
-                                Pair("#E8F0FE", "Ice Blue"),
-                                Pair("#E2F9E9", "Mint Breeze"),
-                                Pair("#FFEBEE", "Rose Pearl"),
-                                Pair("#15181F", "Cosmic Slate")
-                            )
-
-                            val randomFg = fgColorPresets.random().first
-                            val availableBgs = bgColorPresets.filter { bg ->
-                                try {
-                                    val fgCol = Color(android.graphics.Color.parseColor(randomFg))
-                                    val bgCol = Color(android.graphics.Color.parseColor(bg.first))
-                                    val fgLum = 0.299f * fgCol.red + 0.587f * fgCol.green + 0.114f * fgCol.blue
-                                    val bgLum = 0.299f * bgCol.red + 0.587f * bgCol.green + 0.114f * bgCol.blue
-                                    Math.abs(fgLum - bgLum) >= 0.35f
-                                } catch (e: Exception) {
-                                    true
-                                }
-                            }
-                            val randomBg = if (availableBgs.isNotEmpty()) availableBgs.random().first else "#FFFFFF"
+                            val randomFg = listOf("#00FFCC", "#CC33FF", "#EAA21D", "#00FF66", "#FF3366", "#1A73E8", "#0A0A0A").random()
+                            val randomBg = listOf("#0B0C0E", "#0A0512", "#15181F", "#051A0D", "#FFFFFF", "#F4F6F9").random()
                             viewModel.genFgColor.value = randomFg
                             viewModel.genBgColor.value = randomBg
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                        border = BorderStroke(
+                            1.dp,
+                            if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Casino,
                             contentDescription = "Randomize colors",
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
+                            tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Resonate Gem", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Resonate Presets", 
+                            fontSize = 11.sp, 
+                            fontWeight = FontWeight.Bold,
+                            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // B. Foreground Pattern Section
-                Text(
-                    text = "B. Foreground Pattern Color",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Scrollable Octagonal presets list
+                // Custom Text inputs for Custom Fg Hex with real color preview circle
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    val fgColorPresets = listOf(
-                        Pair("#0B0C0E", "Obsidian"),
-                        Pair("#00BD9D", "Malachite"),
-                        Pair("#EAA21D", "Pyrite Gold"),
-                        Pair("#1A73E8", "Sapphire"),
-                        Pair("#C41E3A", "Garnet Ruby"),
-                        Pair("#8A2BE2", "Amethyst"),
-                        Pair("#E91E63", "Rose Quartz")
-                    )
-
-                    fgColorPresets.forEach { (hex, name) ->
-                        val isSel = genFgColor.equals(hex, ignoreCase = true)
-                        
-                        val mineralColor = try { Color(android.graphics.Color.parseColor(hex)) } catch (e: Exception) { Color.Gray }
-                        
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .clickable { viewModel.genFgColor.value = hex }
-                                .padding(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(ChiseledOctagonShape)
-                                    .background(mineralColor)
-                                    .border(
-                                        width = if (isSel) 3.dp else 1.dp,
-                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
-                                        shape = ChiseledOctagonShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isSel) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        tint = if (hex == "#FFFFFF") Color.Black else Color.White,
-                                        modifier = Modifier.size(16.dp)
-                                    )
+                    var customFgHex by remember { mutableStateOf(genFgColor) }
+                    LaunchedEffect(genFgColor) {
+                        customFgHex = genFgColor
+                    }
+                    OutlinedTextField(
+                        value = customFgHex,
+                        onValueChange = { newValue ->
+                            val cleanVal = newValue.trim()
+                            customFgHex = cleanVal
+                            if (cleanVal.length == 7 && cleanVal.startsWith("#")) {
+                                try {
+                                    android.graphics.Color.parseColor(cleanVal)
+                                    viewModel.genFgColor.value = cleanVal
+                                } catch (e: Exception) {
+                                    // ignore until valid
                                 }
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = name,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 10.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
-                                ),
-                                color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Custom Foreground Hex Input with Real-time Preview Leading Icon
-                var customFgHex by remember { mutableStateOf(genFgColor) }
-                LaunchedEffect(genFgColor) {
-                    customFgHex = genFgColor
-                }
-                OutlinedTextField(
-                    value = customFgHex,
-                    onValueChange = { newValue ->
-                        val cleanVal = newValue.trim()
-                        customFgHex = cleanVal
-                        if (cleanVal.length == 7 && cleanVal.startsWith("#")) {
-                            try {
-                                android.graphics.Color.parseColor(cleanVal)
-                                viewModel.genFgColor.value = cleanVal
-                            } catch (e: Exception) {
-                                // ignore invalid color values until complete
-                            }
-                        }
-                    },
-                    label = { Text("Custom Foreground Hex") },
-                    placeholder = { Text("#00BD9D") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
-                    ),
-                    leadingIcon = {
-                        val sideColor = try { Color(android.graphics.Color.parseColor(customFgHex)) } catch (e: Exception) { Color.Gray }
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(ChiseledOctagonShape)
-                                .background(sideColor)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), ChiseledOctagonShape)
-                        )
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // C. Background Canvas Section
-                Text(
-                    text = "C. Background Canvas Color",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Scrollable Octagonal background presets list
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val bgColorPresets = listOf(
-                        Pair("#FFFFFF", "Moonlight"),
-                        Pair("#F4F6F9", "Frost Grey"),
-                        Pair("#FFFDD0", "Cream Pearl"),
-                        Pair("#E8F0FE", "Ice Blue"),
-                        Pair("#E2F9E9", "Mint Breeze"),
-                        Pair("#FFEBEE", "Rose Pearl"),
-                        Pair("#15181F", "Cosmic Slate")
-                    )
-
-                    bgColorPresets.forEach { (hex, name) ->
-                        val isSel = genBgColor.equals(hex, ignoreCase = true)
-                        
-                        val mineralColor = try { Color(android.graphics.Color.parseColor(hex)) } catch (e: Exception) { Color.Gray }
-                        
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .clickable { viewModel.genBgColor.value = hex }
-                                .padding(4.dp)
-                        ) {
+                        },
+                        label = { Text("Fore Hex") },
+                        placeholder = { Text("#00FFCC") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                        ),
+                        leadingIcon = {
+                            val sideColor = try { Color(android.graphics.Color.parseColor(customFgHex)) } catch (e: Exception) { Color.Gray }
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
+                                    .size(20.dp)
                                     .clip(ChiseledOctagonShape)
-                                    .background(mineralColor)
-                                    .border(
-                                        width = if (isSel) 3.dp else 1.dp,
-                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.15f),
-                                        shape = ChiseledOctagonShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isSel) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        tint = if (hex == "#FFFFFF") Color.Black else Color.White,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = name,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 10.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
-                                ),
-                                color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                                    .background(sideColor)
+                                    .border(1.dp, Color.White.copy(alpha = 0.2f), ChiseledOctagonShape)
                             )
                         }
+                    )
+
+                    var customBgHex by remember { mutableStateOf(genBgColor) }
+                    LaunchedEffect(genBgColor) {
+                        customBgHex = genBgColor
                     }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Custom Background Hex Input with Real-time Preview Leading Icon
-                var customBgHex by remember { mutableStateOf(genBgColor) }
-                LaunchedEffect(genBgColor) {
-                    customBgHex = genBgColor
-                }
-                OutlinedTextField(
-                    value = customBgHex,
-                    onValueChange = { newValue ->
-                        val cleanVal = newValue.trim()
-                        customBgHex = cleanVal
-                        if (cleanVal.length == 7 && cleanVal.startsWith("#")) {
-                            try {
-                                android.graphics.Color.parseColor(cleanVal)
-                                viewModel.genBgColor.value = cleanVal
-                            } catch (e: Exception) {
-                                // ignore invalid color values until complete
+                    OutlinedTextField(
+                        value = customBgHex,
+                        onValueChange = { newValue ->
+                            val cleanVal = newValue.trim()
+                            customBgHex = cleanVal
+                            if (cleanVal.length == 7 && cleanVal.startsWith("#")) {
+                                try {
+                                    android.graphics.Color.parseColor(cleanVal)
+                                    viewModel.genBgColor.value = cleanVal
+                                } catch (e: Exception) {
+                                    // ignore until valid
+                                }
                             }
+                        },
+                        label = { Text("Back Hex") },
+                        placeholder = { Text("#0B0C0E") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                        ),
+                        leadingIcon = {
+                            val sideColor = try { Color(android.graphics.Color.parseColor(customBgHex)) } catch (e: Exception) { Color.Gray }
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(ChiseledOctagonShape)
+                                    .background(sideColor)
+                                    .border(1.dp, Color.White.copy(alpha = 0.2f), ChiseledOctagonShape)
+                            )
                         }
-                    },
-                    label = { Text("Custom Background Hex") },
-                    placeholder = { Text("#FFFFFF") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
-                    ),
-                    leadingIcon = {
-                        val sideColor = try { Color(android.graphics.Color.parseColor(customBgHex)) } catch (e: Exception) { Color.Gray }
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(ChiseledOctagonShape)
-                                .background(sideColor)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), ChiseledOctagonShape)
-                        )
-                    }
-                )
+                    )
+                }
 
-                // Contrast verification and styled status card
+                // Low Contrast Warner indicator block
                 val computedContrast = remember(genFgColor, genBgColor) {
                     try {
                         val fg = android.graphics.Color.parseColor(genFgColor)
@@ -1284,7 +1299,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "Low Mineral Contrast: These shades are too similar. Shifting colors is recommended for smooth scanning.",
+                            text = "Low Mineral Contrast: Shades are too close. Readjust colors for flawless QR scanning.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.SemiBold,
@@ -1296,7 +1311,13 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                            .background(
+                                if (isMaterial10Enabled) {
+                                    Color(0xFF00FFCC).copy(alpha = 0.08f)
+                                } else {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                }
+                            )
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1304,13 +1325,13 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Success",
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "Geological Harmony: High contrast ensures flawless scanning coordinates.",
+                            text = "Geological Contrast Verified: Guaranteed bulletproof scanning speed.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.weight(1f)
                         )
@@ -1321,98 +1342,217 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Step 5: Live QR Rendering output
-        RockFacetedCard(
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (generatedBitmap != null) {
-                    val finalBgCol = try { Color(android.graphics.Color.parseColor(genBgColor)) } catch (e: Exception) { Color.White }
-                    Image(
-                        bitmap = generatedBitmap!!.asImageBitmap(),
-                        contentDescription = "Live code generation template",
-                        modifier = Modifier
-                            .size(200.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .border(6.dp, finalBgCol, RoundedCornerShape(16.dp))
-                            .background(finalBgCol)
-                    )
+        // Step 5: Live QR Rendering output with Material 10 3D emission, glowing borders, and holographic sweep
+        val animationStateScale by animateFloatAsState(
+            targetValue = if (generatedBitmap != null) 1.0f else 0.85f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+            label = "qr_scale_pop"
+        )
+        val qrAlphaState by animateFloatAsState(
+            targetValue = if (generatedBitmap != null) 1.0f else 0.0f,
+            animationSpec = tween(500),
+            label = "qr_alpha_fade"
+        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Real-time Styled QR Ready",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                val content = viewModel.getFormattedContent()
-                                clipboardManager.setText(AnnotatedString(content))
-                                Toast.makeText(context, "Copied content", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.CopyAll, contentDescription = "Copy QR payload")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy link")
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = animationStateScale
+                    scaleY = animationStateScale
+                    alpha = qrAlphaState
+                }
+                .background(
+                    if (isMaterial10Enabled && generatedBitmap != null) {
+                        val neonColor = try {
+                            Color(android.graphics.Color.parseColor(genFgColor))
+                        } catch (e: Exception) {
+                            Color(0xFF00FFCC)
                         }
-
-                        Button(
-                            onClick = {
-                                viewModel.saveGeneratedCodeInHistory()
-                                Toast.makeText(context, "Saved to history library", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Icon(Icons.Default.Save, contentDescription = "Save template")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Save History", fontWeight = FontWeight.Bold)
-                        }
+                        Brush.radialGradient(
+                            colors = listOf(neonColor.copy(alpha = 0.12f * pulsingAuraAlpha), Color.Transparent)
+                        )
+                    } else {
+                        Brush.linearGradient(colors = listOf(Color.Transparent, Color.Transparent))
                     }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(200.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.background)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
-                                RoundedCornerShape(16.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.Default.QrCode,
-                                contentDescription = "Draft setup icon",
-                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
-                                modifier = Modifier.size(48.dp)
+                )
+        ) {
+            RockFacetedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("qr_code_viewer"),
+                backgroundColor = if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                borderColor = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.35f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (generatedBitmap != null) {
+                        val finalBgCol = try { Color(android.graphics.Color.parseColor(genBgColor)) } catch (e: Exception) { Color.White }
+                        val finalFgCol = try { Color(android.graphics.Color.parseColor(genFgColor)) } catch (e: Exception) { Color.Black }
+                        
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(220.dp)
+                                .clip(RoundedCornerShape(24.dp))
+                                .border(8.dp, finalBgCol, RoundedCornerShape(24.dp))
+                                .background(finalBgCol)
+                                .padding(12.dp)
+                        ) {
+                            Image(
+                                bitmap = generatedBitmap!!.asImageBitmap(),
+                                contentDescription = "Live code generation template",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .testTag("qr_code_image_preview")
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Enter configuration details above.",
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
+ 
+                            // Holographic dynamic sweeping laser lines
+                            if (isMaterial10Enabled) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    val laserY = size.height * laserSweepValue
+                                    drawLine(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(Color.Transparent, finalFgCol.copy(alpha = 0.7f), Color.Transparent)
+                                        ),
+                                        start = Offset(0f, laserY),
+                                        end = Offset(size.width, laserY),
+                                        strokeWidth = 6f
+                                    )
+                                    // Add soft secondary laser echo
+                                    val echoY = size.height * (laserSweepValue - 0.08f)
+                                    drawLine(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(Color.Transparent, finalFgCol.copy(alpha = 0.25f), Color.Transparent)
+                                        ),
+                                        start = Offset(0f, echoY),
+                                        end = Offset(size.width, echoY),
+                                        strokeWidth = 3f
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = if (isMaterial10Enabled) "🔮 MATERIAL 10 RESONATOR COORDS READY" else "Real-time Styled QR Ready",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.sp,
+                            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    val content = viewModel.getFormattedContent()
+                                    clipboardManager.setText(AnnotatedString(content))
+                                    Toast.makeText(context, "Copied content payload", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CopyAll,
+                                    contentDescription = "Copy QR payload",
+                                    tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onBackground
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    "Copy", 
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    generatedBitmap?.let { bitmap ->
+                                        ShareUtils.shareBitmap(context, bitmap)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("qr_share_image_button"),
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share QR code image",
+                                    tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    "Share", 
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    viewModel.saveGeneratedCodeInHistory()
+                                    Toast.makeText(context, "Saved to history library", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("qr_generate_save_button"),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                    contentColor = if (isMaterial10Enabled) Color(0xFF0C0E14) else MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Save, 
+                                    contentDescription = "Save template"
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Save", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(200.dp)
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(if (isMaterial10Enabled) Color.Black.copy(alpha = 0.4f) else MaterialTheme.colorScheme.background)
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(24.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCode,
+                                    contentDescription = "Draft setup icon",
+                                    tint = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.4f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                                    modifier = Modifier.size(56.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    "Input text or URLs above.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                                    modifier = Modifier.padding(horizontal = 20.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -1673,43 +1813,58 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         OutlinedButton(
                             onClick = {
                                 clipboardManager.setText(AnnotatedString(record.content))
-                                Toast.makeText(context, "Copied payload", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Copied payload text", Toast.LENGTH_SHORT).show()
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy text")
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy text")
+                            Text("Copy Code")
                         }
 
-                        val isWeb = record.content.startsWith("http", ignoreCase = true) == true
-                        Button(
-                            onClick = {
-                                if (isWeb) {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(record.content))
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
-                                    }
-                                } else {
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, record.content)
-                                    }
-                                    context.startActivity(Intent.createChooser(intent, "Share payload"))
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Icon(
-                                imageVector = if (isWeb) Icons.Default.OpenInBrowser else Icons.Default.Share,
-                                contentDescription = "Share details"
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isWeb) "Browse" else "Share")
+                        if (bmap != null) {
+                            OutlinedButton(
+                                onClick = {
+                                    ShareUtils.shareBitmap(context, bmap)
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = "Share Image")
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Share Image")
+                            }
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val isWeb = record.content.startsWith("http", ignoreCase = true) == true
+                    Button(
+                        onClick = {
+                            if (isWeb) {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(record.content))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, record.content)
+                                }
+                                context.startActivity(Intent.createChooser(intent, "Share text payload"))
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(
+                            imageVector = if (isWeb) Icons.Default.OpenInBrowser else Icons.Default.Send,
+                            contentDescription = "Action detail"
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (isWeb) "Browse Link" else "Share Plain Text")
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))

@@ -168,24 +168,39 @@ jobs:
           name: rock-qr-code-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Package Release Assets into ZIP
+        run: |
+          echo "📦 Packaging APK and metadata.json into clean ZIP archive..."
+          mkdir -p release-pkg
+          cp app/build/outputs/apk/debug/app-debug.apk release-pkg/rock-qr-code-debug.apk
+          cp metadata.json release-pkg/metadata.json
+          zip -r rock-qr-code-release.zip release-pkg/
+          echo "✅ ZIP packaging complete."
+
+      - name: Create or Update GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/debug/app-debug.apk
-          name: Rock QR Code v${{ github.ref_name }}
+          files: |
+            app/build/outputs/apk/debug/app-debug.apk
+            rock-qr-code-release.zip
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'latest' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('Rock QR Code v{0}', github.ref_name) || 'Rock QR Code (Latest Rolling Build)' }}
           body: |
             ### 📱 Rock QR Code Release
-            We are glad to announce the newest release of Rock QR Code!
+            
+            ${{ startsWith(github.ref, 'refs/tags/v') && 'This is a stable release of Rock QR Code!' || 'This is an automated rolling pre-release built directly from the latest push to `main`!' }}
 
             #### Key Highlights:
-            - **Tactile Material 3 Design**: Enjoy customized fluid scaling animations, tactile gemstone styling presets, and glassmorphism settings!
-            - **Robust local SQLite support (Room)**: History of scanned and generated elements kept offline-first, privately and fast.
-            - **KSP2/Gradle-native compilation**: Build pipelines are ultra-fast and fully stable.
+            - **Expressive Neon Matrix (Material 10)**: Sweeping hologram laser effects, live emission effects, and interactive mode switching.
+            - **Tactile Material 3 Theme**: Fluid custom animations, high-contrast chiseled preset coordinates, and glassmorphism.
+            - **Robust SQLite Room Database**: Local persistency for recent scans and generated QR codes.
+            - **KSP2/Gradle-native compilation**: Fast, highly optimized builds.
 
-            #### 📦 Attached Artifacts:
-            - **`app-debug.apk`**: Clean, debug-signed build ready to run on any physical Android device.
+            #### 📦 Attached Quality Artifacts:
+            - **`app-debug.apk`**: Installable Android application package (Debug-signed).
+            - **`rock-qr-code-release.zip`**: Complete package containing the installer APK and metadata JSON.
           draft: false
-          prerelease: false
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
