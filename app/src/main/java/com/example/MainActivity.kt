@@ -1741,7 +1741,14 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                     color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                                 )
                             }
+                        }
 
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Button(
                                 onClick = {
                                     viewModel.saveGeneratedCodeInHistory()
@@ -1761,6 +1768,28 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Save", fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = {
+                                    generatedBitmap?.let { bitmap ->
+                                        ShareUtils.saveBitmapToGallery(context, bitmap)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("qr_generate_download_button"),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.secondary,
+                                    contentColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onSecondary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Download, 
+                                    contentDescription = "Download to Gallery"
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Download", fontWeight = FontWeight.Bold)
                             }
                         }
                     } else {
@@ -2064,7 +2093,7 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         ) {
                             Icon(Icons.Default.ContentCopy, contentDescription = "Copy text")
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy Code")
+                            Text("Copy")
                         }
 
                         if (bmap != null) {
@@ -2076,7 +2105,18 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             ) {
                                 Icon(Icons.Default.Share, contentDescription = "Share Image")
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Share Image")
+                                Text("Share")
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    ShareUtils.saveBitmapToGallery(context, bmap)
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = "Download Image")
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Save")
                             }
                         }
                     }
