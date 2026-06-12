@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -84,8 +86,12 @@ class MainActivity : ComponentActivity() {
             val glassBorderThicknessVal by viewModel.glassBorderThickness.collectAsState()
             val glassGlowEnabledVal by viewModel.glassGlowEnabled.collectAsState()
 
-            // Force high-fidelity dark neon theme across dedicated aesthetic UI
-            val useDarkTheme = true
+            val systemInDark = isSystemInDarkTheme()
+            val useDarkTheme = when (themeMode) {
+                "DARK" -> true
+                "LIGHT" -> false
+                else -> systemInDark
+            }
 
             MyApplicationTheme(
                 darkTheme = useDarkTheme,
@@ -137,8 +143,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
     val activeTab by viewModel.activeTab.collectAsState()
-    // Force high-fidelity dark neon theme across dedicated aesthetic UI
-    val useDarkTheme = true
+    val themeMode by viewModel.themeMode.collectAsState()
+    val systemInDark = isSystemInDarkTheme()
+    val useDarkTheme = when (themeMode) {
+        "DARK" -> true
+        "LIGHT" -> false
+        else -> systemInDark
+    }
     
     val context = LocalContext.current
     var showSettingsDialog by remember { mutableStateOf(false) }
@@ -556,6 +567,13 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
 fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    val themeMode by viewModel.themeMode.collectAsState()
+    val systemInDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        "DARK" -> true
+        "LIGHT" -> false
+        else -> systemInDark
+    }
     val genFormat by viewModel.genFormat.collectAsState()
     val genStyle by viewModel.genStyle.collectAsState()
     val genFgColor by viewModel.genFgColor.collectAsState()
@@ -2820,10 +2838,10 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                 )
                             } else {
                                 // Default abstract fluid neon gradient simulation
-                                val baseGrad = if (isSystemInDarkTheme()) {
+                                val baseGrad = if (isDark) {
                                     listOf(Color(0xFF0D0F12), Color(0xFF1E2631))
                                 } else {
-                                    listOf(Color(0xFF1E2631), Color(0xFF0D0F12))
+                                    listOf(Color(0xFFEAF0F6), Color(0xFFC0D0E0))
                                 }
                                 Box(
                                     modifier = Modifier
@@ -4029,6 +4047,10 @@ fun SettingsDialog(
     val themeMode by viewModel.themeMode.collectAsState()
     val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
     val colorPreset by viewModel.colorPreset.collectAsState()
+    val activeOpacity by viewModel.glassOpacity.collectAsState()
+    val activeBlur by viewModel.glassBlurRadius.collectAsState()
+    val activeBorderThickness by viewModel.glassBorderThickness.collectAsState()
+    val activeGlow by viewModel.glassGlowEnabled.collectAsState()
 
     if (showDevProfile) {
         DeveloperProfileDialog(
@@ -4277,7 +4299,6 @@ fun SettingsDialog(
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
                 ) {
-                    val activeOpacity by viewModel.glassOpacity.collectAsState()
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -4348,7 +4369,6 @@ fun SettingsDialog(
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
                 ) {
-                    val activeBlur by viewModel.glassBlurRadius.collectAsState()
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -4414,9 +4434,6 @@ fun SettingsDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Sub-item 3: Trim Border Width & Glow Switch side by side
-                val activeBorderThickness by viewModel.glassBorderThickness.collectAsState()
-                val activeGlow by viewModel.glassGlowEnabled.collectAsState()
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -4513,6 +4530,18 @@ fun SettingsDialog(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Real-time Liquid Glass Light vs Dark Visual Preview Component
+                LiquidGlassStylePreview(
+                    activeOpacity = activeOpacity,
+                    activeBlur = activeBlur,
+                    activeBorderThickness = activeBorderThickness,
+                    activeGlow = activeGlow,
+                    colorPreset = colorPreset,
+                    dynamicColorEnabled = dynamicColorEnabled
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -5336,6 +5365,346 @@ fun DeveloperProfileDialog(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * A highly polished, interactive visual preview component showing the responsive
+ * translucency and depth difference between light and dark Liquid Glass frosted styles.
+ */
+@Composable
+fun LiquidGlassStylePreview(
+    activeOpacity: Float,
+    activeBlur: Float,
+    activeBorderThickness: Float,
+    activeGlow: Boolean,
+    colorPreset: String,
+    dynamicColorEnabled: Boolean
+) {
+    // Resolve aesthetic primary/secondary color bases using the selected preset
+    val basePrimary = if (dynamicColorEnabled) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        when (colorPreset) {
+            "MIDNIGHT" -> com.example.ui.theme.MidnightPrimary
+            "ARCTIC" -> com.example.ui.theme.ArcticPrimary
+            "OCEAN" -> com.example.ui.theme.OceanPrimary
+            "AURORA" -> com.example.ui.theme.AuroraPrimary
+            "EMERALD" -> com.example.ui.theme.EmeraldPrimary
+            else -> com.example.ui.theme.MidnightPrimary
+        }
+    }
+
+    val baseSecondary = if (dynamicColorEnabled) {
+        MaterialTheme.colorScheme.secondary
+    } else {
+        when (colorPreset) {
+            "MIDNIGHT" -> com.example.ui.theme.MidnightSecondary
+            "ARCTIC" -> com.example.ui.theme.ArcticSecondary
+            "OCEAN" -> com.example.ui.theme.OceanSecondary
+            "AURORA" -> com.example.ui.theme.AuroraSecondary
+            "EMERALD" -> com.example.ui.theme.EmeraldSecondary
+            else -> com.example.ui.theme.MidnightSecondary
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFF0E1116).copy(alpha = 0.65f))
+            .border(
+                width = 1.dp,
+                color = basePrimary.copy(alpha = 0.25f),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .padding(14.dp)
+    ) {
+        // Descriptive visual comparison header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Contrast,
+                    contentDescription = "Mirror contrast preview",
+                    tint = basePrimary,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = "FROSTED CANVAS CONTRAST",
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = basePrimary,
+                    letterSpacing = 1.sp
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.Green.copy(alpha = 0.15f))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "REAL-TIME",
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 8.sp,
+                    color = Color(0xFF00FF88)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Simulated high-contrast backdrop layer containing glowing orbits to reveal glass translucency
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFF06080B))
+                .drawBehind {
+                    // Left primary gradient orbit
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(basePrimary.copy(alpha = 0.75f), Color.Transparent),
+                            radius = size.width * 0.35f
+                        ),
+                        center = Offset(size.width * 0.25f, size.height * 0.4f),
+                        radius = size.width * 0.35f
+                    )
+                    // Right secondary gradient orbit
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(baseSecondary.copy(alpha = 0.65f), Color.Transparent),
+                            radius = size.width * 0.3f
+                        ),
+                        center = Offset(size.width * 0.75f, size.height * 0.6f),
+                        radius = size.width * 0.3f
+                    )
+                    // Accent neon center orbit
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFF00FFCC).copy(alpha = 0.35f), Color.Transparent),
+                            radius = size.width * 0.25f
+                        ),
+                        center = Offset(size.width * 0.5f, size.height * 0.5f),
+                        radius = size.width * 0.25f
+                    )
+                }
+                .padding(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // LIGHT MODE FROSTED GLASS SURFACE
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = activeOpacity))
+                        .border(
+                            width = activeBorderThickness.dp,
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.65f),
+                                    Color.White.copy(alpha = 0.15f),
+                                    Color.White.copy(alpha = 0.45f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "LIGHT GLASS",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A),
+                                fontFamily = FontFamily.Monospace
+                            )
+                            Icon(
+                                imageVector = Icons.Default.LightMode,
+                                contentDescription = "Light style icon",
+                                tint = Color(0xFF0F172A),
+                                modifier = Modifier.size(11.dp)
+                            )
+                        }
+
+                        // Miniature QR design element inside light glass
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .border(1.dp, Color(0xFF1E293B).copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                                    .background(Color.White.copy(alpha = 0.3f))
+                                    .padding(4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCode,
+                                    contentDescription = "Mini QR",
+                                    tint = Color(0xFF0F172A),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "HIGH ACCURACY",
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E293B),
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+
+                        Text(
+                            text = "Opacity: ${(activeOpacity * 100).toInt()}%",
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF334155),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+
+                // DARK MODE FROSTED GLASS SURFACE
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Black.copy(alpha = activeOpacity))
+                        .border(
+                            width = activeBorderThickness.dp,
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    basePrimary.copy(alpha = 0.65f),
+                                    baseSecondary.copy(alpha = 0.15f),
+                                    basePrimary.copy(alpha = 0.45f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .shadow(
+                            elevation = if (activeGlow) 8.dp else 0.dp,
+                            shape = RoundedCornerShape(12.dp),
+                            clip = false,
+                            ambientColor = basePrimary,
+                            spotColor = basePrimary
+                        )
+                        .padding(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "DARK GLASS",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontFamily = FontFamily.Monospace
+                            )
+                            Icon(
+                                imageVector = Icons.Default.DarkMode,
+                                contentDescription = "Dark style icon",
+                                tint = basePrimary,
+                                modifier = Modifier.size(11.dp)
+                            )
+                        }
+
+                        // Miniature QR design element inside dark glass
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .border(1.dp, basePrimary.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                                    .background(Color.Black.copy(alpha = 0.4f))
+                                    .padding(4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCode,
+                                    contentDescription = "Mini QR",
+                                    tint = basePrimary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "NEON REACTION",
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = basePrimary,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+
+                        Text(
+                            text = "Blur: ${activeBlur.toInt()}dp",
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.LightGray.copy(alpha = 0.7f),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Informative footer documentation details
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Light Glass: Maximum layout clarity",
+                fontSize = 9.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Normal
+            )
+            Text(
+                text = "Dark Glass: Immersive tactical depth",
+                fontSize = 9.sp,
+                color = basePrimary.copy(alpha = 0.85f),
+                fontWeight = FontWeight.Normal
+            )
         }
     }
 }
