@@ -122,14 +122,15 @@ class MainActivity : ComponentActivity() {
                     borderAlphaStart = if (glassGlowEnabledVal) 0.45f else 0.15f,
                     borderAlphaEnd = if (glassGlowEnabledVal) 0.15f else 0.05f,
                     isGlowEnabled = glassGlowEnabledVal,
-                    borderThickness = glassBorderThicknessVal.dp
+                    borderThickness = glassBorderThicknessVal.dp,
+                    isDark = useDarkTheme
                 )
 
                 com.example.ui.theme.LiquidGlassThemeProvider(config = glassConfig) {
                     var showSplash by remember { mutableStateOf(true) }
                     
                     if (showSplash) {
-                        RockQrSplashScreen(onSplashFinished = { showSplash = false })
+                        ChamoQrSplashScreen(onSplashFinished = { showSplash = false })
                     } else {
                         QrMainDashboard(viewModel)
                     }
@@ -242,7 +243,7 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     }
 
     val sharedPrefs = remember {
-        context.getSharedPreferences("rock_qr_settings", android.content.Context.MODE_PRIVATE)
+        context.getSharedPreferences("chamo_qr_settings", android.content.Context.MODE_PRIVATE)
     }
 
     // Runtime Permission Handler State Engine
@@ -3790,7 +3791,7 @@ fun HistoryItemCard(
 }
 
 @Composable
-fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
+fun ChamoQrSplashScreen(onSplashFinished: () -> Unit) {
     var startPulse by remember { mutableStateOf(false) }
     var startTextFade by remember { mutableStateOf(false) }
     var startColorPulse by remember { mutableStateOf(false) }

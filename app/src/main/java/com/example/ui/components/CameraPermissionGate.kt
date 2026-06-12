@@ -75,7 +75,7 @@ fun CameraPermissionGate(
     }
 
     val sharedPrefs = remember {
-        context.getSharedPreferences("rock_qr_settings", Context.MODE_PRIVATE)
+        context.getSharedPreferences("chamo_qr_settings", Context.MODE_PRIVATE)
     }
 
     // Direct permission state tracker

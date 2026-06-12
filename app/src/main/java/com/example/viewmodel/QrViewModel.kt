@@ -17,7 +17,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
 
     private val database = QrDatabase.getDatabase(application)
     private val repository = QrRepository(database.qrRecordDao())
-    private val prefs = application.getSharedPreferences("rock_qr_settings", android.content.Context.MODE_PRIVATE)
+    private val prefs = application.getSharedPreferences("chamo_qr_settings", android.content.Context.MODE_PRIVATE)
 
     // UI tab select: "SCAN", "GENERATE", "HISTORY"
     private val _activeTab = MutableStateFlow("SCAN")
