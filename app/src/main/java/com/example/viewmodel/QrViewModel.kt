@@ -85,6 +85,10 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
         _isScanning.value = true
     }
 
+    fun setScanning(enabled: Boolean) {
+        _isScanning.value = enabled
+    }
+
     // Manual/Mock Scan (crucial for streaming android environment testing)
     fun triggerManualScanText(text: String) {
         if (text.isNotBlank()) {
