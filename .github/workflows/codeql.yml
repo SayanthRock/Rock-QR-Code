@@ -65,7 +65,7 @@ jobs:
 
     - name: Build Project (Manual compilation for CodeQL)
       run: |
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew clean assembleDebug --no-daemon --no-build-cache --no-configuration-cache
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

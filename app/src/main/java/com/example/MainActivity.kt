@@ -81,12 +81,8 @@ class MainActivity : ComponentActivity() {
             val glassBorderThicknessVal by viewModel.glassBorderThickness.collectAsState()
             val glassGlowEnabledVal by viewModel.glassGlowEnabled.collectAsState()
 
-            val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
-            val useDarkTheme = when (themeMode) {
-                "DARK" -> true
-                "LIGHT" -> false
-                else -> isSystemDark
-            }
+            // Force high-fidelity dark neon theme across dedicated aesthetic UI
+            val useDarkTheme = true
 
             MyApplicationTheme(
                 darkTheme = useDarkTheme,
@@ -138,13 +134,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
     val activeTab by viewModel.activeTab.collectAsState()
-    val themeMode by viewModel.themeMode.collectAsState()
-    val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val useDarkTheme = when (themeMode) {
-        "DARK" -> true
-        "LIGHT" -> false
-        else -> isSystemDark
-    }
+    // Force high-fidelity dark neon theme across dedicated aesthetic UI
+    val useDarkTheme = true
     
     val context = LocalContext.current
     var showSettingsDialog by remember { mutableStateOf(false) }
@@ -1048,7 +1039,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             if (isSel) {
                                 if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                             } else {
-                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
                             }
                         )
                         .border(
@@ -1056,7 +1047,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             if (isSel) {
                                 Color.Transparent
                             } else {
-                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                             },
                             RoundedCornerShape(12.dp)
                         )
@@ -1071,7 +1062,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         color = if (isSel) {
                             if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onBackground
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                         }
                     )
                 }
@@ -1110,7 +1101,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             if (isSel) {
                                 if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                             } else {
-                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
                             }
                         )
                         .border(
@@ -1118,7 +1109,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             if (isSel) {
                                 Color.Transparent
                             } else {
-                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                             },
                             RoundedCornerShape(12.dp)
                         )
@@ -1133,7 +1124,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         color = if (isSel) {
                             if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onBackground
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                         },
                         textAlign = TextAlign.Center
                     )
@@ -1544,7 +1535,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             if (isSel) {
                                 if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                             } else {
-                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
                             }
                         )
                         .border(
@@ -1552,7 +1543,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                             if (isSel) {
                                 Color.Transparent
                             } else {
-                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                             },
                             RoundedCornerShape(12.dp)
                         )
@@ -1567,7 +1558,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         color = if (isSel) {
                             if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onBackground
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                         },
                         textAlign = TextAlign.Center
                     )
@@ -1582,11 +1573,11 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 .padding(top = 8.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(
-                    if (isMaterial10Enabled) Color(0xFF15181F) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                    if (isMaterial10Enabled) Color(0xFF15181F) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f)
                 )
                 .border(
                     1.dp,
-                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
                     RoundedCornerShape(12.dp)
                 )
                 .padding(12.dp)
@@ -1633,7 +1624,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 Text(
                     text = ecDesc,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                    color = if (isMaterial10Enabled) Color(0xFFD1D5DB) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                     lineHeight = 15.sp
                 )
             }
@@ -2278,12 +2269,11 @@ fun HistoryScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     if (selectedRecordForPopup != null) {
         val record = selectedRecordForPopup!!
         Dialog(onDismissRequest = { selectedRecordForPopup = null }) {
-            Card(
+            GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                cornerRadius = 24.dp
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -2822,8 +2812,9 @@ fun SettingsDialog(
         GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                .padding(8.dp)
+                .heightIn(max = 560.dp),
+            backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
             borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
         ) {
             Column(
@@ -2865,13 +2856,21 @@ fun SettingsDialog(
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                 )
 
-                // Section 1: Themes
-                Text(
-                    text = "THEME SETTINGS",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
-                )
+                // Scrollable container for settings options
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Section 1: Themes
+                    Text(
+                        text = "THEME SETTINGS",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+                    )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -3357,7 +3356,9 @@ fun SettingsDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                } // Close the Scrollable options container Column
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Done Button
                 Button(

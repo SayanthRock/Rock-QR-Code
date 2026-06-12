@@ -256,26 +256,32 @@ fun RockChiseledHeader(
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
-    borderColor: Color = MaterialTheme.colorScheme.primary,
+    backgroundColor: Color? = null,
+    borderColor: Color? = null,
     cornerRadius: Dp = 24.dp,
-    borderWidth: Dp = 1.dp,
+    borderWidth: Dp? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val activeBgColor = backgroundColor ?: surfaceColor.copy(alpha = config.glassOpacity)
+    val activeBorderColor = borderColor ?: config.primaryColor
+    val activeBorderWidth = borderWidth ?: config.borderThickness
+
     val borderBrush = Brush.linearGradient(
         colors = listOf(
-            borderColor.copy(alpha = 0.45f),
-            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-            borderColor.copy(alpha = 0.6f)
+            activeBorderColor.copy(alpha = config.borderAlphaStart),
+            config.secondaryColor.copy(alpha = config.borderAlphaEnd),
+            activeBorderColor.copy(alpha = config.borderAlphaStart * 1.30f)
         )
     )
 
     Box(
         modifier = modifier
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(cornerRadius))
-            .background(backgroundColor)
+            .background(activeBgColor)
             .border(
-                width = borderWidth,
+                width = activeBorderWidth,
                 brush = borderBrush,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(cornerRadius)
             )
@@ -295,7 +301,8 @@ fun Modifier.liquidGlass(
     shape: androidx.compose.ui.graphics.Shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
     borderAlphaStart: Float? = null,
     borderAlphaEnd: Float? = null,
-    bgAlpha: Float? = null
+    bgAlpha: Float? = null,
+    borderThickness: Dp? = null
 ) = composed {
     val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
     val primaryColor = config.primaryColor
@@ -305,6 +312,7 @@ fun Modifier.liquidGlass(
     val activeBorderAlphaStart = borderAlphaStart ?: config.borderAlphaStart
     val activeBorderAlphaEnd = borderAlphaEnd ?: config.borderAlphaEnd
     val activeBgAlpha = bgAlpha ?: config.glassOpacity
+    val activeBorderThickness = borderThickness ?: config.borderThickness
 
     val borderBrush = Brush.linearGradient(
         colors = listOf(
@@ -318,7 +326,7 @@ fun Modifier.liquidGlass(
         .clip(shape)
         .background(surfaceColor.copy(alpha = activeBgAlpha))
         .border(
-            width = 1.dp,
+            width = activeBorderThickness,
             brush = borderBrush,
             shape = shape
         )
@@ -336,19 +344,23 @@ fun GlassButton(
     content: @Composable RowScope.() -> Unit
 ) {
     val alphaVal = if (enabled) 1.0f else 0.5f
+    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val primaryColor = config.primaryColor
+    val secondaryColor = config.secondaryColor
+
     Box(
         modifier = modifier
             .alpha(alphaVal)
             .glassTouchFeedback(onClick = { if (enabled) onClick() })
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+            .background(primaryColor.copy(alpha = config.glassOpacity * 0.5f))
             .border(
-                width = 1.5.dp,
+                width = config.borderThickness,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                        primaryColor.copy(alpha = config.borderAlphaStart),
+                        secondaryColor.copy(alpha = config.borderAlphaEnd),
+                        primaryColor.copy(alpha = config.borderAlphaStart * 1.4f)
                     )
                 ),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
@@ -411,6 +423,7 @@ fun LiquidGlassScannerResultCard(
     modifier: Modifier = Modifier,
     onShowToast: ((String, com.example.viewmodel.CustomToastType) -> Unit)? = null
 ) {
+    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
@@ -440,14 +453,14 @@ fun LiquidGlassScannerResultCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.28f))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = config.glassOpacity))
             .border(
-                width = 1.dp,
+                width = config.borderThickness,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+                        config.primaryColor.copy(alpha = config.borderAlphaStart),
+                        config.secondaryColor.copy(alpha = config.borderAlphaEnd),
+                        config.primaryColor.copy(alpha = config.borderAlphaStart * 1.3f)
                     )
                 ),
                 shape = RoundedCornerShape(24.dp)

@@ -1,5 +1,6 @@
 # 📱 Rock QR Code
 
+[![Rock QR Code CI](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml)
 
 Rock QR Code is a highly polished, offline-first Material 3 Android application for scanning and generating QR codes. It features visual elements like **Glassmorphism theme settings**, customizable **geode styles**, tactile UI controls with physical scaling animations, and an automated GitHub Actions CI/CD setup.
 
