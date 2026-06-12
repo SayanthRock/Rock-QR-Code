@@ -17,6 +17,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
 
     private val database = QrDatabase.getDatabase(application)
     private val repository = QrRepository(database.qrRecordDao())
+    private val prefs = application.getSharedPreferences("rock_qr_settings", android.content.Context.MODE_PRIVATE)
 
     // UI tab select: "SCAN", "GENERATE", "HISTORY"
     private val _activeTab = MutableStateFlow("SCAN")
@@ -141,6 +142,45 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     // Logo embed style (NONE, CRYSTAL, SPARK, DIAMOND)
     val embedLogo = MutableStateFlow("NONE")
 
+    val customLogoUri = MutableStateFlow<String?>(prefs.getString("custom_logo_uri", null))
+    val customLogoBitmap = MutableStateFlow<Bitmap?>(null)
+    val customLogoScale = MutableStateFlow(prefs.getFloat("custom_logo_scale", 0.22f))
+    val customLogoShape = MutableStateFlow(prefs.getString("custom_logo_shape", "ROUNDED") ?: "ROUNDED")
+
+    fun setCustomLogoUri(uri: String?) {
+        customLogoUri.value = uri
+        prefs.edit().putString("custom_logo_uri", uri).apply()
+        if (uri != null) {
+            viewModelScope.launch {
+                val bitmap = loadBitmapFromUri(uri)
+                customLogoBitmap.value = bitmap
+            }
+        } else {
+            customLogoBitmap.value = null
+        }
+    }
+
+    fun setCustomLogoScale(value: Float) {
+        customLogoScale.value = value
+        prefs.edit().putFloat("custom_logo_scale", value).apply()
+    }
+
+    fun setCustomLogoShape(shape: String) {
+        customLogoShape.value = shape
+        prefs.edit().putString("custom_logo_shape", shape).apply()
+    }
+
+    private fun loadBitmapFromUri(uriString: String): Bitmap? {
+        return try {
+            val uri = android.net.Uri.parse(uriString)
+            val inputStream = getApplication<Application>().contentResolver.openInputStream(uri)
+            android.graphics.BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     // Error Correction Level (L, M, Q, H)
     val errorCorrectionLevel = MutableStateFlow(ErrorCorrectionLevel.H)
 
@@ -184,8 +224,15 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
 
     // Observe changes across generator state and trigger render automatically
     init {
+        // Load custom logo bitmap if saved URI exists
+        customLogoUri.value?.let { uri ->
+            viewModelScope.launch {
+                customLogoBitmap.value = loadBitmapFromUri(uri)
+            }
+        }
+
         // Collect generation options changes reactively to sync bitmap preview
-        val flowsToObserve = listOf<Flow<Any>>(
+        val flowsToObserve = listOf<Flow<Any?>>(
             genFormat, genStyle, genFgColor, genBgColor,
             wifiSsid, wifiPassword, wifiSecurity,
             phoneNum,
@@ -194,7 +241,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
             smsPhone, smsBody,
             upiVpa, upiName, upiAmount,
             contactName, contactPhone, contactEmail, contactOrg,
-            embedLogo, errorCorrectionLevel
+            embedLogo, errorCorrectionLevel, customLogoBitmap, customLogoScale, customLogoShape
         )
 
         viewModelScope.launch {
@@ -209,7 +256,10 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
                         backgroundHexColor = genBgColor.value,
                         style = genStyle.value,
                         embedLogo = embedLogo.value,
-                        errorCorrection = errorCorrectionLevel.value
+                        errorCorrection = errorCorrectionLevel.value,
+                        customLogoBitmap = customLogoBitmap.value,
+                        customLogoScale = customLogoScale.value,
+                        customLogoShape = customLogoShape.value
                     )
                 } else {
                     null
@@ -352,11 +402,35 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ------------------ SETTINGS & THEMING PERSISTENCE ------------------
-    private val prefs = application.getSharedPreferences("rock_qr_settings", android.content.Context.MODE_PRIVATE)
-
     val themeMode = MutableStateFlow(prefs.getString("theme_mode", "SYSTEM") ?: "SYSTEM")
     val dynamicColorEnabled = MutableStateFlow(prefs.getBoolean("dynamic_color", false))
     val colorPreset = MutableStateFlow(prefs.getString("color_preset", "MIDNIGHT") ?: "MIDNIGHT")
+
+    // Background Photo Customizer state properties
+    val bgPhotoUri = MutableStateFlow(prefs.getString("bg_photo_uri", null))
+    val bgPhotoBlurRadius = MutableStateFlow(prefs.getFloat("bg_photo_blur_radius", 12f))
+    val bgPhotoEnabled = MutableStateFlow(prefs.getBoolean("bg_photo_enabled", false))
+    val bgPhotoBlurEnabled = MutableStateFlow(prefs.getBoolean("bg_photo_blur_enabled", true))
+
+    fun setBgPhotoUri(uri: String?) {
+        bgPhotoUri.value = uri
+        prefs.edit().putString("bg_photo_uri", uri).apply()
+    }
+
+    fun setBgPhotoBlurRadius(value: Float) {
+        bgPhotoBlurRadius.value = value
+        prefs.edit().putFloat("bg_photo_blur_radius", value).apply()
+    }
+
+    fun setBgPhotoEnabled(enabled: Boolean) {
+        bgPhotoEnabled.value = enabled
+        prefs.edit().putBoolean("bg_photo_enabled", enabled).apply()
+    }
+
+    fun setBgPhotoBlurEnabled(enabled: Boolean) {
+        bgPhotoBlurEnabled.value = enabled
+        prefs.edit().putBoolean("bg_photo_blur_enabled", enabled).apply()
+    }
 
     // Dynamic 'Blur UI' glassmorphism settings
     val glassBlurRadius = MutableStateFlow(prefs.getFloat("glass_blur_radius", 16f))

@@ -14,7 +14,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.ui.theme.LocalLiquidGlassThemeConfig
 
 /**
@@ -25,7 +27,11 @@ import com.example.ui.theme.LocalLiquidGlassThemeConfig
 @Composable
 fun LiquidGlassBackground(
     modifier: Modifier = Modifier,
-    useDarkTheme: Boolean = isSystemInDarkTheme()
+    useDarkTheme: Boolean = isSystemInDarkTheme(),
+    bgPhotoUri: String? = null,
+    bgPhotoBlurRadius: Float = 12f,
+    bgPhotoEnabled: Boolean = false,
+    bgPhotoBlurEnabled: Boolean = true
 ) {
     val config = LocalLiquidGlassThemeConfig.current
     val infiniteTransition = rememberInfiniteTransition(label = "liquid_glass_orbit")
@@ -82,36 +88,59 @@ fun LiquidGlassBackground(
             .fillMaxSize()
             .background(baseBgColor)
     ) {
-        // 1. Blurred background fluid glowing orbits
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(radius = config.glassBlur)
-        ) {
-            val w = size.width
-            val h = size.height
-
-            // Draw glowing liquid Blur Orbit 1
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(colorBlob1, Color.Transparent),
-                    center = Offset(w * blob1StateX, h * blob1StateY),
-                    radius = size.minDimension * 0.45f
-                ),
-                radius = size.minDimension * 0.45f,
-                center = Offset(w * blob1StateX, h * blob1StateY)
+        if (bgPhotoEnabled && !bgPhotoUri.isNullOrEmpty()) {
+            AsyncImage(
+                model = bgPhotoUri,
+                contentDescription = "Custom Background Photo",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .let {
+                        if (bgPhotoBlurEnabled && bgPhotoBlurRadius > 0.1f) {
+                            it.blur(bgPhotoBlurRadius.dp)
+                        } else {
+                            it
+                        }
+                    },
+                contentScale = ContentScale.Crop
             )
-
-            // Draw glowing liquid Blur Orbit 2
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(colorBlob2, Color.Transparent),
-                    center = Offset(w * blob2StateX, h * blob2StateY),
-                    radius = size.minDimension * 0.5f
-                ),
-                radius = size.minDimension * 0.5f,
-                center = Offset(w * blob2StateX, h * blob2StateY)
+            // Frosted dark overlay to sustain crisp aesthetic legibility and high contrast
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.55f))
             )
+        } else {
+            // 1. Blurred background fluid glowing orbits
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(radius = config.glassBlur)
+            ) {
+                val w = size.width
+                val h = size.height
+
+                // Draw glowing liquid Blur Orbit 1
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colorBlob1, Color.Transparent),
+                        center = Offset(w * blob1StateX, h * blob1StateY),
+                        radius = size.minDimension * 0.45f
+                    ),
+                    radius = size.minDimension * 0.45f,
+                    center = Offset(w * blob1StateX, h * blob1StateY)
+                )
+
+                // Draw glowing liquid Blur Orbit 2
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colorBlob2, Color.Transparent),
+                        center = Offset(w * blob2StateX, h * blob2StateY),
+                        radius = size.minDimension * 0.5f
+                    ),
+                    radius = size.minDimension * 0.5f,
+                    center = Offset(w * blob2StateX, h * blob2StateY)
+                )
+            }
         }
 
         // 2. Cybernetic matrix dot raster pattern representing precision coordinate tracking (Sharp layer)

@@ -25,7 +25,10 @@ object QrCodeGenerator {
         backgroundHexColor: String = "#FFFFFF",
         style: QrStyle = QrStyle.CLASSIC,
         embedLogo: String = "NONE", // NONE, CRYSTAL, SPARK, DIAMOND
-        errorCorrection: ErrorCorrectionLevel = ErrorCorrectionLevel.H
+        errorCorrection: ErrorCorrectionLevel = ErrorCorrectionLevel.H,
+        customLogoBitmap: Bitmap? = null,
+        customLogoScale: Float = 0.22f,
+        customLogoShape: String = "ROUNDED"
     ): Bitmap? {
         if (content.isEmpty()) return null
         return try {
@@ -103,24 +106,75 @@ object QrCodeGenerator {
             if (embedLogo != "NONE") {
                 val cx = width / 2f
                 val cy = height / 2f
-                val logoSize = width * 0.22f
+                val logoSize = width * customLogoScale
                 val halfSize = logoSize / 2f
 
                 // Draw background mask/backplate to block out QR dots in error correction zone
                 paint.color = bgColor
                 paint.style = Paint.Style.FILL
                 val backplateRect = RectF(cx - halfSize - 4f, cy - halfSize - 4f, cx + halfSize + 4f, cy + halfSize + 4f)
-                canvas.drawRoundRect(backplateRect, logoSize * 0.35f, logoSize * 0.35f, paint)
+                
+                if (embedLogo == "CUSTOM_IMAGE") {
+                    when (customLogoShape) {
+                        "CIRCLE" -> canvas.drawCircle(cx, cy, halfSize + 4f, paint)
+                        "ROUNDED" -> canvas.drawRoundRect(backplateRect, logoSize * 0.35f, logoSize * 0.35f, paint)
+                        else -> canvas.drawRect(backplateRect, paint)
+                    }
+                } else {
+                    canvas.drawRoundRect(backplateRect, logoSize * 0.35f, logoSize * 0.35f, paint)
+                }
 
                 // Optional neon stroke outline for the logo backplate
                 paint.color = fgColor
                 paint.style = Paint.Style.STROKE
                 paint.strokeWidth = 3f
-                canvas.drawRoundRect(backplateRect, logoSize * 0.35f, logoSize * 0.35f, paint)
+                if (embedLogo == "CUSTOM_IMAGE") {
+                    when (customLogoShape) {
+                        "CIRCLE" -> canvas.drawCircle(cx, cy, halfSize + 4f, paint)
+                        "ROUNDED" -> canvas.drawRoundRect(backplateRect, logoSize * 0.35f, logoSize * 0.35f, paint)
+                        else -> canvas.drawRect(backplateRect, paint)
+                    }
+                } else {
+                    canvas.drawRoundRect(backplateRect, logoSize * 0.35f, logoSize * 0.35f, paint)
+                }
 
                 paint.style = Paint.Style.FILL
                 
                 when (embedLogo) {
+                    "CUSTOM_IMAGE" -> {
+                        if (customLogoBitmap != null) {
+                            try {
+                                val destRect = RectF(
+                                    cx - halfSize * 0.85f,
+                                    cy - halfSize * 0.85f,
+                                    cx + halfSize * 0.85f,
+                                    cy + halfSize * 0.85f
+                                )
+                                canvas.save()
+                                val clipPath = android.graphics.Path()
+                                when (customLogoShape) {
+                                    "CIRCLE" -> {
+                                        clipPath.addCircle(cx, cy, halfSize * 0.85f, android.graphics.Path.Direction.CW)
+                                        canvas.clipPath(clipPath)
+                                    }
+                                    "ROUNDED" -> {
+                                        val roundedRect = RectF(destRect)
+                                        clipPath.addRoundRect(roundedRect, halfSize * 0.25f, halfSize * 0.25f, android.graphics.Path.Direction.CW)
+                                        canvas.clipPath(clipPath)
+                                    }
+                                    "SQUARE" -> {
+                                        clipPath.addRect(destRect, android.graphics.Path.Direction.CW)
+                                        canvas.clipPath(clipPath)
+                                    }
+                                    // NONE draws raw bounds
+                                }
+                                canvas.drawBitmap(customLogoBitmap, null, destRect, paint)
+                                canvas.restore()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
                     "CRYSTAL" -> {
                         // Drawing a beautiful faceted gemstone shape using Path
                         val path = android.graphics.Path().apply {
@@ -176,6 +230,49 @@ object QrCodeGenerator {
                             close()
                         }
                         canvas.drawPath(pathIn, paint)
+                    }
+                    "HEART" -> {
+                        // Beautiful elegant heart vector drawn on canvas
+                        val path = android.graphics.Path().apply {
+                            val x = cx
+                            val y = cy - halfSize * 0.25f
+                            val d = logoSize * 0.8f
+                            moveTo(x, y + d / 4f)
+                            cubicTo(x + d / 4f, y - d / 2f, x + d, y, x, y + d * 0.85f)
+                            cubicTo(x - d, y, x - d / 4f, y - d / 2f, x, y + d / 4f)
+                            close()
+                        }
+                        canvas.drawPath(path, paint)
+                    }
+                    "STAR" -> {
+                        // Precise 5-point star path
+                        val path = android.graphics.Path()
+                        val rOuter = halfSize * 0.9f
+                        val rInner = halfSize * 0.38f
+                        for (i in 0 until 10) {
+                            val angle = i * Math.PI / 5 - Math.PI / 2
+                            val r = if (i % 2 == 0) rOuter else rInner
+                            val px = cx + Math.cos(angle).toFloat() * r
+                            val py = cy + Math.sin(angle).toFloat() * r
+                            if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                        }
+                        path.close()
+                        canvas.drawPath(path, paint)
+                    }
+                    else -> {
+                        // Treat as Emoji or custom letters directly
+                        try {
+                            paint.textSize = logoSize * 0.65f
+                            paint.textAlign = Paint.Align.CENTER
+                            paint.style = Paint.Style.FILL
+                            
+                            val metrics = paint.fontMetrics
+                            val textHeight = metrics.descent - metrics.ascent
+                            val textOffset = (textHeight / 2) - metrics.descent
+                            canvas.drawText(embedLogo, cx, cy + textOffset, paint)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
                 }
             }

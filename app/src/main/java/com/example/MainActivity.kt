@@ -56,6 +56,8 @@ import com.example.utils.QrCodeGenerator
 import com.example.utils.ShareUtils
 import com.example.viewmodel.QrViewModel
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -141,9 +143,20 @@ fun QrMainDashboard(viewModel: QrViewModel = viewModel()) {
     var showSettingsDialog by remember { mutableStateOf(false) }
     val toastMessage by viewModel.toastEvent.collectAsState()
 
+    val bgPhotoUri by viewModel.bgPhotoUri.collectAsState()
+    val bgPhotoBlurRadius by viewModel.bgPhotoBlurRadius.collectAsState()
+    val bgPhotoEnabled by viewModel.bgPhotoEnabled.collectAsState()
+    val bgPhotoBlurEnabled by viewModel.bgPhotoBlurEnabled.collectAsState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Dynamic floating liquid orbit backdrop
-        LiquidGlassBackground(useDarkTheme = useDarkTheme)
+        LiquidGlassBackground(
+            useDarkTheme = useDarkTheme,
+            bgPhotoUri = bgPhotoUri,
+            bgPhotoBlurRadius = bgPhotoBlurRadius,
+            bgPhotoEnabled = bgPhotoEnabled,
+            bgPhotoBlurEnabled = bgPhotoBlurEnabled
+        )
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -550,6 +563,11 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val errorCorrectionLevel by viewModel.errorCorrectionLevel.collectAsState()
     val generatedBitmap by viewModel.generatedBitmap.collectAsState()
 
+    val bgPhotoUri by viewModel.bgPhotoUri.collectAsState()
+    val bgPhotoBlurRadius by viewModel.bgPhotoBlurRadius.collectAsState()
+    val bgPhotoEnabled by viewModel.bgPhotoEnabled.collectAsState()
+    val bgPhotoBlurEnabled by viewModel.bgPhotoBlurEnabled.collectAsState()
+
     // Parameters
     val plainText by viewModel.plainText.collectAsState()
     val urlLink by viewModel.urlLink.collectAsState()
@@ -570,6 +588,21 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     val contactPhone by viewModel.contactPhone.collectAsState()
     val contactEmail by viewModel.contactEmail.collectAsState()
     val contactOrg by viewModel.contactOrg.collectAsState()
+
+    val customLogoUri by viewModel.customLogoUri.collectAsState()
+    val customLogoBitmap by viewModel.customLogoBitmap.collectAsState()
+    val customLogoScale by viewModel.customLogoScale.collectAsState()
+    val customLogoShape by viewModel.customLogoShape.collectAsState()
+
+    val logoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.setCustomLogoUri(uri.toString())
+            viewModel.embedLogo.value = "CUSTOM_IMAGE"
+            viewModel.showToast("Custom overlay logo loaded successfully!", com.example.viewmodel.CustomToastType.SUCCESS)
+        }
+    }
 
     // Active design mode: "STANDARD" or the futuristic "MATERIAL_10"
     var isMaterial10Enabled by remember { mutableStateOf(true) }
@@ -1108,56 +1141,483 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onBackground
         )
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val logoOptions = listOf(
+            val row1 = listOf(
                 "NONE" to "Direct Classic",
                 "CRYSTAL" to "Chiseled Gem",
-                "SPARK" to "Star Spark",
-                "DIAMOND" to "Cyber Diamond"
+                "SPARK" to "Star Spark"
             )
-            logoOptions.forEach { (option, label) ->
-                val isSel = activeEmbedLogo == option
+            val row2 = listOf(
+                "DIAMOND" to "Cyber Diamond",
+                "HEART" to "Love Heart",
+                "STAR" to "Magic Star"
+            )
+            val row3 = listOf(
+                "CUSTOM_IMAGE" to "Custom Device Logo 🖼️"
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row1.forEach { (option, label) ->
+                    val isSel = activeEmbedLogo == option
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSel) {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                } else {
+                                    if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
+                                }
+                            )
+                            .border(
+                                1.dp,
+                                if (isSel) {
+                                    Color.Transparent
+                                } else {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                                },
+                                RoundedCornerShape(12.dp)
+                            )
+                            .clickable { viewModel.embedLogo.value = option }
+                            .testTag("logo_style_$option"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                            color = if (isSel) {
+                                if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                            },
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row2.forEach { (option, label) ->
+                    val isSel = activeEmbedLogo == option
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSel) {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                } else {
+                                    if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
+                                }
+                            )
+                            .border(
+                                1.dp,
+                                if (isSel) {
+                                    Color.Transparent
+                                } else {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                                },
+                                RoundedCornerShape(12.dp)
+                            )
+                            .clickable { viewModel.embedLogo.value = option }
+                            .testTag("logo_style_$option"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                            color = if (isSel) {
+                                if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                            },
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row3.forEach { (option, label) ->
+                    val isSel = activeEmbedLogo == option
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSel) {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                } else {
+                                    if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
+                                }
+                            )
+                            .border(
+                                1.dp,
+                                if (isSel) {
+                                    Color.Transparent
+                                } else {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                                },
+                                RoundedCornerShape(12.dp)
+                            )
+                            .clickable { viewModel.embedLogo.value = option }
+                            .testTag("logo_style_$option"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                            color = if (isSel) {
+                                if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                            },
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+
+        if (activeEmbedLogo == "CUSTOM_IMAGE") {
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(
+                        if (isMaterial10Enabled) Color(0xFF15181F) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f)
+                    )
+                    .border(
+                        1.dp,
+                        if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                        RoundedCornerShape(14.dp)
+                    )
+                    .padding(14.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AddPhotoAlternate,
+                            contentDescription = "Upload Custom Logo",
+                            tint = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Central Custom Image Overlay",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = "Choose a clean PNG or JPG image from local files.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Image Preview box
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.Black.copy(alpha = 0.25f))
+                                .border(
+                                    1.dp,
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.3f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    RoundedCornerShape(10.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (customLogoUri != null) {
+                                AsyncImage(
+                                    model = customLogoUri,
+                                    contentDescription = "Overlay logo thumbnail",
+                                    modifier = Modifier.size(54.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = "No Image Selected",
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
+                        // Select buttons
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Button(
+                                onClick = { logoPickerLauncher.launch("image/*") },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                    contentColor = if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PhotoLibrary,
+                                        contentDescription = "Pick logo icon",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = if (customLogoUri != null) "Choose Different Image" else "Select Local Image Logo",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+
+                            if (customLogoUri != null) {
+                                Text(
+                                    text = "Logo loaded into QR core. To ensure bulletproof scan readability, High (H) error correction is auto-enabling.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                    fontSize = 9.sp
+                                )
+                            }
+                        }
+                    }
+
+                    if (customLogoUri != null) {
+                        Divider(
+                            color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+
+                        // 1. Clipping Frame Mask
+                        Text(
+                            text = "Clipping Frame Mask",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val shapes = listOf(
+                                "ROUNDED" to "Rounded ▢",
+                                "CIRCLE" to "Circular ◯",
+                                "SQUARE" to "Sharp Square █"
+                            )
+                            shapes.forEach { (shape, name) ->
+                                val isShapeSel = customLogoShape == shape
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(36.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(
+                                            if (isShapeSel) {
+                                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                            } else {
+                                                Color.Black.copy(alpha = 0.15f)
+                                            }
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (isShapeSel) {
+                                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                            } else {
+                                                Color.Transparent
+                                            },
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable { viewModel.setCustomLogoShape(shape) }
+                                        .testTag("custom_logo_shape_$shape"),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = name,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isShapeSel) {
+                                            if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // 2. Custom Logo Scale Slider
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Overlay Logo Scale: ${(customLogoScale * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                IconButton(
+                                    onClick = { viewModel.setCustomLogoScale((customLogoScale - 0.01f).coerceIn(0.15f, 0.30f)) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Text("-", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary)
+                                }
+                                IconButton(
+                                    onClick = { viewModel.setCustomLogoScale((customLogoScale + 0.01f).coerceIn(0.15f, 0.30f)) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Text("+", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+
+                        Slider(
+                            value = customLogoScale,
+                            onValueChange = { viewModel.setCustomLogoScale(it) },
+                            valueRange = 0.15f..0.30f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                activeTrackColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = if (isMaterial10Enabled) Color.Gray.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(24.dp)
+                                .testTag("custom_logo_scale_slider")
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        var customLogoText by remember { mutableStateOf("") }
+        LaunchedEffect(activeEmbedLogo) {
+            if (activeEmbedLogo !in listOf("NONE", "CRYSTAL", "SPARK", "DIAMOND", "HEART", "STAR", "CUSTOM_IMAGE")) {
+                customLogoText = activeEmbedLogo
+            } else {
+                customLogoText = ""
+            }
+        }
+
+        OutlinedTextField(
+            value = customLogoText,
+            onValueChange = { newVal ->
+                val trimmed = newVal.take(4) // Keeps center overlay small for scan rate
+                customLogoText = trimmed
+                if (trimmed.isNotEmpty()) {
+                    viewModel.embedLogo.value = trimmed
+                } else {
+                    viewModel.embedLogo.value = "NONE"
+                }
+            },
+            label = { Text("Custom Center Emblem (Emoji or Initials)") },
+            placeholder = { Text("e.g. ❤️, 🚀, QR, ME") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+            ),
+            trailingIcon = {
+                if (customLogoText.isNotEmpty()) {
+                    IconButton(onClick = {
+                        customLogoText = ""
+                        viewModel.embedLogo.value = "NONE"
+                    }) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Clear Custom Logo")
+                    }
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val emojiPresets = listOf("🔗", "🚀", "🦎", "⚡", "🔥", "🌟", "📱", "📧", "💎", "👾", "❤️")
+            emojiPresets.forEach { emojiPreset ->
+                val isSelected = activeEmbedLogo == emojiPreset
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(
-                            if (isSel) {
-                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            if (isSelected) {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.2f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                             } else {
-                                if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.25f)
                             }
                         )
                         .border(
                             1.dp,
-                            if (isSel) {
-                                Color.Transparent
+                            if (isSelected) {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
                             } else {
-                                if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                             },
-                            RoundedCornerShape(12.dp)
+                            RoundedCornerShape(20.dp)
                         )
-                        .clickable { viewModel.embedLogo.value = option }
-                        .testTag("logo_style_$option"),
-                    contentAlignment = Alignment.Center
+                        .clickable {
+                            customLogoText = emojiPreset
+                            viewModel.embedLogo.value = emojiPreset
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text(
-                        text = label,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp,
-                        color = if (isSel) {
-                            if (isMaterial10Enabled) Color(0xFF0B0C0E) else MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-                        },
-                        textAlign = TextAlign.Center
-                    )
+                    Text(text = emojiPreset, fontSize = 16.sp)
                 }
             }
         }
@@ -1294,6 +1754,150 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                     }
                                 )
                             }
+                        }
+                    }
+                }
+
+                // Foreground Customizer Swatches
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "B. Foreground Color Customizer Swatches",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    val fgSwatches = listOf(
+                        "Obsidian" to "#0A0A0A",
+                        "Cyan" to "#00FFCC",
+                        "Violet" to "#CC33FF",
+                        "Jade" to "#00FF66",
+                        "Gold" to "#EAA21D",
+                        "Garnet" to "#FF3366",
+                        "Blue" to "#1A73E8",
+                        "White" to "#FFFFFF"
+                    )
+                    fgSwatches.forEach { (name, hex) ->
+                        val isMatched = genFgColor.equals(hex, ignoreCase = true)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.genFgColor.value = hex }
+                                .padding(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(ChiseledOctagonShape)
+                                    .background(Color(android.graphics.Color.parseColor(hex)))
+                                    .border(
+                                        width = if (isMatched) 2.5.dp else 1.dp,
+                                        color = if (isMatched) {
+                                            if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                        } else {
+                                            Color.White.copy(alpha = 0.25f)
+                                        },
+                                        shape = ChiseledOctagonShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isMatched) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = if (hex.equals("#FFFFFF", ignoreCase = true)) Color.Black else Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 9.sp,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (isMatched) 1.0f else 0.6f),
+                                fontWeight = if (isMatched) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                // Background Customizer Swatches
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "C. Background Color Customizer Swatches",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    val bgSwatches = listOf(
+                        "Cotton" to "#FFFFFF",
+                        "Pitch" to "#0B0C0E",
+                        "Velvet" to "#121316",
+                        "Astral" to "#0A0512",
+                        "Chamber" to "#051A0D",
+                        "Clay" to "#FFFDF9",
+                        "Slate" to "#15181F",
+                        "Charcoal" to "#333333"
+                    )
+                    bgSwatches.forEach { (name, hex) ->
+                        val isMatched = genBgColor.equals(hex, ignoreCase = true)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.genBgColor.value = hex }
+                                .padding(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(ChiseledOctagonShape)
+                                    .background(Color(android.graphics.Color.parseColor(hex)))
+                                    .border(
+                                        width = if (isMatched) 2.5.dp else 1.dp,
+                                        color = if (isMatched) {
+                                            if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                        } else {
+                                            Color.White.copy(alpha = 0.25f)
+                                        },
+                                        shape = ChiseledOctagonShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isMatched) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = if (hex.equals("#FFFFFF", ignoreCase = true)) Color.Black else Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 9.sp,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (isMatched) 1.0f else 0.6f),
+                                fontWeight = if (isMatched) FontWeight.Bold else FontWeight.Normal
+                            )
                         }
                     }
                 }
@@ -1660,6 +2264,450 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             }
         }
 
+        // Step 6: Generator Background Photo Suite
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "6. Generator & App Background Photo Suite",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Replace the abstract orbits with rich geological patterns, rock textures, or your own custom photos with full frost blur controls.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        val photoPickerLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                viewModel.setBgPhotoUri(uri.toString())
+                viewModel.setBgPhotoEnabled(true)
+                viewModel.showToast("Custom geological backplate applied!", com.example.viewmodel.CustomToastType.SUCCESS)
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (isMaterial10Enabled) Color(0xFF15181F) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f)
+                )
+                .border(
+                    1.dp,
+                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                    RoundedCornerShape(16.dp)
+                )
+                .padding(16.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Feature activation toggle switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "Background Photo Mode",
+                            tint = if (bgPhotoEnabled) {
+                                if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            },
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Enable Custom Backplate",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = "Toggles background graphic overlay",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                    Switch(
+                        checked = bgPhotoEnabled,
+                        onCheckedChange = { viewModel.setBgPhotoEnabled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = if (isMaterial10Enabled) Color(0xFF0B0C0E) else Color.White,
+                            checkedTrackColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = Color.Gray,
+                            uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.5f)
+                        )
+                    )
+                }
+
+                if (bgPhotoEnabled) {
+                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+
+                    // 1. Photos Selectors Row (Presets + Gallery Picker)
+                    Text(
+                        text = "Select Background Image Preset:",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val presets = listOf(
+                            Triple("Cosmic Ore", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80", "🌌"),
+                            Triple("Neon Agate", "https://images.unsplash.com/photo-1576016770956-debb63d90029?auto=format&fit=crop&w=800&q=80", "🍀"),
+                            Triple("Volcanic Ruby", "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80", "🔥"),
+                            Triple("Ice Glacier", "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=800&q=80", "❄️"),
+                            Triple("Jade Quartz", "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=800&q=80", "🍃")
+                        )
+
+                        // A highly stylized custom picker item
+                        val isCustomPicked = bgPhotoUri != null && !presets.any { it.second == bgPhotoUri }
+                        Box(
+                            modifier = Modifier
+                                .size(width = 110.dp, height = 75.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    if (isCustomPicked) {
+                                        if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                    } else {
+                                        Color(0xFF22252C)
+                                    }
+                                )
+                                .border(
+                                    width = if (isCustomPicked) 2.dp else 1.dp,
+                                    color = if (isCustomPicked) {
+                                        if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                    } else {
+                                        Color.White.copy(alpha = 0.1f)
+                                    },
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .clickable { photoPickerLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AddPhotoAlternate,
+                                    contentDescription = "Pick Custom Image",
+                                    tint = if (isCustomPicked) {
+                                        if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                    } else {
+                                        Color.White.copy(alpha = 0.70f)
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (isCustomPicked) "Custom Picked" else "Custom Gallery",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
+                        // Presets
+                        presets.forEach { (name, url, emoji) ->
+                            val isSelected = bgPhotoUri == url
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 110.dp, height = 75.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF1E2127))
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) {
+                                            if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                        } else {
+                                            Color.White.copy(alpha = 0.1f)
+                                        },
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable {
+                                        viewModel.setBgPhotoUri(url)
+                                        viewModel.showToast("$name applied!", com.example.viewmodel.CustomToastType.INFO)
+                                    }
+                            ) {
+                                // Background preview representation (Coil image or stylized overlay)
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = name,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                // Dark mask
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f))
+                                            )
+                                        )
+                                )
+                                // Label + Emoji
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(6.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    horizontalAlignment = Alignment.Start
+                                ) {
+                                    Text(text = emoji, fontSize = 16.sp)
+                                    Text(
+                                        text = name,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+
+                                if (isSelected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = Color.Black,
+                                            modifier = Modifier.size(10.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Apply Gaussian Blur toggle switch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BlurOn,
+                                contentDescription = "Gaussian Blur Effect",
+                                tint = if (bgPhotoBlurEnabled) {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                },
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "Apply Gaussian Blur",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                Text(
+                                    text = "Blurs background to improve QR code contrast",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = bgPhotoBlurEnabled,
+                            onCheckedChange = { 
+                                viewModel.setBgPhotoBlurEnabled(it)
+                                if (it) {
+                                    viewModel.showToast("Gaussian blur enabled for better QR readability!", com.example.viewmodel.CustomToastType.SUCCESS)
+                                } else {
+                                    viewModel.showToast("Gaussian blur disabled.", com.example.viewmodel.CustomToastType.INFO)
+                                }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = if (isMaterial10Enabled) Color(0xFF0B0C0E) else Color.White,
+                                checkedTrackColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                uncheckedThumbColor = Color.Gray,
+                                uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.5f)
+                            ),
+                            modifier = Modifier.testTag("bg_photo_blur_toggle")
+                        )
+                    }
+
+                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+
+                    // 2. Blur controls with + and - quick adjustments and full precision Slider
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Backplate Frost Blur Radius:",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = if (bgPhotoBlurRadius < 0.2f) "0 dp (Sharp Clear)" else "${bgPhotoBlurRadius.toInt()} dp",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    // Dynamic slider control
+                    Slider(
+                        value = bgPhotoBlurRadius,
+                        onValueChange = { viewModel.setBgPhotoBlurRadius(it) },
+                        valueRange = 0f..25f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                            activeTrackColor = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = Color.Gray.copy(alpha = 0.3f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Quick tactile "Add Blur / Remove Blur" controls
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Remove Blur completely (Sharp)
+                        Button(
+                            onClick = {
+                                viewModel.setBgPhotoBlurRadius(0f)
+                                viewModel.showToast("Background sharp mode active (0 dp blur)", com.example.viewmodel.CustomToastType.INFO)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onBackground
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                if (bgPhotoBlurRadius < 0.2f) {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                } else {
+                                    Color.Transparent
+                                }
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Visibility,
+                                    contentDescription = "Remove Blur",
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text("Remove Blur", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        // Add soft blur minus
+                        Button(
+                            onClick = {
+                                val current = (bgPhotoBlurRadius - 4f).coerceAtLeast(0f)
+                                viewModel.setBgPhotoBlurRadius(current)
+                            },
+                            enabled = bgPhotoBlurRadius > 0f,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Black.copy(alpha = 0.15f),
+                                contentColor = MaterialTheme.colorScheme.onBackground
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(0.5f)
+                        ) {
+                            Text("- Blur", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        // Add soft blur plus
+                        Button(
+                            onClick = {
+                                val current = (bgPhotoBlurRadius + 4f).coerceAtMost(25f)
+                                viewModel.setBgPhotoBlurRadius(current)
+                            },
+                            enabled = bgPhotoBlurRadius < 25f,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Black.copy(alpha = 0.15f),
+                                contentColor = MaterialTheme.colorScheme.onBackground
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(0.5f)
+                        ) {
+                            Text("+ Blur", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        // Max frost blur
+                        Button(
+                            onClick = {
+                                viewModel.setBgPhotoBlurRadius(16f)
+                                viewModel.showToast("Deep glass frost applied (16 dp blur)", com.example.viewmodel.CustomToastType.INFO)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isMaterial10Enabled) Color.Black.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onBackground
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                if (kotlin.math.abs(bgPhotoBlurRadius - 16f) < 0.5f) {
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary
+                                } else {
+                                    Color.Transparent
+                                }
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.BlurOn,
+                                    contentDescription = "Apply Frosted Blur",
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text("Frosted (16dp)", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         // Step 5: Live QR Rendering output with Material 10 3D emission, glowing borders, and holographic sweep
@@ -1935,7 +2983,10 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                         backgroundHexColor = genBgColor,
                                         style = styleEnum,
                                         embedLogo = activeEmbedLogo,
-                                        errorCorrection = errorCorrectionLevel
+                                        errorCorrection = errorCorrectionLevel,
+                                        customLogoBitmap = customLogoBitmap,
+                                        customLogoScale = customLogoScale,
+                                        customLogoShape = customLogoShape
                                     )
                                     highResBmap?.let { bitmap ->
                                         val ext = if (exportFormat == "PNG") "png" else "jpg"
@@ -2009,7 +3060,10 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                         backgroundHexColor = genBgColor,
                                         style = styleEnum,
                                         embedLogo = activeEmbedLogo,
-                                        errorCorrection = errorCorrectionLevel
+                                        errorCorrection = errorCorrectionLevel,
+                                        customLogoBitmap = customLogoBitmap,
+                                        customLogoScale = customLogoScale,
+                                        customLogoShape = customLogoShape
                                     )
                                     highResBmap?.let { bitmap ->
                                         val prefix = if (isMaterial10Enabled) "Material10_QR_" else "Rock_QR_"
