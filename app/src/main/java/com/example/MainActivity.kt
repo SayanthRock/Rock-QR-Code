@@ -4549,14 +4549,33 @@ fun SettingsDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "Rock QR Engine Pro",
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Rock QR Engine Pro",
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "v4.0 STABLE",
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "Offline-first, tactile, metamorphic coordinates scanning & building toolkit.",
                             style = MaterialTheme.typography.bodySmall,
@@ -5102,7 +5121,7 @@ fun DeveloperProfileDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Rock QR Code",
+                                        text = "Rock QR Code v4.0",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = customCyan,
@@ -5111,29 +5130,48 @@ fun DeveloperProfileDialog(
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(4.dp))
-                                            .background(customCyan.copy(alpha = 0.1f))
-                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                            .background(customCyan.copy(alpha = 0.15f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = "10k+ Users",
+                                            text = "v4.0 STABLE",
                                             fontSize = 8.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = customCyan
+                                            color = customCyan,
+                                            fontFamily = FontFamily.Monospace
                                         )
                                     }
                                 }
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Cross-platform QR code scan-build solution compiled with modern Kotlin and Node.js. Features automated secure pipelines and optimized deployment.",
+                                    text = "High-performance QR engine featuring automated CI/CD releases via GitHub Actions. Brand assets are meticulously corrected, pre-releases aligned, and redundant archives streamlined in the latest stable production release.",
                                     fontSize = 10.sp,
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    modifier = Modifier.padding(vertical = 4.dp)
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    lineHeight = 14.sp
                                 )
-                                Text(
-                                    text = "Stack: Kotlin, Compose, NodeJS, CI/CD",
-                                    fontSize = 9.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = Color.Gray
-                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Builds: APK Configured",
+                                        fontSize = 9.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = Color.Gray
+                                    )
+                                    Text(
+                                        text = "•",
+                                        fontSize = 9.sp,
+                                        color = Color.Gray
+                                    )
+                                    Text(
+                                        text = "CI/CD: GitHub Actions",
+                                        fontSize = 9.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = customCyan.copy(alpha = 0.85f)
+                                    )
+                                }
                             }
                         }
 
