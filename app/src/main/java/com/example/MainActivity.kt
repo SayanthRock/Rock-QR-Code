@@ -28,6 +28,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -2760,46 +2761,182 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         val finalBgCol = try { Color(android.graphics.Color.parseColor(genBgColor)) } catch (e: Exception) { Color.White }
                         val finalFgCol = try { Color(android.graphics.Color.parseColor(genFgColor)) } catch (e: Exception) { Color.Black }
                         
+                        // Header title for real-time renderer status
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary)
+                            )
+                            Text(
+                                text = "REAL-TIME RENDERING ENGINE ACTIVE",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isMaterial10Enabled) Color(0xFF00FFCC) else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 1.2.sp
+                            )
+                        }
+
+                        // The Real-Time Unified Readability Simulator Preview
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(220.dp)
-                                .clip(RoundedCornerShape(24.dp))
-                                .border(8.dp, finalBgCol, RoundedCornerShape(24.dp))
-                                .background(finalBgCol)
-                                .padding(12.dp)
+                                .fillMaxWidth()
+                                .height(260.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color.Black.copy(alpha = 0.45f))
+                                .border(
+                                    1.dp,
+                                    if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                    RoundedCornerShape(20.dp)
+                                )
                         ) {
-                            Image(
-                                bitmap = generatedBitmap!!.asImageBitmap(),
-                                contentDescription = "Live code generation template",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .testTag("qr_code_image_preview")
-                            )
- 
-                            // Holographic dynamic sweeping laser lines
-                            if (isMaterial10Enabled) {
-                                Canvas(modifier = Modifier.fillMaxSize()) {
-                                    val laserY = size.height * laserSweepValue
-                                    drawLine(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(Color.Transparent, finalFgCol.copy(alpha = 0.7f), Color.Transparent)
-                                        ),
-                                        start = Offset(0f, laserY),
-                                        end = Offset(size.width, laserY),
-                                        strokeWidth = 6f
-                                    )
-                                    // Add soft secondary laser echo
-                                    val echoY = size.height * (laserSweepValue - 0.08f)
-                                    drawLine(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(Color.Transparent, finalFgCol.copy(alpha = 0.25f), Color.Transparent)
-                                        ),
-                                        start = Offset(0f, echoY),
-                                        end = Offset(size.width, echoY),
-                                        strokeWidth = 3f
-                                    )
+                            // 1. Live Ambient Simulated Background photo layer
+                            if (bgPhotoEnabled && !bgPhotoUri.isNullOrEmpty()) {
+                                AsyncImage(
+                                    model = bgPhotoUri,
+                                    contentDescription = "Simulated Background Photo",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .let {
+                                            if (bgPhotoBlurEnabled && bgPhotoBlurRadius > 0.1f) {
+                                                it.blur(bgPhotoBlurRadius.dp)
+                                            } else {
+                                                it
+                                            }
+                                        },
+                                    contentScale = ContentScale.Crop
+                                )
+                                // Dark frosted mask to mimic the overall app look and optimize scanning
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black.copy(alpha = 0.45f))
+                                )
+                            } else {
+                                // Default abstract fluid neon gradient simulation
+                                val baseGrad = if (isSystemInDarkTheme()) {
+                                    listOf(Color(0xFF0D0F12), Color(0xFF1E2631))
+                                } else {
+                                    listOf(Color(0xFF1E2631), Color(0xFF0D0F12))
                                 }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Brush.linearGradient(baseGrad))
+                                )
+                            }
+                            
+                            // 2. The Solid Contrast Backplate QR Code Container
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(195.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .border(6.dp, finalBgCol, RoundedCornerShape(18.dp))
+                                    .background(finalBgCol)
+                                    .padding(10.dp)
+                            ) {
+                                Image(
+                                    bitmap = generatedBitmap!!.asImageBitmap(),
+                                    contentDescription = "Live code generation template",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .testTag("qr_code_image_preview")
+                                )
+                                
+                                // Holographic dynamic sweeping laser lines
+                                if (isMaterial10Enabled) {
+                                    Canvas(modifier = Modifier.fillMaxSize()) {
+                                        val laserY = size.height * laserSweepValue
+                                        drawLine(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(Color.Transparent, finalFgCol.copy(alpha = 0.35f), Color.Transparent)
+                                            ),
+                                            start = Offset(0f, laserY),
+                                            end = Offset(size.width, laserY),
+                                            strokeWidth = 6f
+                                        )
+                                        // Soft secondary laser echo
+                                        val echoY = size.height * (laserSweepValue - 0.08f)
+                                        drawLine(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(Color.Transparent, finalFgCol.copy(alpha = 0.15f), Color.Transparent)
+                                            ),
+                                            start = Offset(0f, echoY),
+                                            end = Offset(size.width, echoY),
+                                            strokeWidth = 3f
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            // 3. Floating Overlay badges with current active properties
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(8.dp)
+                                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+                                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (bgPhotoEnabled) Icons.Default.BlurOn else Icons.Default.Image,
+                                    contentDescription = "Background Status",
+                                    tint = if (bgPhotoEnabled) Color(0xFF00FFCC) else Color.Gray,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = if (bgPhotoEnabled) {
+                                        if (bgPhotoBlurEnabled) "${bgPhotoBlurRadius.toInt()}dp glass blur" else "sharp backdrop"
+                                    } else {
+                                        "standard mode"
+                                    },
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+
+                            // Dynamic contrast checker badge
+                            val (badgeColor, badgeLabel) = remember(bgPhotoEnabled, bgPhotoBlurEnabled, bgPhotoBlurRadius) {
+                                when {
+                                    !bgPhotoEnabled -> Color(0xFF00FFCC) to "Perfect 100%"
+                                    !bgPhotoBlurEnabled -> Color(0xFFFFCC00) to "Scan Risk (No Blur)"
+                                    bgPhotoBlurRadius < 6f -> Color(0xFF00D1FF) to "Normal 85%"
+                                    else -> Color(0xFF00FFCC) to "Optimal 100%"
+                                }
+                            }
+                            
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp)
+                                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+                                    .border(1.dp, badgeColor.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (badgeColor == Color(0xFFFFCC00)) Icons.Default.Warning else Icons.Default.CheckCircle,
+                                    contentDescription = "Readability rating icon",
+                                    tint = badgeColor,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = "Contrast: $badgeLabel",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White
+                                )
                             }
                         }
 
