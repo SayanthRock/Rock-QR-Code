@@ -127,9 +127,10 @@ class MainActivity : ComponentActivity() {
                 )
 
                 com.example.ui.theme.LiquidGlassThemeProvider(config = glassConfig) {
-                    var showSplash by remember { mutableStateOf(true) }
+                    val skipSplashPref by viewModel.skipSplashScreen.collectAsState()
+                    var showSplash by remember { mutableStateOf(!skipSplashPref) }
                     
-                    if (showSplash) {
+                    if (showSplash && !skipSplashPref) {
                         ChamoQrSplashScreen(onSplashFinished = { showSplash = false })
                     } else {
                         QrMainDashboard(viewModel)
@@ -3841,7 +3842,11 @@ fun ChamoQrSplashScreen(onSplashFinished: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(activeBackground) // Volcanic Obsidian Black Background
-            .rockFractureBackground(color = activePrimary, alpha = 0.15f), // Shaded mineral fissures
+            .rockFractureBackground(color = activePrimary, alpha = 0.15f) // Shaded mineral fissures
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null
+            ) { onSplashFinished() },
         contentAlignment = Alignment.Center
     ) {
         // Crystalline ambient back-glow
@@ -4202,6 +4207,43 @@ fun SettingsDialog(
                     Switch(
                         checked = dynamicColorEnabled,
                         onCheckedChange = { viewModel.setDynamicColorEnabled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Instant Launch Toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Instant Launch",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Skip splash screen for faster load",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+
+                    val skipSplashPref by viewModel.skipSplashScreen.collectAsState()
+                    Switch(
+                        checked = skipSplashPref,
+                        onCheckedChange = { viewModel.setSkipSplashScreen(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = MaterialTheme.colorScheme.primary,
                             checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
@@ -4704,6 +4746,8 @@ fun DeveloperProfileDialog(
         }
     }
 
+    var activeDevTab by remember { mutableStateOf("SAYANTH") }
+
     Dialog(onDismissRequest = onDismiss) {
         GlassCard(
             modifier = Modifier
@@ -4711,7 +4755,11 @@ fun DeveloperProfileDialog(
                 .padding(8.dp)
                 .heightIn(max = 620.dp),
             backgroundColor = Color(0xFF0B0C0E).copy(alpha = 0.95f),
-            borderColor = customCyan.copy(alpha = 0.4f)
+            borderColor = when (activeDevTab) {
+                "SAYANTH" -> customCyan.copy(alpha = 0.4f)
+                "AI_AGENT" -> Color(0xFFBB86FC).copy(alpha = 0.4f)
+                else -> Color(0xFFFF7F50).copy(alpha = 0.4f)
+            }
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -4728,11 +4776,15 @@ fun DeveloperProfileDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "// DEV_CREDENTIAL",
+                            text = "// CREW_PROFILE_WALL",
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 15.sp,
-                            color = customCyan,
+                            color = when (activeDevTab) {
+                                "SAYANTH" -> customCyan
+                                "AI_AGENT" -> Color(0xFFBB86FC)
+                                else -> Color(0xFFFF7F50)
+                            },
                             letterSpacing = 1.2.sp
                         )
                     }
@@ -4752,9 +4804,148 @@ fun DeveloperProfileDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 4.dp)
                         .height(1.dp)
-                        .background(customCyan.copy(alpha = 0.25f))
+                        .background(
+                            (when (activeDevTab) {
+                                "SAYANTH" -> customCyan
+                                "AI_AGENT" -> Color(0xFFBB86FC)
+                                else -> Color(0xFFFF7F50)
+                            }).copy(alpha = 0.25f)
+                        )
+                )
+
+                // Row of Avatars (Tab Buttons)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    // Sayanth Rock Avatar as Tab Button
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable { activeDevTab = "SAYANTH" }
+                            .padding(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (activeDevTab == "SAYANTH") customCyan.copy(alpha = 0.2f)
+                                    else customCyan.copy(alpha = 0.04f)
+                                )
+                                .border(
+                                    width = if (activeDevTab == "SAYANTH") 2.dp else 1.dp,
+                                    color = if (activeDevTab == "SAYANTH") customCyan else customCyan.copy(alpha = 0.3f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "SR",
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 18.sp,
+                                color = customCyan
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Sayanth",
+                            fontSize = 9.sp,
+                            fontWeight = if (activeDevTab == "SAYANTH") FontWeight.Bold else FontWeight.Normal,
+                            color = if (activeDevTab == "SAYANTH") customCyan else Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+
+                    // AI Copilot Avatar as Tab Button
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable { activeDevTab = "AI_AGENT" }
+                            .padding(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (activeDevTab == "AI_AGENT") Color(0xFFBB86FC).copy(alpha = 0.2f)
+                                    else Color(0xFFBB86FC).copy(alpha = 0.04f)
+                                )
+                                .border(
+                                    width = if (activeDevTab == "AI_AGENT") 2.dp else 1.dp,
+                                    color = if (activeDevTab == "AI_AGENT") Color(0xFFBB86FC) else Color(0xFFBB86FC).copy(alpha = 0.3f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "AI",
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 18.sp,
+                                color = Color(0xFFBB86FC)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "AI Agent",
+                            fontSize = 9.sp,
+                            fontWeight = if (activeDevTab == "AI_AGENT") FontWeight.Bold else FontWeight.Normal,
+                            color = if (activeDevTab == "AI_AGENT") Color(0xFFBB86FC) else Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+
+                    // Beta Crew Avatar as Tab Button
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable { activeDevTab = "BETA_CREW" }
+                            .padding(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (activeDevTab == "BETA_CREW") Color(0xFFFF7F50).copy(alpha = 0.2f)
+                                    else Color(0xFFFF7F50).copy(alpha = 0.04f)
+                                )
+                                .border(
+                                    width = if (activeDevTab == "BETA_CREW") 2.dp else 1.dp,
+                                    color = if (activeDevTab == "BETA_CREW") Color(0xFFFF7F50) else Color(0xFFFF7F50).copy(alpha = 0.3f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "BC",
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 18.sp,
+                                color = Color(0xFFFF7F50)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Beta Crew",
+                            fontSize = 9.sp,
+                            fontWeight = if (activeDevTab == "BETA_CREW") FontWeight.Bold else FontWeight.Normal,
+                            color = if (activeDevTab == "BETA_CREW") Color(0xFFFF7F50) else Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                // Line Separator
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .height(0.5.dp)
+                        .background(Color.White.copy(alpha = 0.1f))
                 )
 
                 // Main content
@@ -4765,8 +4956,10 @@ fun DeveloperProfileDialog(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Profile picture and header metadata
-                    Box(
+                    when (activeDevTab) {
+                        "SAYANTH" -> {
+                            // Profile picture and header metadata
+                            Box(
                         modifier = Modifier
                             .size(76.dp)
                             .clip(CircleShape)
@@ -5344,10 +5537,371 @@ fun DeveloperProfileDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+                "AI_AGENT" -> {
+                    // AI Copilot Profile
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFBB86FC).copy(alpha = 0.15f))
+                            .border(1.5.dp, Color(0xFFBB86FC), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "AI",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 28.sp,
+                            color = Color(0xFFBB86FC)
+                        )
+                        // A small pulsing purple dot in the corner
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFBB86FC))
+                                .border(1.5.dp, Color(0xFF0B0C0E), CircleShape)
+                                .align(Alignment.BottomEnd)
+                        )
+                    }
 
-                // Close Button
-                Button(
-                    onClick = onDismiss,
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "AI Coding Copilot",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    Text(
+                        text = "AI Studio Build System Agent",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFBB86FC),
+                        fontFamily = FontFamily.Monospace,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Language,
+                            contentDescription = "Deployment",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "Google AI Studio Cloud Sandbox ☁️",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Action Links
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFBB86FC).copy(alpha = 0.12f))
+                                .border(1.dp, Color(0xFFBB86FC).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                .clickable { openUrl("https://ai.studio/build") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.Language, contentDescription = "AI Studio", tint = Color(0xFFBB86FC), modifier = Modifier.size(14.dp))
+                                Text("AI Studio", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFBB86FC))
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White.copy(alpha = 0.08f))
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                .clickable { openUrl("https://deepmind.google") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.Language, contentDescription = "DeepMind", tint = Color.White, modifier = Modifier.size(14.dp))
+                                Text("DeepMind", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Profile Summary Card
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White.copy(alpha = 0.04f))
+                            .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(14.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "AGENT CONTEXT & IDENTITY",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFFBB86FC),
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        Text(
+                            text = "An intelligent development co-pilot designed to implement robust, clean-architecture Kotlin and Jetpack Compose mobile codebases instantly via iterative LLM synthesis. Empowered by Antigravity and Gemini 1.5/2.0 API layers.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.85f),
+                            textAlign = TextAlign.Start,
+                            lineHeight = 16.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Key Directives & Capabilities
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White.copy(alpha = 0.04f))
+                            .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(14.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "CORE OPERATIONS",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFFBB86FC),
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.padding(bottom = 10.dp)
+                        )
+
+                        val operations = listOf(
+                            "Architecture" to listOf("MVVM Pattern", "Clean Domain Segregations", "Type-safe Compose Navigation"),
+                            "UI/UX Design" to listOf("Material Design 3", "Dynamic Dark Schemes", "Frosted Glassmorphism Shaders"),
+                            "Persistence" to listOf("Room Databases", "Kotlin Symbol Processing", "Local DB Caching Flows")
+                        )
+
+                        operations.forEachIndexed { idx, (opGroup, items) ->
+                            if (idx > 0) Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = opGroup.uppercase(),
+                                fontSize = 9.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState())
+                            ) {
+                                items.forEach { item ->
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(Color.White.copy(alpha = 0.03f))
+                                            .border(0.5.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = item,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White.copy(alpha = 0.9f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                else -> {
+                    // Beta Crew Profile
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFF7F50).copy(alpha = 0.15f))
+                            .border(1.5.dp, Color(0xFFFF7F50), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "BC",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 28.sp,
+                            color = Color(0xFFFF7F50)
+                        )
+                        // A small pulsing coral dot in the corner
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFF7F50))
+                                .border(1.5.dp, Color(0xFF0B0C0E), CircleShape)
+                                .align(Alignment.BottomEnd)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Liquid Glass Beta Crew",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    Text(
+                        text = "Global Alpha & Beta Testers",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFFF7F50),
+                        fontFamily = FontFamily.Monospace,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Community",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "DeX, Foldables & Tablet Sandboxes 📱",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Experience Details
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White.copy(alpha = 0.04f))
+                            .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(14.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "COMMUNITY GOALS",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFFFF7F50),
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        Text(
+                            text = "Our collaborative cohort stress-tests frontier visual glassmorphism shaders, edge-to-edge layout bounds, high-contrast dynamic colors, and multi-device tactile responsive feedbacks.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.85f),
+                            textAlign = TextAlign.Start,
+                            lineHeight = 16.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Active Task Deck
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White.copy(alpha = 0.04f))
+                            .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(14.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "ACTIVE SANDBOX TESTING",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFFFF7F50),
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        val tasks = listOf(
+                            "Physical Shader Renders" to "Profiling Android hardware rendering layers under translucent backdrops.",
+                            "Edge-to-Edge Compatibility" to "Testing insets under status and action navigation bars for flawless overlays.",
+                            "Multi-size Layout Stretch" to "Ensuring zero-recomposition stutter across fluid compact, medium, and expanded canvases."
+                        )
+
+                        tasks.forEach { (title, subtitle) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Build,
+                                    contentDescription = "Test icon",
+                                    tint = Color(0xFFFF5555),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = title,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = subtitle,
+                                        fontSize = 9.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+
+        // Close Button
+        Button(
+            onClick = onDismiss,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)

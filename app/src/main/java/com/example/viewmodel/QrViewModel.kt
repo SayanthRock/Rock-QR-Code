@@ -404,6 +404,7 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     // ------------------ SETTINGS & THEMING PERSISTENCE ------------------
     val themeMode = MutableStateFlow(prefs.getString("theme_mode", "SYSTEM") ?: "SYSTEM")
     val dynamicColorEnabled = MutableStateFlow(prefs.getBoolean("dynamic_color", false))
+    val skipSplashScreen = MutableStateFlow(prefs.getBoolean("skip_splash_screen", false))
     val colorPreset = MutableStateFlow(prefs.getString("color_preset", "MIDNIGHT") ?: "MIDNIGHT")
 
     // Background Photo Customizer state properties
@@ -446,6 +447,11 @@ class QrViewModel(application: Application) : AndroidViewModel(application) {
     fun setDynamicColorEnabled(enabled: Boolean) {
         dynamicColorEnabled.value = enabled
         prefs.edit().putBoolean("dynamic_color", enabled).apply()
+    }
+
+    fun setSkipSplashScreen(enabled: Boolean) {
+        skipSplashScreen.value = enabled
+        prefs.edit().putBoolean("skip_splash_screen", enabled).apply()
     }
 
     fun setColorPreset(preset: String) {
