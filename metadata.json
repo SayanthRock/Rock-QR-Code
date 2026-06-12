@@ -1,5 +1,5 @@
 {
-  "name": "Rock QR Code",
+  "name": "Chamo QR",
   "description": "An offline-first, professional Material 3 QR Code Scanner and Custom QR Generator featuring stylish Liquid Glass frosted themes and dynamic color presets.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rock QR Code</string>
+    <string name="app_name">Chamo QR</string>
     <string name="tab_scan">Scanner</string>
     <string name="tab_generate">Generator</string>
     <string name="tab_history">History</string>

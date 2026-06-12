@@ -84,7 +84,7 @@ object ShareUtils {
     fun saveBitmapToGallery(
         context: Context, 
         bitmap: Bitmap, 
-        displayName: String = "RockQR_", 
+        displayName: String = "ChamoQR_", 
         isPng: Boolean = true,
         onShowToast: ((String, com.example.viewmodel.CustomToastType) -> Unit)? = null
     ) {
@@ -97,8 +97,8 @@ object ShareUtils {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
             put(MediaStore.MediaColumns.MIME_TYPE, mime)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Save to Pictures/RockQR folder
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/RockQR")
+                // Save to Pictures/ChamoQR folder
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ChamoQR")
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
         }
@@ -130,7 +130,7 @@ object ShareUtils {
                 resolver.update(imageUri, contentValues, null, null)
             }
             
-            val successMsg = "Downloaded successfully to Gallery (Pictures/RockQR)"
+            val successMsg = "Downloaded successfully to Gallery (Pictures/ChamoQR)"
             if (onShowToast != null) {
                 onShowToast(successMsg, com.example.viewmodel.CustomToastType.SUCCESS)
             } else {

@@ -3221,7 +3221,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                                         customLogoShape = customLogoShape
                                     )
                                     highResBmap?.let { bitmap ->
-                                        val prefix = if (isMaterial10Enabled) "Material10_QR_" else "Rock_QR_"
+                                        val prefix = if (isMaterial10Enabled) "Material10_QR_" else "Chamo_QR_"
                                         ShareUtils.saveBitmapToGallery(
                                             context = context,
                                             bitmap = bitmap,
@@ -3972,7 +3972,7 @@ fun RockQrSplashScreen(onSplashFinished: () -> Unit) {
                 modifier = Modifier.graphicsLayer { alpha = textAlpha }
             ) {
                 Text(
-                    text = "ROCK QR CODE",
+                    text = "CHAMO QR CODE",
                     fontSize = 24.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.ExtraBold,
@@ -4583,7 +4583,7 @@ fun SettingsDialog(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = "Rock QR Engine Pro",
+                                text = "Chamo QR Engine Pro",
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
@@ -5150,7 +5150,7 @@ fun DeveloperProfileDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Rock QR Code v4.0",
+                                        text = "Chamo QR Code v4.0",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = customCyan,
@@ -5306,7 +5306,7 @@ fun DeveloperProfileDialog(
 
                         // Awards
                         val awards = listOf(
-                            "Open Source Contributor" to "Maintainer of Rock QR Code",
+                            "Open Source Contributor" to "Maintainer of Chamo QR",
                             "Hackathon Winner" to "AI/ML Innovation Challenge",
                             "Academic Excellence" to "Top 1% in CS Engineering"
                         )
