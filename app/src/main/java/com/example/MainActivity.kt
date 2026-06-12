@@ -281,17 +281,7 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 hasCameraPermission = granted
             },
             onShowToast = { msg, type -> viewModel.showToast(msg, type) },
-            onShowTestPayloadPrompt = {
-                if (permissionRequestedOnce) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Or insert a test payload into the Mock simulator module below.",
-                        fontSize = 10.sp,
-                        color = Color.White.copy(alpha = 0.45f),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
+            onShowTestPayloadPrompt = null
         ) {
             if (isScanning) {
                 CameraPreview(
@@ -427,63 +417,7 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
             }
         }
 
-        // --- 4. FLOATING GLASS MOCK PARSER PANEL (BOTTOM) ---
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 16.dp, vertical = 24.dp)
-        ) {
-            GlassCard(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    var simText by remember { mutableStateOf("") }
-                    Text(
-                        text = "MOCK BEACON ANALYZER",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 1.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = simText,
-                            onValueChange = { simText = it },
-                            placeholder = { Text("Paste test URL, payee UPI, contact vCard...", fontSize = 12.sp) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            textStyle = LocalTextStyle.current.copy(fontSize = 12.sp),
-                            trailingIcon = {
-                                if (simText.isNotEmpty()) {
-                                    IconButton(onClick = { simText = "" }) {
-                                        Icon(Icons.Default.Clear, contentDescription = "Clear custom input")
-                                    }
-                                }
-                            }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                if (simText.isNotBlank()) {
-                                    viewModel.triggerManualScanText(simText)
-                                    simText = ""
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text("Mock", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
+        // Removed Floating Glass Mock Parser Panel
     }
 
     // SCANNED DIALOG RESULT VIEWER (Uses premium, high-blur Liquid Glass custom container card)
