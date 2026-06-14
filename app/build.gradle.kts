@@ -129,3 +129,34 @@ tasks.withType<Test>().configureEach {
     failOnPassedAfterRetry.set(false)
   }
 }
+
+abstract class CopyApkTask : DefaultTask() {
+  @get:InputFile
+  abstract val sourceApk: RegularFileProperty
+
+  @get:Internal
+  abstract val targetDir: DirectoryProperty
+
+  @TaskAction
+  fun copy() {
+    val src = sourceApk.get().asFile
+    val destDir = targetDir.get().asFile
+    if (src.exists()) {
+      src.copyTo(File(destDir, "Chamo QR.apk"), overwrite = true)
+      src.copyTo(File(destDir, "Chamo_QR.apk"), overwrite = true)
+      println("✅ Copied APK to root directory as 'Chamo QR.apk' and 'Chamo_QR.apk'")
+    }
+  }
+}
+
+val copyApkToWorkspace = tasks.register<CopyApkTask>("copyApkToWorkspace") {
+  sourceApk.set(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+  targetDir.set(layout.projectDirectory.dir(".."))
+}
+
+tasks.configureEach {
+  if (name == "assembleDebug") {
+    finalizedBy(copyApkToWorkspace)
+  }
+}
+
