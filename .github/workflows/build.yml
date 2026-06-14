@@ -64,6 +64,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           validate-wrappers: false
+          # Restrict cache writes to main/master branches and tags to optimize build speeds and prevent cache pollution on PRs
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Validate or Regenerate Gradle Wrapper
         run: |
@@ -168,15 +170,35 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Chamo QR.apk"
 
       - name: Upload Build Artifacts
+        id: upload-apk
         uses: actions/upload-artifact@v4
         with:
-          name: Chamo QR
-          path: "app/build/outputs/apk/debug/Chamo QR.apk"
+          name: Chamo-QR-Artifacts
+          path: |
+            app/build/outputs/apk/debug/Chamo QR.apk
+            app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Add APK to Job Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Downloadable Build Artifacts" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.upload-apk.outcome }}" = "success" ]; then
+            echo "#### 🎉 APK Generation Succeeded!" >> $GITHUB_STEP_SUMMARY
+            echo "The following artifacts have been built, signed with debug certificates, and uploaded directly to this GitHub Action run summary page:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **📱 [Download Chamo QR APKs](${{ steps.upload-apk.outputs.artifact-url }})** (Direct ZIP containing all built APK variants)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Alternative Access:** You can also download files individually from the **Artifacts** section at the bottom of this run summary page." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "#### ❌ APK Generation Failed" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the build and upload logs to identify compile or packaging errors." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
 
       - name: Generate Automatic Changelog
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo "📝 Fetching full git context for changelog..."
+          echo "📝 Fetching full git history for accurate changelog generation..."
           git fetch --prune --unshallow || true
           
           echo "🔍 Locating previous release tag..."
@@ -184,12 +206,31 @@ jobs:
           
           if [ -n "$PREV_TAG" ]; then
             echo "📄 Previous tag found: $PREV_TAG"
-            CHANGELOG=$(git log ${PREV_TAG}..HEAD --oneline --pretty=format:"- %s (%h)" || echo "- Incremental updates")
+            git log ${PREV_TAG}..HEAD --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Incremental package adjustments (v0.0.0) by CI" > raw_commits.txt
           else
-            echo "📄 No previous tag in history. Outputting recent commits..."
-            CHANGELOG=$(git log -n 15 --oneline --pretty=format:"- %s (%h)" || echo "- Initial project release")
+            echo "📄 No previous tag in repository history. Extrapolating commit logs..."
+            git log -n 25 --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Initial repository setup (v1.0.0) by CI" > raw_commits.txt
           fi
-          
+
+          # Parse and group commit entries into standardized conventional categories
+          touch feats.txt fixes.txt docs.txt chores.txt others.txt
+          while IFS= read -r line; do
+            # Cover case-insensitivity cleanly
+            lower_line=$(echo "$line" | tr '[:upper:]' '[:lower:]')
+            if [[ "$lower_line" =~ ^feat || "$lower_line" =~ ^add ]]; then
+              echo "- $line" >> feats.txt
+            elif [[ "$lower_line" =~ ^fix ]]; then
+              echo "- $line" >> fixes.txt
+            elif [[ "$lower_line" =~ ^docs || "$lower_line" =~ ^readme ]]; then
+              echo "- $line" >> docs.txt
+            elif [[ "$lower_line" =~ ^chore || "$lower_line" =~ ^refactor || "$lower_line" =~ ^ci || "$lower_line" =~ ^test || "$lower_line" =~ ^style || "$lower_line" =~ ^perf ]]; then
+              echo "- $line" >> chores.txt
+            else
+              echo "- $line" >> others.txt
+            fi
+          done < raw_commits.txt
+
+          # Build release notes template header
           cat << 'EOF' > release_notes.md
           ### 📱 Chamo QR Release
 
@@ -201,23 +242,49 @@ jobs:
           - **Robust SQLite Room Database**: Local persistency for recent scans and generated QR codes.
           - **KSP2/Gradle-native compilation**: Fast, highly optimized builds.
 
-          #### 📝 Detailed Changelog:
+          #### 📝 Structured Changelog:
           EOF
           
-          # Remove leading whitespaces from templated lines in release_notes.md for clean markdown rendering
+          # Remove leading whitespaces from templated header
           sed -i -e 's/^[[:space:]]*//' release_notes.md
-          
-          # Append the dynamic changelog commits
-          echo "$CHANGELOG" >> release_notes.md
-          
-          # Append the trailing artifact info
+
+          # Append grouped segments to build structured release logs
+          {
+            if [ -s feats.txt ]; then
+              echo ""
+              echo "##### 🚀 New Features & Capabilities"
+              cat feats.txt
+            fi
+            if [ -s fixes.txt ]; then
+              echo ""
+              echo "##### 🐛 Bug Fixes & Resilience"
+              cat fixes.txt
+            fi
+            if [ -s docs.txt ]; then
+              echo ""
+              echo "##### 📖 Documentation & Guides"
+              cat docs.txt
+            fi
+            if [ -s chores.txt ]; then
+              echo ""
+              echo "##### ⚙️ Maintenance, Refactoring & CI/CD"
+              cat chores.txt
+            fi
+            if [ -s others.txt ]; then
+              echo ""
+              echo "##### 📝 Other Incremental Adjustments"
+              cat others.txt
+            fi
+          } >> release_notes.md
+
+          # Add closing quality assurances
           cat << 'EOF' >> release_notes.md
 
           #### 📦 Attached Quality Artifacts:
           - **`Chamo QR.apk`**: Installable Android application package (Debug-signed).
           EOF
-          
-          echo "✅ Generated release_notes.md accurately."
+
+          echo "✅ Category-based structural release note compiled successfully."
           cat release_notes.md
 
       - name: Create or Update GitHub Release
