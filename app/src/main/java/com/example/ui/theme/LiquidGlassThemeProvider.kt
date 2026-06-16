@@ -9,42 +9,37 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Configuration payload representing the dynamic 'Liquid Glass' theme engine.
- * Maps conceptually to React Context state & Tailwind CSS dynamic variables,
- * providing real-time responsive design values across all child composables.
+ * Encapsulated dynamic 'Liquid Glass' theme engine.
+ * Consolidates the configuration schema, Local state container context,
+ * and standard composition provider into a static object to protect cross-package
+ * class compilation paths.
  */
-data class LiquidGlassThemeConfig(
-    val primaryColor: Color = Color(0xFF9D4EDD),
-    val secondaryColor: Color = Color(0xFF5A189A),
-    val glassBlur: Dp = 16.dp,
-    val glassOpacity: Float = 0.28f,
-    val borderAlphaStart: Float = 0.45f,
-    val borderAlphaEnd: Float = 0.15f,
-    val isGlowEnabled: Boolean = true,
-    val cornerRadius: Dp = 16.dp,
-    val borderThickness: Dp = 1.5.dp,
-    val isDark: Boolean = true
-)
+object LiquidGlassTheme {
 
-/**
- * The CompositionLocal variable representing the React-like context container.
- * This exposes the values dynamically across the full Compose hierarchy.
- */
-val LocalLiquidGlassThemeConfig: ProvidableCompositionLocal<LiquidGlassThemeConfig> = 
-    staticCompositionLocalOf { LiquidGlassThemeConfig() }
-
-/**
- * LiquidGlassThemeProvider acts as the React-equivalent context provider.
- * Allows deep child component nodes to dynamically query, react, and redraw
- * themselves when the theme preset is toggled.
- */
-@Composable
-fun LiquidGlassThemeProvider(
-    config: LiquidGlassThemeConfig,
-    content: @Composable () -> Unit
-) {
-    CompositionLocalProvider(
-        LocalLiquidGlassThemeConfig provides config,
-        content = content
+    data class Config(
+        val primaryColor: Color = Color(0xFF9D4EDD),
+        val secondaryColor: Color = Color(0xFF5A189A),
+        val glassBlur: Dp = 16.dp,
+        val glassOpacity: Float = 0.28f,
+        val borderAlphaStart: Float = 0.45f,
+        val borderAlphaEnd: Float = 0.15f,
+        val isGlowEnabled: Boolean = true,
+        val cornerRadius: Dp = 16.dp,
+        val borderThickness: Dp = 1.5.dp,
+        val isDark: Boolean = true
     )
+
+    val LocalConfig: ProvidableCompositionLocal<Config> = 
+        staticCompositionLocalOf { Config() }
+
+    @Composable
+    fun Provider(
+        config: Config,
+        content: @Composable () -> Unit
+    ) {
+        CompositionLocalProvider(
+            LocalConfig provides config,
+            content = content
+        )
+    }
 }

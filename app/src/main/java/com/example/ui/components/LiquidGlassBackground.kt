@@ -18,6 +18,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.ui.theme.LocalLiquidGlassThemeConfig
+import com.example.ui.theme.LiquidGlassThemeConfig
 
 /**
  * A beautiful, premium animated "Liquid Glass / Frosted Glass" background.
@@ -76,12 +77,44 @@ fun LiquidGlassBackground(
         label = "blob2_y"
     )
 
+    // Orbit coordinates for Blob 3 (Tertiary yellow/cyan accent aspect)
+    val blob3StateX by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(21000, easing = SineIntervalEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "blob3_x"
+    )
+    val blob3StateY by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 0.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(18000, easing = SineIntervalEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "blob3_y"
+    )
+
+    // Slow-sweeping glass reflection sheen sweep mimicking sunlight on physical glass
+    val glassSheenShift by infiniteTransition.animateFloat(
+        initialValue = -0.3f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(28000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "glass_sheen"
+    )
+
     // Primary background colors
     val baseBgColor = if (useDarkTheme) Color(0xFF0D0F12) else Color(0xFFF3F5F9)
     val dotColor = if (useDarkTheme) Color(0xFF00FFCC).copy(alpha = 0.05f) else Color(0xFF00BD9D).copy(alpha = 0.07f)
     
     val colorBlob1 = MaterialTheme.colorScheme.primary.copy(alpha = if (useDarkTheme) 0.16f else 0.10f)
     val colorBlob2 = MaterialTheme.colorScheme.secondary.copy(alpha = if (useDarkTheme) 0.14f else 0.08f)
+    val colorBlob3 = MaterialTheme.colorScheme.tertiary.copy(alpha = if (useDarkTheme) 0.12f else 0.06f)
 
     Box(
         modifier = modifier
@@ -139,6 +172,32 @@ fun LiquidGlassBackground(
                     ),
                     radius = size.minDimension * 0.5f,
                     center = Offset(w * blob2StateX, h * blob2StateY)
+                )
+
+                // Draw glowing liquid Blur Orbit 3
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colorBlob3, Color.Transparent),
+                        center = Offset(w * blob3StateX, h * blob3StateY),
+                        radius = size.minDimension * 0.4f
+                    ),
+                    radius = size.minDimension * 0.4f,
+                    center = Offset(w * blob3StateX, h * blob3StateY)
+                )
+
+                // 3D Glass linear highlight lustre sweeping slowly across the frosted pane
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = if (useDarkTheme) 0.012f else 0.03f),
+                            Color.White.copy(alpha = if (useDarkTheme) 0.035f else 0.07f),
+                            Color.White.copy(alpha = if (useDarkTheme) 0.012f else 0.03f),
+                            Color.Transparent
+                        ),
+                        start = Offset(w * (glassSheenShift - 0.25f), 0f),
+                        end = Offset(w * (glassSheenShift + 0.25f), h)
+                    )
                 )
             }
         }

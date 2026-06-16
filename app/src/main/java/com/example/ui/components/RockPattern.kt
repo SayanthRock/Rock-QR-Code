@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import com.example.ui.theme.LocalLiquidGlassThemeConfig
+import com.example.ui.theme.LiquidGlassThemeConfig
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

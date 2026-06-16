@@ -53,7 +53,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.QrRecord
 import com.example.ui.components.*
-import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.theme.*
 import com.example.utils.QrStyle
 import com.example.utils.QrCodeGenerator
 import com.example.utils.ShareUtils
@@ -271,7 +271,7 @@ fun ScanScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
     )
 
     // Automatically check and refresh permission state when user returns from Settings
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
@@ -1442,7 +1442,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                     }
 
                     if (customLogoUri != null) {
-                        Divider(
+                        HorizontalDivider(
                             color = if (isMaterial10Enabled) Color(0xFF00FFCC).copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                             thickness = 1.dp,
                             modifier = Modifier.padding(vertical = 4.dp)
@@ -2372,7 +2372,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                 }
 
                 if (bgPhotoEnabled) {
-                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
                     // 1. Photos Selectors Row (Presets + Gallery Picker)
                     Text(
@@ -2582,7 +2582,7 @@ fun GenerateScreen(viewModel: QrViewModel, onSettingsClick: () -> Unit) {
                         )
                     }
 
-                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
                     // 2. Blur controls with + and - quick adjustments and full precision Slider
                     Row(

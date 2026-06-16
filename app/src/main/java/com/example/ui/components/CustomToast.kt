@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.example.viewmodel.CustomToastMessage
 import com.example.viewmodel.CustomToastType
 import com.example.ui.theme.LocalLiquidGlassThemeConfig
+import com.example.ui.theme.LiquidGlassThemeConfig
 import kotlinx.coroutines.delay
 
 @Composable
