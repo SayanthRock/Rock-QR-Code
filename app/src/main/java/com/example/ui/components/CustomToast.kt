@@ -24,8 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.viewmodel.CustomToastMessage
 import com.example.viewmodel.CustomToastType
-import com.example.ui.theme.LocalLiquidGlassThemeConfig
-import com.example.ui.theme.LiquidGlassThemeConfig
+import com.example.ui.theme.LiquidGlassTheme
 import kotlinx.coroutines.delay
 
 @Composable
@@ -73,7 +72,7 @@ fun CustomToastCard(
     toastMessage: CustomToastMessage,
     modifier: Modifier = Modifier
 ) {
-    val themeConfig = LocalLiquidGlassThemeConfig.current
+    val themeConfig = LiquidGlassTheme.LocalConfig.current
     
     // Choose appropriate icon and colors based on ToastType
     val (icon, accentColor) = when (toastMessage.type) {

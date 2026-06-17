@@ -1,6 +1,6 @@
 {
-  "name": "Chamo QR",
-  "description": "An offline-first, professional Material 3 QR Code Scanner and Custom QR Generator featuring stylish Liquid Glass frosted themes and dynamic color presets.",
+  "name": "Rock Wallpapers HD",
+  "description": "An offline-first, professional Material 3 Wallpaper application featuring structured rock category catalogs, metadata-driven listings, favorites management, and stunning Liquid Glass visual styling.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

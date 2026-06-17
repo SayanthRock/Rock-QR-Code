@@ -22,30 +22,27 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.viewmodel.QrViewModel
-import com.example.ui.theme.LocalLiquidGlassThemeConfig
-import com.example.ui.theme.LiquidGlassThemeConfig
+import com.example.viewmodel.WallpaperViewModel
+import com.example.ui.theme.LiquidGlassTheme
 
 @Composable
 fun DraggableFloatingActionBar(
-    viewModel: QrViewModel,
+    viewModel: WallpaperViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val activeTab by viewModel.activeTab.collectAsState()
     val activePreset by viewModel.colorPreset.collectAsState()
 
-    // Access colors dynamically from the React-like Liquid Glass Theme Context
-    val themeConfig = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val themeConfig = com.example.ui.theme.LiquidGlassTheme.LocalConfig.current
     val primaryColor = themeConfig.primaryColor
     val secondaryColor = themeConfig.secondaryColor
 
-    // Rotate the paint/palette icon smoothly on tap
     var isRotating by remember { mutableStateOf(0f) }
     val rotationAnimation by animateFloatAsState(
         targetValue = isRotating,
         animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessLow),
-        label = "fixed_palette_spin"
+        label = "palette_spin"
     )
 
     Box(
@@ -55,7 +52,6 @@ fun DraggableFloatingActionBar(
             .padding(bottom = 16.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Futuristic Glassmorphic translucent control capsule
         Row(
             modifier = Modifier
                 .wrapContentSize()
@@ -76,7 +72,6 @@ fun DraggableFloatingActionBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Segmented interactive deck
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(22.dp))
@@ -85,27 +80,27 @@ fun DraggableFloatingActionBar(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // SCAN TAB
-                val isScanSelected = activeTab == "SCAN"
+                // EXPLORE TAB
+                val isExploreSelected = activeTab == "EXPLORE"
                 Box(
                     modifier = Modifier
-                        .testTag("fab_tab_scan")
+                        .testTag("fab_tab_explore")
                         .clip(RoundedCornerShape(18.dp))
                         .background(
-                            if (isScanSelected) primaryColor.copy(alpha = 0.22f)
+                            if (isExploreSelected) primaryColor.copy(alpha = 0.22f)
                             else Color.Transparent
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isScanSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            color = if (isExploreSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp)
                         )
-                        .height(48.dp)
+                        .height(44.dp)
                         .clickable {
                             com.example.utils.HapticUtils.vibrate(context, 35)
-                            viewModel.selectTab("SCAN")
+                            viewModel.selectTab("EXPLORE")
                         }
-                        .padding(horizontal = 14.dp),
+                        .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(
@@ -113,42 +108,43 @@ fun DraggableFloatingActionBar(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
-                            contentDescription = "Navigate to Scanner",
-                            tint = if (isScanSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            imageVector = Icons.Default.Explore,
+                            contentDescription = "Explore wallpapers",
+                            tint = if (isExploreSelected) primaryColor else Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = "SCANNER",
+                            text = "WALLS",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isScanSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            color = if (isExploreSelected) Color.White else Color.White.copy(alpha = 0.5f),
                             letterSpacing = 0.5.sp
                         )
                     }
                 }
 
-                // GENERATE TAB
-                val isGenSelected = activeTab == "GENERATE"
+                // CATEGORIES TAB
+                val isCatsSelected = activeTab == "CATEGORIES"
                 Box(
                     modifier = Modifier
-                        .testTag("fab_tab_generate")
+                        .testTag("fab_tab_categories")
                         .clip(RoundedCornerShape(18.dp))
                         .background(
-                            if (isGenSelected) primaryColor.copy(alpha = 0.22f)
+                            if (isCatsSelected) primaryColor.copy(alpha = 0.22f)
                             else Color.Transparent
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isGenSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            color = if (isCatsSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp)
                         )
-                        .height(48.dp)
+                        .height(44.dp)
                         .clickable {
                             com.example.utils.HapticUtils.vibrate(context, 35)
-                            viewModel.selectTab("GENERATE")
+                            viewModel.selectCategory(null) // Reset filter when selecting Category overview
+                            viewModel.selectTab("CATEGORIES")
                         }
-                        .padding(horizontal = 14.dp),
+                        .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(
@@ -156,42 +152,42 @@ fun DraggableFloatingActionBar(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.QrCode,
-                            contentDescription = "Navigate to Generator",
-                            tint = if (isGenSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            imageVector = Icons.Default.Category,
+                            contentDescription = "Categories",
+                            tint = if (isCatsSelected) primaryColor else Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = "GENERATOR",
+                            text = "CATS",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isGenSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            color = if (isCatsSelected) Color.White else Color.White.copy(alpha = 0.5f),
                             letterSpacing = 0.5.sp
                         )
                     }
                 }
 
-                // HISTORY TAB
-                val isHistorySelected = activeTab == "HISTORY"
+                // FAVORITES TAB
+                val isFavSelected = activeTab == "FAVORITES"
                 Box(
                     modifier = Modifier
-                        .testTag("fab_tab_history")
+                        .testTag("fab_tab_favorites")
                         .clip(RoundedCornerShape(18.dp))
                         .background(
-                            if (isHistorySelected) primaryColor.copy(alpha = 0.22f)
+                            if (isFavSelected) primaryColor.copy(alpha = 0.22f)
                             else Color.Transparent
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isHistorySelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            color = if (isFavSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp)
                         )
-                        .height(48.dp)
+                        .height(44.dp)
                         .clickable {
                             com.example.utils.HapticUtils.vibrate(context, 35)
-                            viewModel.selectTab("HISTORY")
+                            viewModel.selectTab("FAVORITES")
                         }
-                        .padding(horizontal = 14.dp),
+                        .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(
@@ -199,23 +195,65 @@ fun DraggableFloatingActionBar(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = "Navigate to History Log",
-                            tint = if (isHistorySelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "Favorites",
+                            tint = if (isFavSelected) primaryColor else Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = "HISTORY",
+                            text = "FAVS",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isHistorySelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            color = if (isFavSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+
+                // SETTINGS TAB
+                val isSettingsSelected = activeTab == "SETTINGS"
+                Box(
+                    modifier = Modifier
+                        .testTag("fab_tab_settings")
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            if (isSettingsSelected) primaryColor.copy(alpha = 0.22f)
+                            else Color.Transparent
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isSettingsSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .height(44.dp)
+                        .clickable {
+                            com.example.utils.HapticUtils.vibrate(context, 35)
+                            viewModel.selectTab("SETTINGS")
+                        }
+                        .padding(horizontal = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = if (isSettingsSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "SETS",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSettingsSelected) Color.White else Color.White.copy(alpha = 0.5f),
                             letterSpacing = 0.5.sp
                         )
                     }
                 }
             }
 
-            // Divider spacer
             Box(
                 modifier = Modifier
                     .height(24.dp)
@@ -223,11 +261,10 @@ fun DraggableFloatingActionBar(
                     .background(Color.White.copy(alpha = 0.15f))
             )
 
-            // Dynamic preset quick cycle wheel
             Box(
                 modifier = Modifier
                     .testTag("fab_theme_cycler")
-                    .size(48.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(primaryColor.copy(alpha = 0.15f))
                     .border(1.dp, primaryColor.copy(alpha = 0.40f), CircleShape)
@@ -241,12 +278,12 @@ fun DraggableFloatingActionBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Palette,
-                    contentDescription = "Cycle color options",
-                    tint = primaryColor,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .scale(rotationAnimation.let { 1f + (it % 72f) / 180f })
+                     imageVector = Icons.Default.Palette,
+                     contentDescription = "Cycle themes",
+                     tint = primaryColor,
+                     modifier = Modifier
+                         .size(18.dp)
+                         .scale(rotationAnimation.let { 1f + (it % 72f) / 180f })
                 )
             }
         }

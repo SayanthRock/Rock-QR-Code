@@ -5,26 +5,26 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [QrRecord::class], version = 1, exportSchema = false)
-abstract class QrDatabase : RoomDatabase() {
-    abstract fun qrRecordDao(): QrRecordDao
+@Database(entities = [WallpaperRecord::class], version = 1, exportSchema = false)
+abstract class WallpaperDatabase : RoomDatabase() {
+    abstract fun wallpaperDao(): WallpaperDao
 
     companion object {
         @Volatile
-        private var INSTANCE: QrDatabase? = null
+        private var INSTANCE: WallpaperDatabase? = null
 
-        fun getDatabase(context: Context): QrDatabase {
+        fun getDatabase(context: Context): WallpaperDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    QrDatabase::class.java,
-                    "rock_qr_database"
+                    WallpaperDatabase::class.java,
+                    "rock_wallpapers_database"
                 )
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance
             }
+            }
         }
     }
-}

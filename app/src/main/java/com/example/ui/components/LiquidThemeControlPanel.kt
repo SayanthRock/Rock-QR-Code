@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.viewmodel.QrViewModel
+import com.example.viewmodel.WallpaperViewModel
 import kotlinx.coroutines.delay
 
 // Information on Liquid Presets for the display terminal
@@ -48,7 +48,7 @@ val AndroidPresetsInfo = listOf(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LiquidThemeControlPanel(
-    viewModel: QrViewModel,
+    viewModel: WallpaperViewModel,
     modifier: Modifier = Modifier
 ) {
     val activePreset by viewModel.colorPreset.collectAsState()

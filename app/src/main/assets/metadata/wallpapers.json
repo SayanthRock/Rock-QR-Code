@@ -1,0 +1,110 @@
+[
+  {
+    "id": "dark_basalt",
+    "title": "Obsidian Veins",
+    "category": "DARK",
+    "url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop",
+    "tags": ["dark", "obsidian", "liquid", "neon", "luxurious"],
+    "isPremium": false
+  },
+  {
+    "id": "dark_slabs",
+    "title": "Volcanic Basalt Pillars",
+    "category": "DARK",
+    "url": "https://images.unsplash.com/photo-1533038590840-1cde6b66b7c6?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1533038590840-1cde6b66b7c6?w=400&auto=format&fit=crop",
+    "tags": ["black", "basalt", "column", "geometric"],
+    "isPremium": false
+  },
+  {
+    "id": "dark_lava",
+    "title": "Magma Core Fissure",
+    "category": "DARK",
+    "url": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&auto=format&fit=crop",
+    "tags": ["lava", "glowing", "crack", "magma", "intense"],
+    "isPremium": true
+  },
+  {
+    "id": "nature_canyon_sunset",
+    "title": "Sandstone Canyon",
+    "category": "NATURE",
+    "url": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=400&auto=format&fit=crop",
+    "tags": ["orange", "sunset", "canyon", "usa", "erosion"],
+    "isPremium": false
+  },
+  {
+    "id": "nature_rocky_peaks",
+    "title": "Glacial Dolomite Peaks",
+    "category": "NATURE",
+    "url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&auto=format&fit=crop",
+    "tags": ["alpine", "summit", "snow", "alps", "range"],
+    "isPremium": false
+  },
+  {
+    "id": "nature_sea_arch",
+    "title": "Eroded Sea Arch Cliffs",
+    "category": "NATURE",
+    "url": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&auto=format&fit=crop",
+    "tags": ["coastal", "ocean", "cliffs", "pacific", "wave"],
+    "isPremium": true
+  },
+  {
+    "id": "abstract_amethyst",
+    "title": "Siberian Amethyst Geode",
+    "category": "ABSTRACT",
+    "url": "https://images.unsplash.com/photo-1515516089376-88db1e26e9c0?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1515516089376-88db1e26e9c0?w=400&auto=format&fit=crop",
+    "tags": ["purple", "violet", "crystals", "amethyst", "geological"],
+    "isPremium": false
+  },
+  {
+    "id": "abstract_quartz",
+    "title": "Prismatic Quartz Facets",
+    "category": "ABSTRACT",
+    "url": "https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=400&auto=format&fit=crop",
+    "tags": ["gold", "refraction", "shimmer", "crystals", "mineral"],
+    "isPremium": false
+  },
+  {
+    "id": "abstract_fluorite",
+    "title": "Fluorite Cubes Grid",
+    "category": "ABSTRACT",
+    "url": "https://images.unsplash.com/photo-1599740831419-b5ed04851ea3?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1599740831419-b5ed04851ea3?w=400&auto=format&fit=crop",
+    "tags": ["green", "geometric", "cube", "specimen"],
+    "isPremium": true
+  },
+  {
+    "id": "minimal_zen_stack",
+    "title": "Pebble Cairn Stack",
+    "category": "MINIMAL",
+    "url": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&auto=format&fit=crop",
+    "tags": ["balance", "zen", "harmony", "basalt", "river"],
+    "isPremium": false
+  },
+  {
+    "id": "minimal_slate_texture",
+    "title": "Textured Charcoal Slate",
+    "category": "MINIMAL",
+    "url": "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=400&auto=format&fit=crop",
+    "tags": ["slate", "background", "charcoal", "monochrome"],
+    "isPremium": false
+  },
+  {
+    "id": "minimal_sand_ripple",
+    "title": "White Zen Wave Ripples",
+    "category": "MINIMAL",
+    "url": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=1200&auto=format&fit=crop",
+    "thumb": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=400&auto=format&fit=crop",
+    "tags": ["sand", "pattern", "peaceful", "cream", "white"],
+    "isPremium": true
+  }
+]

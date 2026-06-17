@@ -17,8 +17,7 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.ui.theme.LocalLiquidGlassThemeConfig
-import com.example.ui.theme.LiquidGlassThemeConfig
+import com.example.ui.theme.LiquidGlassTheme
 
 /**
  * A beautiful, premium animated "Liquid Glass / Frosted Glass" background.
@@ -34,7 +33,7 @@ fun LiquidGlassBackground(
     bgPhotoEnabled: Boolean = false,
     bgPhotoBlurEnabled: Boolean = true
 ) {
-    val config = LocalLiquidGlassThemeConfig.current
+    val config = LiquidGlassTheme.LocalConfig.current
     val infiniteTransition = rememberInfiniteTransition(label = "liquid_glass_orbit")
 
     // Orbit coordinates for Blob 1 (Cyan/Blue neon aspect)

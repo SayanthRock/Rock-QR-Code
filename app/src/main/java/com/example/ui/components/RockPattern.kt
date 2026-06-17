@@ -1,7 +1,6 @@
 package com.example.ui.components
 
-import com.example.ui.theme.LocalLiquidGlassThemeConfig
-import com.example.ui.theme.LiquidGlassThemeConfig
+import com.example.ui.theme.LiquidGlassTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -264,7 +263,7 @@ fun GlassCard(
     borderWidth: Dp? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val config = com.example.ui.theme.LiquidGlassTheme.LocalConfig.current
     val surfaceColor = MaterialTheme.colorScheme.surface
     val activeBgColor = backgroundColor ?: surfaceColor.copy(alpha = config.glassOpacity)
     val activeBorderColor = borderColor ?: config.primaryColor
@@ -306,7 +305,7 @@ fun Modifier.liquidGlass(
     bgAlpha: Float? = null,
     borderThickness: Dp? = null
 ) = composed {
-    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val config = com.example.ui.theme.LiquidGlassTheme.LocalConfig.current
     val primaryColor = config.primaryColor
     val secondaryColor = config.secondaryColor
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -346,7 +345,7 @@ fun GlassButton(
     content: @Composable RowScope.() -> Unit
 ) {
     val alphaVal = if (enabled) 1.0f else 0.5f
-    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val config = com.example.ui.theme.LiquidGlassTheme.LocalConfig.current
     val primaryColor = config.primaryColor
     val secondaryColor = config.secondaryColor
 
@@ -425,7 +424,7 @@ fun LiquidGlassScannerResultCard(
     modifier: Modifier = Modifier,
     onShowToast: ((String, com.example.viewmodel.CustomToastType) -> Unit)? = null
 ) {
-    val config = com.example.ui.theme.LocalLiquidGlassThemeConfig.current
+    val config = com.example.ui.theme.LiquidGlassTheme.LocalConfig.current
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
