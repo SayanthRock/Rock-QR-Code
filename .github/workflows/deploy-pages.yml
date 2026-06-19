@@ -1,0 +1,63 @@
+name: Website Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Build APK and Deploy PWA
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Fix Gradle permissions
+        run: chmod +x gradlew || true
+
+      - name: Build Android App (APK compilation)
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Prepare Web Deployment Directory
+        run: |
+          mkdir -p dist
+          
+          # Copy core static web pages and configuration
+          cp index.html manifest.json sw.js dist/
+          
+          # Copy web asset directories
+          cp -r assets dist/ || echo "⚠️ assets directory not present"
+          cp -r components dist/ || echo "⚠️ components directory not present"
+          cp -r lib dist/ || echo "⚠️ lib directory not present"
+          cp -r share dist/ || echo "⚠️ share directory not present"
+          
+          # Copy compiled brand APKs for direct downloads on Web PWA
+          cp "Rock QR.apk" dist/ || echo "⚠️ Rock QR.apk not found"
+          cp "Rock_QR.apk" dist/ || echo "⚠️ Rock_QR.apk not found"
+          cp "Chamo QR.apk" dist/ || echo "⚠️ Chamo QR.apk not found"
+          cp "Chamo_QR.apk" dist/ || echo "⚠️ Chamo_QR.apk not found"
+          
+          echo "📂 Deployment folder structure:"
+          ls -la dist/
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          clean: true
