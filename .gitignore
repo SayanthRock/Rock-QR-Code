@@ -16,3 +16,9 @@
 local.properties
 .env
 debug.keystore
+
+# Ignore Built and Copied Android Packages
+*.apk
+/app/build/
+.build-outputs/
+
