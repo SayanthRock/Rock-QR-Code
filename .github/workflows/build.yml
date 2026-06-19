@@ -1,4 +1,4 @@
-name: Chamo QR CI
+name: Rock QR CI
 
 on:
   push:
@@ -25,7 +25,7 @@ on:
 
 jobs:
   build:
-    name: Validate and Build Chamo QR
+    name: Validate and Build Rock QR
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -107,7 +107,7 @@ jobs:
 
           results_dir = 'app/build/test-results/testDebugUnitTest'
           summary = []
-          summary.append('### 📊 Chamo QR Test Summary')
+          summary.append('### 📊 Rock QR Test Summary')
 
           if not os.path.exists(results_dir):
               summary.append('❌ No JUnit XML test results found at ' + results_dir)
@@ -164,7 +164,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: chamo-qr-test-reports
+          name: rock-qr-test-reports
           path: app/build/reports/tests/testDebugUnitTest/
 
       - name: Build Debug APK
@@ -172,15 +172,17 @@ jobs:
 
       - name: Rename APK for Release
         run: |
-          echo "🏷️ Renaming app-debug.apk to Chamo QR.apk..."
+          echo "🏷️ Renaming app-debug.apk to Rock QR.apk and Chamo QR.apk..."
+          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Rock QR.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Chamo QR.apk"
 
       - name: Upload Build Artifacts
         id: upload-apk
         uses: actions/upload-artifact@v4
         with:
-          name: Chamo-QR-Artifacts
+          name: Rock-QR-Artifacts
           path: |
+            app/build/outputs/apk/debug/Rock QR.apk
             app/build/outputs/apk/debug/Chamo QR.apk
             app/build/outputs/apk/debug/app-debug.apk
 
@@ -193,7 +195,7 @@ jobs:
             echo "#### 🎉 APK Generation Succeeded!" >> $GITHUB_STEP_SUMMARY
             echo "The following artifacts have been built, signed with debug certificates, and uploaded directly to this GitHub Action run summary page:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- **📱 [Download Chamo QR APKs](${{ steps.upload-apk.outputs.artifact-url }})** (Direct ZIP containing all built APK variants)" >> $GITHUB_STEP_SUMMARY
+            echo "- **📱 [Download Rock QR APKs](${{ steps.upload-apk.outputs.artifact-url }})** (Direct ZIP containing all built APK variants)" >> $GITHUB_STEP_SUMMARY
             echo "- **Alternative Access:** You can also download files individually from the **Artifacts** section at the bottom of this run summary page." >> $GITHUB_STEP_SUMMARY
           else
             echo "#### ❌ APK Generation Failed" >> $GITHUB_STEP_SUMMARY
@@ -238,9 +240,9 @@ jobs:
 
           # Build release notes template header
           cat << 'EOF' > release_notes.md
-          ### 📱 Chamo QR Release
+          ### 📱 Rock QR Release
 
-          This is a stable release of Chamo QR!
+          This is a stable release of Rock QR!
 
           #### Key Highlights:
           - **Expressive Neon Matrix (Material 10)**: Sweeping hologram laser effects, live emission effects, and interactive mode switching.
@@ -287,7 +289,8 @@ jobs:
           cat << 'EOF' >> release_notes.md
 
           #### 📦 Attached Quality Artifacts:
-          - **`Chamo QR.apk`**: Installable Android application package (Debug-signed).
+          - **`Rock QR.apk`**: Dual-branded high-performance release build under Rock branding.
+          - **`Chamo QR.apk`**: Dual-branded stable release build under Chamo branding.
           EOF
 
           echo "✅ Category-based structural release note compiled successfully."
@@ -298,9 +301,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            app/build/outputs/apk/debug/Rock QR.apk
             app/build/outputs/apk/debug/Chamo QR.apk
           tag_name: ${{ github.ref_name }}
-          name: Chamo QR ${{ github.ref_name }}
+          name: Rock QR ${{ github.ref_name }}
           body_path: release_notes.md
           generate_release_notes: true
           draft: false

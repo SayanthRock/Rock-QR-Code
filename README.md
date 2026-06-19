@@ -1,68 +1,91 @@
-# 📱 Rock QR Code
+# 📱 Rock QR Code Ecosystem
+
+A high-fidelity, dual-platform QR Code suite delivering a premium user experience across both an **offline-first Android client** (Jetpack Compose) and a **luxury companion web app** (GitHub Pages / PWA). 
 
 [![Rock QR Code CI](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml)
 
-Rock QR Code is a highly polished, offline-first Material 3 Android application for scanning and generating QR codes. It features visual elements like **Glassmorphism theme settings**, customizable **geode styles**, tactile UI controls with physical scaling animations, and an automated GitHub Actions CI/CD setup.
+---
+
+## 🌐 Live Companion Web App
+
+Experience the premium web suite instantly:
+👉 **[Try the Rock QR Web Console](https://sayanthrock.github.io/Rock-QR-Code/)**
+
+*Fully installable Progressive Web App (PWA) with complete offline support, real-time dynamic web links, custom metadata tags, and integrated camera scanner lens.*
 
 ---
 
-## 🎨 Design & Key Features
+## 💎 Ecosystem Feature Highlights
 
-- **Crystal Rock & Rounded Pebbles Styles**: Generate QR codes mapped with unique visual styles, including classic structures, rounded pebbles, or sharp metamorphic rock textures.
-- **Glassmorphism Interfaces**: Clean semi-transparent card panels, glassy dialogs, and tactile touch behaviors with fine physical scale-down/alpha-shifting feedback.
-- **Sleek Settings Panel**: Easily customize light/dark/system theme alignment, toggle Material You dynamic coloring options, and learn about the core QR builder engine.
-- **Fully Local & Offline-First**: Built with a reliable SQLite database using KSP Compiled Room Database wrappers to securely store historical scanning entries offline.
-- **Continuous Integration (CI)**: Powered by a complete GitHub Actions validation script verifying Gradle parameters, checking compiler settings, and running JVM/Robolectric test suites automatically on every commit.
+### 📱 Android Native Application
+- **Modern Jetpack Compose UI**: Designed around Material 3 fluid glassmorphic palettes, customizable geode styles, and tactile feedback.
+- **Offline Persistence**: Google Room Database integrated with modern flow architecture to manage historic scans securely on-device.
+- **Flexible Options**: Generate codes mapping unique structures, rounded pebbles, or metamorphic textures.
+- **Continuous Integration**: Configured with automated Robolectric and Roborazzi UI/Visual Regression testing suites.
 
----
-
-## 🛠️ Tech Stack
-
-- **UI Framework**: Modern Jetpack Compose using Jetpack Navigation, custom graphics overlays, and Material Design 3.
-- **Local Persistence**: Google Room Database with Flow observation.
-- **Asynchronous Engine**: Kotlin Coroutines and Flows for offline-first reactive states.
-- **Unit Testing**: JUnit, Robolectric for local JVM testing, and Roborazzi for automated UI/visual regression testing.
-- **Build Automation**: Modern Gradle with Kotlin DSL (`build.gradle.kts`) and central catalog dependency systems (Version Catalog).
+### 🌐 Progressive Web App (Companion)
+- **Fluid glassmorphic client interface**: Designed with Tailwind CSS, Plus Jakarta Sans display typography, and beautiful frosted-glass backdrops.
+- **Web-to-App Synchronization Links**: Share generated QR matrices via universal deep-links that seamlessly import into the companion hub.
+- **Interactive Lens Scanner**: Embedded high-performance webcam scanning using local JS decoding routines.
+- **Dual-Mode Portability**: Fully compatible for home screen installations, functioning entirely offline without server dependencies.
 
 ---
 
-## ⚙️ Automated CI/CD Workflow
+## 🛠️ Combined Architecture & Tech Stack
 
-The project is configured with a robust GitHub Actions workflow file (`build.yml`):
-1. **Validation Tasks**: Checks `gradle.properties` to ensure modern Kotlin compiler execution strategies have replaced deprecated in-process settings and validates the Gradle Wrapper checksums/permissions.
-2. **Unit Tests Run**: Runs JUnit and Robolectric-backed test plans locally without needing an emulator.
-3. **Summary Generator**: Extracts raw JUnit results automatically into Markdown formats, displaying status grids directly inside the GitHub Actions live panel summary.
-4. **HTML Report Archive**: Uploads detailed HTML reports of test execution results as run artifacts to make tracing failures straightforward.
-5. **Debug Compilation**: Generates a compiled APK artifact ready for manual checks, downloads, or deployment.
+### Native Client Core (Android)
+- **Framework**: Jetpack Compose, Jetpack Navigation, custom graphics canvas overlays, vector-drawn QR modules.
+- **Persistence**: SQLite Room Database with Kotlin Symbol Processing (KSP).
+- **Asynchronous Flow**: Kotlin Coroutines and StateFlow lifecycle elements.
+
+### Web Console Core (PWA)
+- **Design & Layout**: Tailwind CSS custom configuration, Lucide premium symbols.
+- **Matrix Generation**: Client-side QR generation engine (QRCode.js).
+- **Capture Engine**: HTML5-QR webcam reader routines.
+- **Caching**: Service worker `sw.js` script with structured service-level resource interception.
 
 ---
 
-## 📦 How to Compile or Install
+## ⚙️ Automated CI/CD Pipelines
 
-### Prerequisites
-- Android Studio Koala or newer.
-- Gradle JDK level 17+.
+Our workflows run automatically inside `.github/workflows/`:
+1. **Build Checklist (`build.yml`)**: Restores dependencies, runs local Robolectric tests, and packages debug binaries.
+2. **Release pipeline (`release.yml`)**: Triggered automatically on tags (e.g. `v1.2.0`), auto-generating rich changelogs from commits and attaching production APK bundles to releases.
+3. **Dependency submission (`dependency-submission.yml`)**: Continuous tracking of dependency trees to ensure security compliance.
 
-### Building Locally
-Clone the repository and run:
+---
+
+## 📦 Run & Build Locally
+
+### 📱 Running the Android App
+Clone the repository and compile using Gradle:
 ```bash
+# Compile and generate a local debug APK
 ./gradlew assembleDebug
-```
-The compiled APK will be produced at:
-`app/build/outputs/apk/debug/app-debug.apk`
 
-### 📲 Downloading the Pre-Built APK
-You do not need to compile the application locally to test it on your device:
-1. **GitHub Action Artifacts**: On every successful commit to `main` or `master`, the [Rock QR Code CI Workflows](https://github.com/SayanthRock/Rock-QR-Code/actions) run automatically. You can click on any workflow run and download the precompiled **`rock-qr-code-debug-apk`** artifact.
-2. **GitHub Releases**: Tagging your repository with a version prefix (e.g., `v1.0.0`, `v1.1.2` etc.) automatically triggers a production-grade packaging pipeline. Under the **Releases** section, a release is automatically created with the high-performance release log notes and the runnable **`app-debug.apk`** binary attached directly to the release.
-
-### Running Unit Tests
-To execute unit test cases locally:
-```bash
+# Execution of test suites
 ./gradlew testDebugUnitTest
 ```
+The compiled APK is preserved at `app/build/outputs/apk/debug/app-debug.apk`.
+
+### 🌐 Running the Web Console
+Double-click `index.html` or host a quick local server:
+```bash
+python3 -m http.server 8000
+```
+Open `http://localhost:8000` to test local service workers and webcam support.
 
 ---
 
-## 📄 License & Ownership
-Created and developed by `@sayanthRock` | Licensed under the MIT License.
+## ⚙️ Setting Up GitHub Pages
+To publish the live web version on your own repository branch:
+1. Navigate to your repository **Settings** tab.
+2. Select **Pages** from the left navigation.
+3. Under **Build and deployment**, select **Deploy from a branch** as the source.
+4. Set the branch to `main` (or your active default branch) and directory to `/ (root)`.
+5. Tap **Save**. Your site will be published at your custom GitHub Pages URL!
+
+---
+
+## 📄 License & Integrity
+Designed, engineered, and developed by `@sayanthRock` | Licensed under the MIT License.

@@ -12,7 +12,7 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.chamoqr.qzlypm"
+    applicationId = "com.aistudio.rockqr.qzlypm"
     minSdk = 24
     targetSdk = 36
     versionCode = 1
@@ -151,9 +151,11 @@ abstract class CopyApkTask : DefaultTask() {
     val src = sourceApk.get().asFile
     val destDir = targetDir.get().asFile
     if (src.exists()) {
+      src.copyTo(File(destDir, "Rock QR.apk"), overwrite = true)
+      src.copyTo(File(destDir, "Rock_QR.apk"), overwrite = true)
       src.copyTo(File(destDir, "Chamo QR.apk"), overwrite = true)
       src.copyTo(File(destDir, "Chamo_QR.apk"), overwrite = true)
-      println("✅ Copied APK to root directory as 'Chamo QR.apk' and 'Chamo_QR.apk'")
+      println("✅ Copied APK to root directory as both 'Rock QR.apk' and 'Chamo QR.apk'")
     }
   }
 }
