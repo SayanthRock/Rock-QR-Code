@@ -153,9 +153,7 @@ abstract class CopyApkTask : DefaultTask() {
     if (src.exists()) {
       src.copyTo(File(destDir, "Rock QR.apk"), overwrite = true)
       src.copyTo(File(destDir, "Rock_QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo_QR.apk"), overwrite = true)
-      println("✅ Copied APK to root directory as both 'Rock QR.apk' and 'Chamo QR.apk'")
+      println("✅ Copied APK to root directory as 'Rock QR.apk' and 'Rock_QR.apk'")
     }
   }
 }

@@ -49,8 +49,6 @@ jobs:
           # Copy compiled brand APKs for direct downloads on Web PWA
           cp "Rock QR.apk" dist/ || echo "⚠️ Rock QR.apk not found"
           cp "Rock_QR.apk" dist/ || echo "⚠️ Rock_QR.apk not found"
-          cp "Chamo QR.apk" dist/ || echo "⚠️ Chamo QR.apk not found"
-          cp "Chamo_QR.apk" dist/ || echo "⚠️ Chamo_QR.apk not found"
           
           echo "📂 Deployment folder structure:"
           ls -la dist/
