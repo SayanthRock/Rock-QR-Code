@@ -1,6 +1,6 @@
 {
-  "name": "Rock Wallpapers HD",
-  "description": "An offline-first, professional Material 3 Wallpaper application featuring structured rock category catalogs, metadata-driven listings, favorites management, and stunning Liquid Glass visual styling.",
+  "name": "Rock QR Code",
+  "description": "A luxury, Play Store ready QR Code Generator & Scanner with direct CameraX integration, custom-styled liquid glass designs, local history saving with Room DB, and flexible QR sharing options.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

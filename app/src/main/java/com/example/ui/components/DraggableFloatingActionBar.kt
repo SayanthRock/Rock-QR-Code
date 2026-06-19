@@ -22,12 +22,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.viewmodel.WallpaperViewModel
+import com.example.viewmodel.QRViewModel
 import com.example.ui.theme.LiquidGlassTheme
 
 @Composable
 fun DraggableFloatingActionBar(
-    viewModel: WallpaperViewModel,
+    viewModel: QRViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -80,25 +80,25 @@ fun DraggableFloatingActionBar(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // EXPLORE TAB
-                val isExploreSelected = activeTab == "EXPLORE"
+                // SCAN TAB
+                val isScanSelected = activeTab == "SCAN"
                 Box(
                     modifier = Modifier
-                        .testTag("fab_tab_explore")
+                        .testTag("fab_tab_scan")
                         .clip(RoundedCornerShape(18.dp))
                         .background(
-                            if (isExploreSelected) primaryColor.copy(alpha = 0.22f)
+                            if (isScanSelected) primaryColor.copy(alpha = 0.22f)
                             else Color.Transparent
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isExploreSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            color = if (isScanSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp)
                         )
                         .height(44.dp)
                         .clickable {
                             com.example.utils.HapticUtils.vibrate(context, 35)
-                            viewModel.selectTab("EXPLORE")
+                            viewModel.selectTab("SCAN")
                         }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -108,41 +108,40 @@ fun DraggableFloatingActionBar(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Explore,
-                            contentDescription = "Explore wallpapers",
-                            tint = if (isExploreSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            imageVector = Icons.Default.QrCodeScanner,
+                            contentDescription = "Scan QR Code",
+                            tint = if (isScanSelected) primaryColor else Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = "WALLS",
+                            text = "SCAN",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isExploreSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            color = if (isScanSelected) Color.White else Color.White.copy(alpha = 0.5f),
                             letterSpacing = 0.5.sp
                         )
                     }
                 }
 
-                // CATEGORIES TAB
-                val isCatsSelected = activeTab == "CATEGORIES"
+                // GENERATE TAB
+                val isGenSelected = activeTab == "GENERATE"
                 Box(
                     modifier = Modifier
-                        .testTag("fab_tab_categories")
+                        .testTag("fab_tab_generate")
                         .clip(RoundedCornerShape(18.dp))
                         .background(
-                            if (isCatsSelected) primaryColor.copy(alpha = 0.22f)
+                            if (isGenSelected) primaryColor.copy(alpha = 0.22f)
                             else Color.Transparent
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isCatsSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            color = if (isGenSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp)
                         )
                         .height(44.dp)
                         .clickable {
                             com.example.utils.HapticUtils.vibrate(context, 35)
-                            viewModel.selectCategory(null) // Reset filter when selecting Category overview
-                            viewModel.selectTab("CATEGORIES")
+                            viewModel.selectTab("GENERATE")
                         }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -152,40 +151,40 @@ fun DraggableFloatingActionBar(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Category,
-                            contentDescription = "Categories",
-                            tint = if (isCatsSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = "Generate QR Code",
+                            tint = if (isGenSelected) primaryColor else Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = "CATS",
+                            text = "GEN",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isCatsSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            color = if (isGenSelected) Color.White else Color.White.copy(alpha = 0.5f),
                             letterSpacing = 0.5.sp
                         )
                     }
                 }
 
-                // FAVORITES TAB
-                val isFavSelected = activeTab == "FAVORITES"
+                // HISTORY TAB
+                val isHistSelected = activeTab == "HISTORY"
                 Box(
                     modifier = Modifier
-                        .testTag("fab_tab_favorites")
+                        .testTag("fab_tab_history")
                         .clip(RoundedCornerShape(18.dp))
                         .background(
-                            if (isFavSelected) primaryColor.copy(alpha = 0.22f)
+                            if (isHistSelected) primaryColor.copy(alpha = 0.22f)
                             else Color.Transparent
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isFavSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
+                            color = if (isHistSelected) primaryColor.copy(alpha = 0.50f) else Color.Transparent,
                             shape = RoundedCornerShape(18.dp)
                         )
                         .height(44.dp)
                         .clickable {
                             com.example.utils.HapticUtils.vibrate(context, 35)
-                            viewModel.selectTab("FAVORITES")
+                            viewModel.selectTab("HISTORY")
                         }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -195,16 +194,16 @@ fun DraggableFloatingActionBar(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = "Favorites",
-                            tint = if (isFavSelected) primaryColor else Color.White.copy(alpha = 0.5f),
+                            imageVector = Icons.Default.History,
+                            contentDescription = "History Logs",
+                            tint = if (isHistSelected) primaryColor else Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = "FAVS",
+                            text = "HIST",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isFavSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                            color = if (isHistSelected) Color.White else Color.White.copy(alpha = 0.5f),
                             letterSpacing = 0.5.sp
                         )
                     }
@@ -239,7 +238,7 @@ fun DraggableFloatingActionBar(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = "Settings Panel",
                             tint = if (isSettingsSelected) primaryColor else Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(15.dp)
                         )
