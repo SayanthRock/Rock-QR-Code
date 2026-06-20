@@ -46,9 +46,9 @@ jobs:
           cp -r lib dist/ || echo "⚠️ lib directory not present"
           cp -r share dist/ || echo "⚠️ share directory not present"
           
-          # Copy compiled brand APKs for direct downloads on Web PWA
-          cp "Rock QR.apk" dist/ || echo "⚠️ Rock QR.apk not found"
-          cp "Rock_QR.apk" dist/ || echo "⚠️ Rock_QR.apk not found"
+          # Copy compiled brand APKs for direct downloads on Web PWA from building output
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/Rock_QR.apk" || echo "⚠️ debug APK could not be copied to Rock_QR.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/Rock QR.apk" || echo "⚠️ debug APK could not be copied to Rock QR.apk"
           
           echo "📂 Deployment folder structure:"
           ls -la dist/

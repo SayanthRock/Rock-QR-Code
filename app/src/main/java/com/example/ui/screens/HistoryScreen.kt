@@ -413,7 +413,7 @@ fun HistoryCardItem(
                     val rawContent = record.content
                     val title = record.title
                     val type = record.type
-                    val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
+                    val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share/?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
 
                     val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                         this.type = "text/plain"

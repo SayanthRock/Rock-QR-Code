@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.*
 import com.example.ui.screens.*
 import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.theme.LiquidGlassTheme
 import com.example.utils.HapticUtils
 import com.example.viewmodel.QRViewModel
 import com.example.viewmodel.CustomToastType
@@ -51,6 +52,13 @@ class MainActivity : ComponentActivity() {
             val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
             val colorPreset by viewModel.colorPreset.collectAsState()
 
+            // Collect custom Liquid Glass layout configurations dynamically
+            val glassBlurEnabledState by viewModel.glassBlurEnabled.collectAsState()
+            val glassBlurRadiusVal by viewModel.glassBlurRadius.collectAsState()
+            val glassOpacityVal by viewModel.glassOpacity.collectAsState()
+            val glassBorderThicknessVal by viewModel.glassBorderThickness.collectAsState()
+            val glassGlowEnabledVal by viewModel.glassGlowEnabled.collectAsState()
+
             val useDarkTheme = when (themeMode) {
                 "DARK" -> true
                 "LIGHT" -> false
@@ -67,14 +75,28 @@ class MainActivity : ComponentActivity() {
                 dynamicColor = dynamicColorEnabled,
                 colorPresetName = colorPreset
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .rockFractureBackground(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
-                ) {
-                    LiquidGlassBackground(modifier = Modifier.fillMaxSize())
+                val primaryColorVal = MaterialTheme.colorScheme.primary
+                val secondaryColorVal = MaterialTheme.colorScheme.secondary
+                val glassThemeConfig = LiquidGlassTheme.Config(
+                    primaryColor = primaryColorVal,
+                    secondaryColor = secondaryColorVal,
+                    glassBlur = if (glassBlurEnabledState) glassBlurRadiusVal.dp else 0.dp,
+                    glassOpacity = glassOpacityVal,
+                    borderThickness = glassBorderThicknessVal.dp,
+                    isGlowEnabled = glassGlowEnabledVal,
+                    isDark = useDarkTheme
+                )
 
-                    MainAppContent(viewModel = viewModel)
+                LiquidGlassTheme.Provider(config = glassThemeConfig) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .rockFractureBackground(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+                    ) {
+                        LiquidGlassBackground(modifier = Modifier.fillMaxSize())
+
+                        MainAppContent(viewModel = viewModel)
+                    }
                 }
             }
         }
@@ -159,6 +181,7 @@ fun LocalSettingsScreen(
 
     val themeMode by viewModel.themeMode.collectAsState()
     val dynamicColor by viewModel.dynamicColorEnabled.collectAsState()
+    val glassBlurEnabledState by viewModel.glassBlurEnabled.collectAsState()
 
     val historyEntries by viewModel.historyRecords.collectAsState()
     val favCount = remember(historyEntries) { historyEntries.count { it.isFavorite } }
@@ -335,6 +358,45 @@ fun LocalSettingsScreen(
                             uncheckedThumbColor = Color.White.copy(alpha = 0.4f),
                             uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
                         )
+                    )
+                }
+
+                Divider(color = Color.White.copy(alpha = 0.05f))
+
+                // GLASS BLUR TOGGLE ROW (Accessibility and Performance)
+                Row(
+                    modifier = Modifier.fillMaxWidth().testTag("blur_toggle_row"),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = "Glass Blur Effect",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("Glass Blur Effects", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Frosted backdrop composition blend", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                        }
+                    }
+
+                    Switch(
+                        checked = glassBlurEnabledState,
+                        onCheckedChange = {
+                            HapticUtils.vibrate(context, 20)
+                            viewModel.setGlassBlurEnabled(it)
+                            viewModel.showToast(if (it) "Liquid Glass Blur Activated" else "High Performance Mode (Blur Disabled)", CustomToastType.SUCCESS)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = primaryColor,
+                            checkedTrackColor = primaryColor.copy(alpha = 0.3f),
+                            uncheckedThumbColor = Color.White.copy(alpha = 0.4f),
+                            uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.testTag("glass_blur_switch")
                     )
                 }
             }
