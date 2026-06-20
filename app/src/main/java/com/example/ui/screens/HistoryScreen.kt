@@ -71,7 +71,7 @@ fun HistoryScreen(
                 text = "Core Archive",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = themeConfig.textColor,
                 fontFamily = FontFamily.SansSerif,
                 modifier = Modifier.testTag("history_title")
             )
@@ -95,7 +95,7 @@ fun HistoryScreen(
         Text(
             text = "Track, review, or bookmark your scanner history cache.",
             fontSize = 13.sp,
-            color = Color.White.copy(alpha = 0.5f),
+            color = themeConfig.subTextColor,
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp)
         )
 
@@ -103,24 +103,24 @@ fun HistoryScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { viewModel.searchQuery.value = it },
-            placeholder = { Text("Search logs by title, content, or type...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.White.copy(alpha = 0.4f)) },
+            placeholder = { Text("Search logs by title, content, or type...", color = themeConfig.subTextColor) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = themeConfig.subTextColor) },
             trailingIcon = if (searchQuery.isNotEmpty()) {
                 {
                     IconButton(onClick = { viewModel.searchQuery.value = "" }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Clear Search", tint = Color.White)
+                        Icon(Icons.Default.Clear, contentDescription = "Clear Search", tint = themeConfig.textColor)
                     }
                 }
             } else null,
             modifier = Modifier.fillMaxWidth().testTag("search_bar"),
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                focusedTextColor = themeConfig.textColor,
+                unfocusedTextColor = themeConfig.textColor,
+                focusedContainerColor = themeConfig.containerBgColor,
+                unfocusedContainerColor = themeConfig.containerBgColor,
                 focusedIndicatorColor = primaryColor,
-                unfocusedIndicatorColor = Color.White.copy(alpha = 0.10f)
+                unfocusedIndicatorColor = themeConfig.textColor.copy(alpha = 0.10f)
             ),
             singleLine = true
         )
@@ -147,12 +147,12 @@ fun HistoryScreen(
                         .clip(RoundedCornerShape(10.dp))
                         .background(
                             if (isSelected) primaryColor.copy(alpha = 0.20f)
-                            else Color.White.copy(alpha = 0.04f)
+                            else themeConfig.containerBgColor
                         )
                         .border(
                             1.dp,
                             if (isSelected) primaryColor.copy(alpha = 0.50f)
-                            else Color.White.copy(alpha = 0.06f),
+                            else themeConfig.textColor.copy(alpha = 0.08f),
                             RoundedCornerShape(10.dp)
                         )
                         .clickable {
@@ -166,7 +166,7 @@ fun HistoryScreen(
                         text = label,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
+                        color = if (isSelected) primaryColor else themeConfig.subTextColor
                     )
                 }
             }
@@ -188,13 +188,13 @@ fun HistoryScreen(
                     modifier = Modifier
                         .size(72.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.03f)),
+                        .background(themeConfig.containerBgColor),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.FolderOpen,
                         contentDescription = "Empty History",
-                        tint = Color.White.copy(alpha = 0.25f),
+                        tint = themeConfig.subTextColor.copy(alpha = 0.35f),
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -203,13 +203,13 @@ fun HistoryScreen(
                     text = "No records in cache",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = themeConfig.textColor.copy(alpha = 0.8f)
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = if (searchQuery.isNotEmpty()) "Adjust your filters or search statement." else "Generate or scan physical codes to store them here indefinitely.",
                     fontSize = 12.sp,
-                    color = Color.White.copy(alpha = 0.4f),
+                    color = themeConfig.subTextColor,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 32.dp)
                 )
@@ -246,8 +246,8 @@ fun HistoryScreen(
     if (showClearConfirm) {
         AlertDialog(
             onDismissRequest = { showClearConfirm = false },
-            title = { Text("Purge History Log?", color = Color.White, fontWeight = FontWeight.Bold) },
-            text = { Text("This will permanently clear all generated and scanned QR history from your offline device space. This operation is irreversible.", color = Color.White.copy(alpha = 0.7f)) },
+            title = { Text("Purge History Log?", color = themeConfig.textColor, fontWeight = FontWeight.Bold) },
+            text = { Text("This will permanently clear all generated and scanned QR history from your offline device space. This operation is irreversible.", color = themeConfig.subTextColor) },
             confirmButton = {
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
@@ -261,10 +261,10 @@ fun HistoryScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearConfirm = false }) {
-                    Text("Cancel", color = Color.White.copy(alpha = 0.6f))
+                    Text("Cancel", color = themeConfig.subTextColor)
                 }
             },
-            containerColor = Color(0xFF1E1E1E),
+            containerColor = if (themeConfig.isDark) Color(0xFF1E1E1E) else Color.White,
             shape = RoundedCornerShape(16.dp)
         )
     }
@@ -279,6 +279,7 @@ fun HistoryCardItem(
     onCopyText: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val themeConfig = LiquidGlassTheme.LocalConfig.current
     val formatter = remember { SimpleDateFormat("MMM d, yyyy - hh:mm a", Locale.getDefault()) }
     val dateString = remember(record.timestamp) { formatter.format(Date(record.timestamp)) }
 
@@ -296,12 +297,12 @@ fun HistoryCardItem(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = 0.05f),
+                color = themeConfig.textColor.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(16.dp)
             )
             .testTag("history_record_item"),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.03f)
+            containerColor = themeConfig.containerBgColor
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -348,7 +349,7 @@ fun HistoryCardItem(
                     Text(
                         text = record.title,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = themeConfig.textColor,
                         fontSize = 15.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -377,7 +378,7 @@ fun HistoryCardItem(
 
                 Text(
                     text = record.content,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = themeConfig.subTextColor,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -387,7 +388,7 @@ fun HistoryCardItem(
 
                 Text(
                     text = dateString,
-                    color = Color.White.copy(alpha = 0.3f),
+                    color = themeConfig.subTextColor.copy(alpha = 0.6f),
                     fontSize = 10.sp
                 )
             }
@@ -402,7 +403,7 @@ fun HistoryCardItem(
                     Icon(
                         imageVector = Icons.Outlined.ContentCopy,
                         contentDescription = "Copy Content",
-                        tint = Color.White.copy(alpha = 0.5f),
+                        tint = themeConfig.subTextColor,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -425,7 +426,7 @@ fun HistoryCardItem(
                     Icon(
                         imageVector = Icons.Outlined.Share,
                         contentDescription = "Share Web Link",
-                        tint = Color.White.copy(alpha = 0.5f),
+                        tint = themeConfig.subTextColor,
                         modifier = Modifier.size(17.dp)
                     )
                 }
@@ -435,7 +436,7 @@ fun HistoryCardItem(
                     Icon(
                         imageVector = if (record.isFavorite) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
                         contentDescription = "Toggle bookmark",
-                        tint = if (record.isFavorite) Color(0xFFFFB703) else Color.White.copy(alpha = 0.5f),
+                        tint = if (record.isFavorite) Color(0xFFFFB703) else themeConfig.subTextColor,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -445,7 +446,7 @@ fun HistoryCardItem(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Delete Record",
-                        tint = Color.White.copy(alpha = 0.3f),
+                        tint = themeConfig.subTextColor.copy(alpha = 0.6f),
                         modifier = Modifier.size(18.dp)
                     )
                 }

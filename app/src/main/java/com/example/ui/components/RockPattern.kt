@@ -265,17 +265,30 @@ fun GlassCard(
 ) {
     val config = com.example.ui.theme.LiquidGlassTheme.LocalConfig.current
     val surfaceColor = MaterialTheme.colorScheme.surface
-    val activeBgColor = backgroundColor ?: surfaceColor.copy(alpha = config.glassOpacity)
+    val activeBgColor = if (config.isLiquidGlassEnabled) {
+        backgroundColor ?: surfaceColor.copy(alpha = config.glassOpacity)
+    } else {
+        backgroundColor ?: surfaceColor
+    }
     val activeBorderColor = borderColor ?: config.primaryColor
     val activeBorderWidth = borderWidth ?: config.borderThickness
 
-    val borderBrush = Brush.linearGradient(
-        colors = listOf(
-            activeBorderColor.copy(alpha = config.borderAlphaStart),
-            config.secondaryColor.copy(alpha = config.borderAlphaEnd),
-            activeBorderColor.copy(alpha = config.borderAlphaStart * 1.30f)
+    val borderBrush = if (config.isLiquidGlassEnabled) {
+        Brush.linearGradient(
+            colors = listOf(
+                activeBorderColor.copy(alpha = config.borderAlphaStart),
+                config.secondaryColor.copy(alpha = config.borderAlphaEnd),
+                activeBorderColor.copy(alpha = config.borderAlphaStart * 1.30f)
+            )
         )
-    )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                activeBorderColor.copy(alpha = 0.15f),
+                activeBorderColor.copy(alpha = 0.15f)
+            )
+        )
+    }
 
     Box(
         modifier = modifier
@@ -312,16 +325,29 @@ fun Modifier.liquidGlass(
     
     val activeBorderAlphaStart = borderAlphaStart ?: config.borderAlphaStart
     val activeBorderAlphaEnd = borderAlphaEnd ?: config.borderAlphaEnd
-    val activeBgAlpha = bgAlpha ?: config.glassOpacity
+    val activeBgAlpha = if (config.isLiquidGlassEnabled) {
+        bgAlpha ?: config.glassOpacity
+    } else {
+        0.95f
+    }
     val activeBorderThickness = borderThickness ?: config.borderThickness
 
-    val borderBrush = Brush.linearGradient(
-        colors = listOf(
-            primaryColor.copy(alpha = activeBorderAlphaStart),
-            secondaryColor.copy(alpha = activeBorderAlphaEnd),
-            primaryColor.copy(alpha = activeBorderAlphaStart * 1.3f)
+    val borderBrush = if (config.isLiquidGlassEnabled) {
+        Brush.linearGradient(
+            colors = listOf(
+                primaryColor.copy(alpha = activeBorderAlphaStart),
+                secondaryColor.copy(alpha = activeBorderAlphaEnd),
+                primaryColor.copy(alpha = activeBorderAlphaStart * 1.3f)
+            )
         )
-    )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                primaryColor.copy(alpha = 0.15f),
+                primaryColor.copy(alpha = 0.15f)
+            )
+        )
+    }
     
     this
         .clip(shape)
@@ -349,21 +375,35 @@ fun GlassButton(
     val primaryColor = config.primaryColor
     val secondaryColor = config.secondaryColor
 
+    val activeBgColor = if (config.isLiquidGlassEnabled) {
+        primaryColor.copy(alpha = config.glassOpacity * 0.5f)
+    } else {
+        primaryColor
+    }
+
+    val borderBrush = if (config.isLiquidGlassEnabled) {
+        Brush.linearGradient(
+            colors = listOf(
+                primaryColor.copy(alpha = config.borderAlphaStart),
+                secondaryColor.copy(alpha = config.borderAlphaEnd),
+                primaryColor.copy(alpha = config.borderAlphaStart * 1.4f)
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, Color.Transparent)
+        )
+    }
+
     Box(
         modifier = modifier
             .alpha(alphaVal)
             .glassTouchFeedback(onClick = { if (enabled) onClick() })
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-            .background(primaryColor.copy(alpha = config.glassOpacity * 0.5f))
+            .background(activeBgColor)
             .border(
-                width = config.borderThickness,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        primaryColor.copy(alpha = config.borderAlphaStart),
-                        secondaryColor.copy(alpha = config.borderAlphaEnd),
-                        primaryColor.copy(alpha = config.borderAlphaStart * 1.4f)
-                    )
-                ),
+                width = if (config.isLiquidGlassEnabled) config.borderThickness else 0.dp,
+                brush = borderBrush,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             )
             .padding(horizontal = 24.dp, vertical = 12.dp),

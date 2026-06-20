@@ -26,8 +26,13 @@ object LiquidGlassTheme {
         val isGlowEnabled: Boolean = true,
         val cornerRadius: Dp = 16.dp,
         val borderThickness: Dp = 1.5.dp,
-        val isDark: Boolean = true
-    )
+        val isDark: Boolean = true,
+        val isLiquidGlassEnabled: Boolean = true
+    ) {
+        val textColor: Color get() = if (isDark) Color.White else Color(0xFF1A1C1E)
+        val subTextColor: Color get() = if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF1A1C1E).copy(alpha = 0.6f)
+        val containerBgColor: Color get() = if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.04f)
+    }
 
     val LocalConfig: ProvidableCompositionLocal<Config> = 
         staticCompositionLocalOf { Config() }

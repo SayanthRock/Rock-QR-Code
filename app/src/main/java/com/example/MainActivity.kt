@@ -58,6 +58,8 @@ class MainActivity : ComponentActivity() {
             val glassOpacityVal by viewModel.glassOpacity.collectAsState()
             val glassBorderThicknessVal by viewModel.glassBorderThickness.collectAsState()
             val glassGlowEnabledVal by viewModel.glassGlowEnabled.collectAsState()
+            val liquidGlassEnabledState by viewModel.liquidGlassEnabled.collectAsState()
+            val fullScreenEnabledState by viewModel.fullScreenEnabled.collectAsState()
 
             val useDarkTheme = when (themeMode) {
                 "DARK" -> true
@@ -68,6 +70,22 @@ class MainActivity : ComponentActivity() {
             val currentIntent = intent
             LaunchedEffect(currentIntent) {
                 handleIntent(currentIntent, viewModel)
+            }
+
+            val context = LocalContext.current
+            LaunchedEffect(fullScreenEnabledState) {
+                val activity = context as? ComponentActivity
+                val window = activity?.window
+                if (window != null) {
+                    val windowInsetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+                    if (fullScreenEnabledState) {
+                        windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                        windowInsetsController.systemBarsBehavior = 
+                            androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    } else {
+                        windowInsetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                    }
+                }
             }
 
             MyApplicationTheme(
@@ -84,7 +102,8 @@ class MainActivity : ComponentActivity() {
                     glassOpacity = glassOpacityVal,
                     borderThickness = glassBorderThicknessVal.dp,
                     isGlowEnabled = glassGlowEnabledVal,
-                    isDark = useDarkTheme
+                    isDark = useDarkTheme,
+                    isLiquidGlassEnabled = liquidGlassEnabledState
                 )
 
                 LiquidGlassTheme.Provider(config = glassThemeConfig) {
@@ -182,6 +201,8 @@ fun LocalSettingsScreen(
     val themeMode by viewModel.themeMode.collectAsState()
     val dynamicColor by viewModel.dynamicColorEnabled.collectAsState()
     val glassBlurEnabledState by viewModel.glassBlurEnabled.collectAsState()
+    val liquidGlassEnabled by viewModel.liquidGlassEnabled.collectAsState()
+    val fullScreenEnabled by viewModel.fullScreenEnabled.collectAsState()
 
     val historyEntries by viewModel.historyRecords.collectAsState()
     val favCount = remember(historyEntries) { historyEntries.count { it.isFavorite } }
@@ -397,6 +418,84 @@ fun LocalSettingsScreen(
                             uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
                         ),
                         modifier = Modifier.testTag("glass_blur_switch")
+                    )
+                }
+
+                Divider(color = Color.White.copy(alpha = 0.05f))
+
+                // LIQUID GLASS THEME TOGGLE ROW
+                Row(
+                    modifier = Modifier.fillMaxWidth().testTag("liquid_glass_toggle_row"),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Waves,
+                            contentDescription = "Liquid Glass Theme Toggle",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("Liquid Glass Theme", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Apply translucent glass profiles and floating glow design", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                        }
+                    }
+
+                    Switch(
+                        checked = liquidGlassEnabled,
+                        onCheckedChange = {
+                            HapticUtils.vibrate(context, 20)
+                            viewModel.setLiquidGlassEnabled(it)
+                            viewModel.showToast(if (it) "Liquid Glass Theme Configured" else "Solid Theme Style Applied (Saves CPU)", CustomToastType.SUCCESS)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = primaryColor,
+                            checkedTrackColor = primaryColor.copy(alpha = 0.3f),
+                            uncheckedThumbColor = Color.White.copy(alpha = 0.4f),
+                            uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.testTag("liquid_glass_switch")
+                    )
+                }
+
+                Divider(color = Color.White.copy(alpha = 0.05f))
+
+                // IMMERSIVE FULL SCREEN MODE TOGGLE ROW
+                Row(
+                    modifier = Modifier.fillMaxWidth().testTag("fullscreen_toggle_row"),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Fullscreen,
+                            contentDescription = "Immersive Fullscreen Option",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("Immersive Fullscreen", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Hide system navigation and status bars", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                        }
+                    }
+
+                    Switch(
+                        checked = fullScreenEnabled,
+                        onCheckedChange = {
+                            HapticUtils.vibrate(context, 20)
+                            viewModel.setFullScreenEnabled(it)
+                            viewModel.showToast(if (it) "Immersive Fullscreen Enabled" else "Standard Navigation Restored", CustomToastType.SUCCESS)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = primaryColor,
+                            checkedTrackColor = primaryColor.copy(alpha = 0.3f),
+                            uncheckedThumbColor = Color.White.copy(alpha = 0.4f),
+                            uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.testTag("fullscreen_switch")
                     )
                 }
             }
