@@ -1,4 +1,4 @@
-name: Rock QR CI
+name: Rock QR CI & Automated Release
 
 on:
   push:
@@ -23,10 +23,15 @@ on:
       - 'gradle.properties'
       - 'gradle/**'
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version tag (e.g., v1.0.50). Leave blank to auto-increment patch from the latest tag."
+        required: false
+        default: ""
 
 jobs:
   build:
-    name: Validate and Build Rock QR
+    name: Validate, Test & Release Rock QR
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -34,9 +39,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for automatic tagging and design logs
 
       - name: Fix Gradle permissions
-        run: chmod +x gradlew
+        run: chmod +x gradlew || true
 
       - name: Clean broken wrapper cache
         run: rm -rf ~/.gradle/wrapper/dists || true
@@ -44,21 +51,15 @@ jobs:
       - name: Validate Gradle Properties for KSP2 Compatibility
         run: |
           echo "🔍 Checking gradle.properties for incompatible legacy options..."
-          
-          # Check for legacy in-process compilation strategy
           if grep -q "kotlin.compiler.execution.strategy=in-process" gradle.properties; then
             echo "❌ ERROR: Legacy 'kotlin.compiler.execution.strategy=in-process' found in gradle.properties!"
-            echo "KSP2's compiler frontend expects a standalone Kotlin compiler daemon. Setting this property to 'in-process' will cause NullPointerException crashes."
+            echo "KSP2's compiler frontend expects a standalone Kotlin compiler daemon."
             exit 1
           fi
-          
-          # Check for legacy ksp.useKSP2=false option (which is obsolete in newer KSP releases)
           if grep -q "ksp.useKSP2=false" gradle.properties; then
             echo "❌ ERROR: Obsolete 'ksp.useKSP2=false' found in gradle.properties!"
-            echo "Legacy KSP1 is no longer supported with the updated Gradle/Kotlin version. KSP2 must be used."
             exit 1
           fi
-          
           echo "✅ gradle.properties validation passed. Ready for KSP2-based compilation."
 
       - name: Set up JDK 17
@@ -71,7 +72,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           validate-wrappers: false
-          # Restrict cache writes to main/master branches and tags to optimize build speeds and prevent cache pollution on PRs
           cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Validate or Regenerate Gradle Wrapper
@@ -79,7 +79,7 @@ jobs:
           echo "🔍 Checking Gradle Wrapper integrity..."
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || ! java -jar gradle/wrapper/gradle-wrapper.jar --version > /dev/null 2>&1; then
             echo "⚠️ Corrupt or missing gradle-wrapper.jar detected! Regenerating using pre-installed system Gradle..."
-            gradle wrapper --gradle-version 9.3.1
+            gradle wrapper --gradle-version 8.7
           fi
           echo "✅ Gradle Wrapper is ready. Setting execute permissions..."
           chmod +x ./gradlew
@@ -93,6 +93,73 @@ jobs:
             echo "⚠️ debug.keystore.base64 not found! Generating fresh temporary debug.keystore..."
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
+
+      - name: Determine & Assert Release Version
+        id: versioning
+        run: |
+          echo "🧭 Determining version identifier..."
+          IS_RELEASE="false"
+          VERSION_NAME=""
+          
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION_NAME="${{ github.ref_name }}"
+            IS_RELEASE="true"
+            echo "🎯 Triggered by tag push: $VERSION_NAME"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            IS_RELEASE="true"
+            INPUT_VERSION="${{ github.event.inputs.version }}"
+            if [ -n "$INPUT_VERSION" ]; then
+              VERSION_NAME="$INPUT_VERSION"
+              echo "🎯 Manual version specified in inputs: $VERSION_NAME"
+            else
+              echo "🔍 Automatic version bump requested. Querying git tags..."
+              # Get latest tag
+              LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+              if [ -z "$LATEST_TAG" ]; then
+                LATEST_TAG="v1.0.49"
+                echo "⚠️ No tags found in repository. Defaulting to base tag: $LATEST_TAG"
+              else
+                echo "📄 Latest tag found: $LATEST_TAG"
+              fi
+              
+              # Clean tag leading character
+              CLEAN_TAG=$(echo "$LATEST_TAG" | sed 's/^[vV]//')
+              
+              if [[ "$CLEAN_TAG" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+                MAJOR="${BASH_REMATCH[1]}"
+                MINOR="${BASH_REMATCH[2]}"
+                PATCH="${BASH_REMATCH[3]}"
+                NEW_PATCH=$((PATCH + 1))
+                VERSION_NAME="v$MAJOR.$MINOR.$NEW_PATCH"
+                echo "📈 Auto-incremented patch version to: $VERSION_NAME"
+              else
+                VERSION_NAME="v1.0.50"
+                echo "⚠️ Unexpected tag format. Defaulting to: $VERSION_NAME"
+              fi
+            fi
+            
+            # Normalize prefix to 'v'
+            if [[ ! "$VERSION_NAME" =~ ^[vV] ]]; then
+              VERSION_NAME="v$VERSION_NAME"
+            fi
+            
+            # Authenticate and push newly generated tag back to repo
+            git fetch --tags || true
+            if git rev-parse "$VERSION_NAME" >/dev/null 2>&1; then
+              echo "ℹ️ Tag '$VERSION_NAME' already exists. Skipping pushing new tag."
+            else
+              echo "🚀 Creating and pushing new tag '$VERSION_NAME'..."
+              git config --local user.email "github-actions[bot]@users.noreply.github.com"
+              git config --local user.name "github-actions[bot]"
+              git tag "$VERSION_NAME"
+              git push origin "$VERSION_NAME"
+            fi
+          fi
+          
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "IS_RELEASE=$IS_RELEASE" >> $GITHUB_ENV
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
 
       - name: Run Unit Tests
         id: unit-tests
@@ -124,7 +191,6 @@ jobs:
                       try:
                           tree = ET.parse(os.path.join(results_dir, file))
                           root = tree.getroot()
-                          # Support single testsuite as root or nested testsuites
                           suites = [root] if root.tag == 'testsuite' else root.findall('.//testsuite')
                           for testsuite in suites:
                               total_tests += int(testsuite.attrib.get('tests', 0))
@@ -171,19 +237,24 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
-      - name: Rename APK for Release
+      - name: Rename and Stage APKs
         run: |
-          echo "🏷️ Renaming app-debug.apk to Rock QR.apk..."
+          mkdir -p release_outputs
+          cp app/build/outputs/apk/debug/app-debug.apk release_outputs/"Rock_QR.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Rock QR.apk"
+          
+          if [ -n "$VERSION_NAME" ]; then
+            echo "🏷️ Staging release APK versions with name label: $VERSION_NAME"
+            cp app/build/outputs/apk/debug/app-debug.apk release_outputs/"Rock_QR_${VERSION_NAME}.apk"
+            cp app/build/outputs/apk/debug/app-debug.apk release_outputs/"Rock QR ${VERSION_NAME}.apk"
+          fi
 
       - name: Upload Build Artifacts
         id: upload-apk
         uses: actions/upload-artifact@v4
         with:
           name: Rock-QR-Artifacts
-          path: |
-            app/build/outputs/apk/debug/Rock QR.apk
-            app/build/outputs/apk/debug/app-debug.apk
+          path: release_outputs/
 
       - name: Add APK to Job Summary
         if: always()
@@ -192,7 +263,7 @@ jobs:
           echo "### 📦 Downloadable Build Artifacts" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.upload-apk.outcome }}" = "success" ]; then
             echo "#### 🎉 APK Generation Succeeded!" >> $GITHUB_STEP_SUMMARY
-            echo "The following artifacts have been built, signed with debug certificates, and uploaded directly to this GitHub Action run summary page:" >> $GITHUB_STEP_SUMMARY
+            echo "The following artifacts have been built, signed with debug certificates, and uploaded directly to this run summary page:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "- **📱 [Download Rock QR APKs](${{ steps.upload-apk.outputs.artifact-url }})** (Direct ZIP containing all built APK variants)" >> $GITHUB_STEP_SUMMARY
             echo "- **Alternative Access:** You can also download files individually from the **Artifacts** section at the bottom of this run summary page." >> $GITHUB_STEP_SUMMARY
@@ -203,17 +274,17 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
       - name: Generate Automatic Changelog
-        if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/V')
+        if: env.IS_RELEASE == 'true' && env.VERSION_NAME != ''
         run: |
           echo "📝 Fetching full git history for accurate changelog generation..."
           git fetch --prune --unshallow || true
           
-          echo "🔍 Locating previous release tag..."
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          echo "🔍 Locating previous release tag prior to $VERSION_NAME..."
+          PREV_TAG=$(git describe --tags --abbrev=0 "${VERSION_NAME}^" 2>/dev/null || true)
           
           if [ -n "$PREV_TAG" ]; then
             echo "📄 Previous tag found: $PREV_TAG"
-            git log ${PREV_TAG}..HEAD --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Incremental package adjustments (v0.0.0) by CI" > raw_commits.txt
+            git log "${PREV_TAG}..${VERSION_NAME}" --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Incremental package adjustments (v0.0.0) by CI" > raw_commits.txt
           else
             echo "📄 No previous tag in repository history. Extrapolating commit logs..."
             git log -n 25 --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Initial repository setup (v1.0.0) by CI" > raw_commits.txt
@@ -222,7 +293,6 @@ jobs:
           # Parse and group commit entries into standardized conventional categories
           touch feats.txt fixes.txt docs.txt chores.txt others.txt
           while IFS= read -r line; do
-            # Cover case-insensitivity cleanly
             lower_line=$(echo "$line" | tr '[:upper:]' '[:lower:]')
             if [[ "$lower_line" =~ ^feat || "$lower_line" =~ ^add ]]; then
               echo "- $line" >> feats.txt
@@ -252,7 +322,6 @@ jobs:
           #### 📝 Structured Changelog:
           EOF
           
-          # Remove leading whitespaces from templated header
           sed -i -e 's/^[[:space:]]*//' release_notes.md
 
           # Append grouped segments to build structured release logs
@@ -288,20 +357,24 @@ jobs:
           cat << 'EOF' >> release_notes.md
 
           #### 📦 Attached Quality Artifacts:
-          - **`Rock QR.apk`**: Installable Android application package (Debug-signed).
+          - **`Rock_QR.apk`**: Installable Android application package (Debug-signed).
+          - **`Rock_QR_${VERSION_NAME}.apk`**: Installable Android application package tagged with release version.
           EOF
 
           echo "✅ Category-based structural release note compiled successfully."
           cat release_notes.md
 
       - name: Create or Update GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/V')
+        if: env.IS_RELEASE == 'true' && env.VERSION_NAME != ''
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            app/build/outputs/apk/debug/Rock QR.apk
-          tag_name: ${{ github.ref_name }}
-          name: Rock QR ${{ github.ref_name }}
+            release_outputs/Rock_QR.apk
+            release_outputs/Rock QR.apk
+            release_outputs/Rock_QR_${{ env.VERSION_NAME }}.apk
+            release_outputs/Rock QR ${{ env.VERSION_NAME }}.apk
+          tag_name: ${{ env.VERSION_NAME }}
+          name: Rock QR ${{ env.VERSION_NAME }}
           body_path: release_notes.md
           generate_release_notes: true
           draft: false

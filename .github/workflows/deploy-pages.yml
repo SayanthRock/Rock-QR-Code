@@ -26,9 +26,18 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
 
-      - name: Fix Gradle permissions
-        run: chmod +x gradlew || true
+      - name: Validate or Regenerate Gradle Wrapper
+        run: |
+          echo "🔍 Checking Gradle Wrapper integrity..."
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || ! java -jar gradle/wrapper/gradle-wrapper.jar --version > /dev/null 2>&1; then
+            echo "⚠️ Corrupt or missing gradle-wrapper.jar detected! Regenerating using pre-installed system Gradle..."
+            gradle wrapper --gradle-version 8.7
+          fi
+          echo "✅ Gradle Wrapper is ready. Setting execute permissions..."
+          chmod +x ./gradlew
 
       - name: Decode or Generate Debug Keystore
         run: |
