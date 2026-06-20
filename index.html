@@ -93,6 +93,27 @@
     .neon-glow-bg {
       animation: pulse-slow 8s infinite ease-in-out;
     }
+
+    /* Pop animation for the QR canvas wrapper */
+    @keyframes qr-pop {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      35% {
+        transform: scale(1.08);
+        filter: brightness(1.2);
+        border-color: rgba(167, 139, 250, 0.8);
+        box-shadow: 0 0 35px rgba(139, 92, 246, 0.4);
+      }
+      100% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+    }
+    .animate-qr-pop {
+      animation: qr-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen flex flex-col font-sans selection:bg-purple-500/30 selection:text-white antialiased">
@@ -636,6 +657,16 @@
         }, 2200);
       }
 
+      // Pop element definition and trigger function
+      const qrWrapper = document.getElementById("qrcode-canvas-wrapper");
+      function triggerQrPop() {
+        if (!qrWrapper) return;
+        qrWrapper.classList.remove("animate-qr-pop");
+        // Trigger reflow to restart animation
+        void qrWrapper.offsetWidth;
+        qrWrapper.classList.add("animate-qr-pop");
+      }
+
       // Live payload construction depending on selected type
       function computePayload() {
         switch (selectedType) {
@@ -693,6 +724,10 @@
               dark: "#0a0e17",
               light: "#1e1e2e"
             }
+          }, function (error) {
+            if (!error) {
+              triggerQrPop();
+            }
           });
           return;
         }
@@ -709,6 +744,8 @@
         }, function (error) {
           if (error) {
             console.error("QR Draw Error: ", error);
+          } else {
+            triggerQrPop();
           }
         });
 
@@ -892,6 +929,7 @@
         parsedTimeBadge.textContent = new Date().toLocaleTimeString();
 
         triggerToast("QR Scanned Successfully!", true);
+        triggerQrPop();
       }
 
       function stopScanCamera() {
