@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+      - "V*"
 
 permissions:
   contents: write
@@ -83,28 +84,108 @@ jobs:
           fi
 
       # 🧠 Generate automatic changelog from commits
-      - name: Generate Changelog
-        id: changelog
+      - name: Generate Automatic Changelog
         run: |
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          # Get previous tag. If none exists, fetch all history.
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          echo "📝 Fetching full git history for accurate changelog generation..."
+          git fetch --prune --unshallow || true
+          
+          echo "🔍 Locating previous release tag..."
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          
           if [ -n "$PREV_TAG" ]; then
-            echo "🔍 Comparing tag HEAD against previous tag: $PREV_TAG"
-            git log --pretty=format:"- %s" "$PREV_TAG..HEAD" >> $GITHUB_ENV
+            echo "📄 Previous tag found: $PREV_TAG"
+            git log ${PREV_TAG}..HEAD --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Incremental package adjustments (v0.0.0) by CI" > raw_commits.txt
           else
-            echo "🔍 No previous tag found. Extracting complete design log history."
-            git log --pretty=format:"- %s" >> $GITHUB_ENV
+            echo "📄 No previous tag in repository history. Extrapolating commit logs..."
+            git log -n 25 --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Initial repository setup (v1.0.0) by CI" > raw_commits.txt
           fi
-          echo "" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
 
-      # 🚀 Create GitHub Release
-      - name: Create Release
+          # Parse and group commit entries into standardized conventional categories
+          touch feats.txt fixes.txt docs.txt chores.txt others.txt
+          while IFS= read -r line; do
+            # Cover case-insensitivity cleanly
+            lower_line=$(echo "$line" | tr '[:upper:]' '[:lower:]')
+            if [[ "$lower_line" =~ ^feat || "$lower_line" =~ ^add ]]; then
+              echo "- $line" >> feats.txt
+            elif [[ "$lower_line" =~ ^fix ]]; then
+              echo "- $line" >> fixes.txt
+            elif [[ "$lower_line" =~ ^docs || "$lower_line" =~ ^readme ]]; then
+              echo "- $line" >> docs.txt
+            elif [[ "$lower_line" =~ ^chore || "$lower_line" =~ ^refactor || "$lower_line" =~ ^ci || "$lower_line" =~ ^test || "$lower_line" =~ ^style || "$lower_line" =~ ^perf ]]; then
+              echo "- $line" >> chores.txt
+            else
+              echo "- $line" >> others.txt
+            fi
+          done < raw_commits.txt
+
+          # Build release notes template header
+          cat << 'EOF' > release_notes.md
+          ### 📱 Rock QR Release
+
+          This is a stable release of Rock QR!
+
+          #### Key Highlights:
+          - **Expressive Neon Matrix (Material 10)**: Sweeping hologram laser effects, live emission effects, and interactive mode switching.
+          - **Tactile Material 3 Theme**: Fluid custom animations, high-contrast chiseled preset coordinates, and glassmorphism.
+          - **Robust SQLite Room Database**: Local persistency for recent scans and generated QR codes.
+          - **KSP2/Gradle-native compilation**: Fast, highly optimized builds.
+
+          #### 📝 Structured Changelog:
+          EOF
+          
+          # Remove leading whitespaces from templated header
+          sed -i -e 's/^[[:space:]]*//' release_notes.md
+
+          # Append grouped segments to build structured release logs
+          {
+            if [ -s feats.txt ]; then
+              echo ""
+              echo "##### 🚀 New Features & Capabilities"
+              cat feats.txt
+            fi
+            if [ -s fixes.txt ]; then
+              echo ""
+              echo "##### 🐛 Bug Fixes & Resilience"
+              cat fixes.txt
+            fi
+            if [ -s docs.txt ]; then
+              echo ""
+              echo "##### 📖 Documentation & Guides"
+              cat docs.txt
+            fi
+            if [ -s chores.txt ]; then
+              echo ""
+              echo "##### ⚙️ Maintenance, Refactoring & CI/CD"
+              cat chores.txt
+            fi
+            if [ -s others.txt ]; then
+              echo ""
+              echo "##### 📝 Other Incremental Adjustments"
+              cat others.txt
+            fi
+          } >> release_notes.md
+
+          # Add closing quality assurances
+          cat << 'EOF' >> release_notes.md
+
+          #### 📦 Attached Quality Artifacts:
+          - **`Rock_QR.apk`**: Installable Android application package (Release-signed/Debug-signed).
+          EOF
+
+          echo "✅ Category-based structural release note compiled successfully."
+          cat release_notes.md
+
+      # 🚀 Create or Update GitHub Release
+      - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ env.CHANGELOG }}
           files: |
             app/build/outputs/apk/release/Rock_QR.apk
+          tag_name: ${{ github.ref_name }}
+          name: Rock QR ${{ github.ref_name }}
+          body_path: release_notes.md
+          generate_release_notes: true
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
