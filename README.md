@@ -1,6 +1,4 @@
-# Rock QR Code
 
-![Rock QR CI](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)
 
 **Rock QR Code** is a clean, offline-first QR scanner and generator app built with Android Jetpack Compose, CameraX, Room, and ZXing. It also includes a lightweight GitHub Pages web companion for quick QR access from the browser.
 
