@@ -9,25 +9,66 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.*
+import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,7 +78,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
@@ -62,49 +104,40 @@ fun ScanScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            hasCameraPermission = granted
-            if (granted) {
-                viewModel.showToast("Camera Permission Granted!", CustomToastType.SUCCESS)
-            } else {
-                viewModel.showToast("Camera is required to use the real-time scanner.", CustomToastType.WARNING)
-            }
-        }
-    )
-
-    val activePreset by viewModel.colorPreset.collectAsState()
     val themeConfig = LiquidGlassTheme.LocalConfig.current
     val primaryColor = themeConfig.primaryColor
     val secondaryColor = themeConfig.secondaryColor
 
-    // Scanner state
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+    }
     var scannedContent by remember { mutableStateOf<String?>(null) }
     var lastScannedTime by remember { mutableStateOf(0L) }
     var isFlashOn by remember { mutableStateOf(false) }
     var cameraControlState by remember { mutableStateOf<CameraControl?>(null) }
 
-    // Pulse animation for HUD frame
-    val infiniteTransition = rememberInfiniteTransition(label = "hud_pulse")
-    val scanTrackerOffset by infiniteTransition.animateFloat(
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasCameraPermission = granted
+            viewModel.showToast(
+                if (granted) "Camera permission granted" else "Camera permission is required for scanning",
+                if (granted) CustomToastType.SUCCESS else CustomToastType.WARNING
+            )
+        }
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "scanner_motion")
+    val scannerLineOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(2200, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "scanner_tracker"
+        label = "scanner_line"
     )
 
     Box(
@@ -113,446 +146,426 @@ fun ScanScreen(
             .testTag("scan_screen_root")
     ) {
         if (!hasCameraPermission) {
-            // GORGEOUS CAMERA PERMISSION GATE WITH CRYSTAL STONES INSPIRED STYLING
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(primaryColor.copy(alpha = 0.15f))
-                        .border(1.5.dp, primaryColor.copy(alpha = 0.40f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Camera Access Required",
-                        tint = primaryColor,
-                        modifier = Modifier.size(42.dp)
-                    )
+            CameraPermissionGate(
+                primaryColor = primaryColor,
+                onRequestPermission = {
+                    HapticUtils.vibrate(context, 40)
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
                 }
+            )
+            return@Box
+        }
 
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Text(
-                    text = "Activate Crystal Lens",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    fontFamily = FontFamily.SansSerif
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "To decode QR barcodes instantly, authorize camera access. Scanning is completed fully offline to respect your data privacy.",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.70f),
-                    textAlign = TextAlign.Center,
-                    lineHeight = 22.sp
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Button(
-                    onClick = {
-                        HapticUtils.vibrate(context, 40)
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = primaryColor
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(52.dp)
-                        .testTag("request_camera_button")
-                ) {
-                    Text(
-                        text = "Enable Offline Scanner",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                        color = Color.White
-                    )
-                }
+        val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+        DisposableEffect(Unit) {
+            onDispose {
+                cameraExecutor.shutdown()
             }
-        } else {
-            // CAMERA PREVIEW AND SCAN HUD LAYER
-            val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+        }
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                AndroidView(
-                    factory = { ctx ->
-                        val previewView = PreviewView(ctx).apply {
-                            scaleType = PreviewView.ScaleType.FILL_CENTER
-                        }
-                        val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                        cameraProviderFuture.addListener({
-                            val cameraProvider = cameraProviderFuture.get()
-                            val preview = Preview.Builder().build().apply {
-                                setSurfaceProvider(previewView.surfaceProvider)
-                            }
-
-                            val imageAnalyzer = ImageAnalysis.Builder()
-                                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                .build()
-                                .also {
-                                    it.setAnalyzer(
-                                        cameraExecutor,
-                                        QrCodeAnalyzer { result ->
-                                            val currentTime = System.currentTimeMillis()
-                                            if (result.isNotEmpty() && (currentTime - lastScannedTime > 2000)) {
-                                                lastScannedTime = currentTime
-                                                HapticUtils.vibrate(context, 80)
-                                                scannedContent = result
-                                                viewModel.saveScannedResult(result)
-                                                viewModel.showToast("QR Decoded Successfully!", CustomToastType.SUCCESS)
-                                            }
-                                        }
-                                    )
-                                }
-
-                            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                            try {
-                                cameraProvider.unbindAll()
-                                val camera = cameraProvider.bindToLifecycle(
-                                    lifecycleOwner,
-                                    cameraSelector,
-                                    preview,
-                                    imageAnalyzer
-                                )
-                                cameraControlState = camera.cameraControl
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }, ContextCompat.getMainExecutor(ctx))
-                        previewView
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                // ROCK ENCLOSED BARCODE MASK OVERLAY
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val width = size.width
-                    val height = size.height
-                    val squareSize = 250.dp.toPx()
-
-                    val left = (width - squareSize) / 2
-                    val top = (height - squareSize) / 2
-
-                    // Transparent dark layer surrounding the scan box
-                    drawRect(
-                        color = Color.Black.copy(alpha = 0.65f),
-                        size = size
-                    )
-
-                    // punch hole in context
-                    drawRoundRect(
-                        color = Color.Transparent,
-                        topLeft = Offset(left, top),
-                        size = Size(squareSize, squareSize),
-                        cornerRadius = CornerRadius(24f, 24f),
-                        blendMode = BlendMode.Clear
-                    )
+        AndroidView(
+            factory = { ctx ->
+                val previewView = PreviewView(ctx).apply {
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
                 }
+                val mainExecutor = ContextCompat.getMainExecutor(ctx)
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
-                // SUBTLE CORNER LIGHTING DESIGN
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(250.dp)
-                            .border(width = 2.dp, color = primaryColor.copy(alpha = 0.40f), shape = RoundedCornerShape(12.dp))
-                    ) {
-                        // Moving Quartz laser line
-                        val yOffset = 250.dp * scanTrackerOffset
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(3.dp)
-                                .offset(y = yOffset)
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            primaryColor,
-                                            secondaryColor,
-                                            primaryColor,
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
-                        )
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder().build().apply {
+                        setSurfaceProvider(previewView.surfaceProvider)
                     }
-                }
+                    val imageAnalyzer = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                        .also { analysis ->
+                            analysis.setAnalyzer(cameraExecutor, QrCodeAnalyzer { result ->
+                                mainExecutor.execute {
+                                    val now = System.currentTimeMillis()
+                                    if (result.isNotBlank() && now - lastScannedTime > 1800L) {
+                                        lastScannedTime = now
+                                        scannedContent = result
+                                        HapticUtils.vibrate(ctx, 80)
+                                        viewModel.saveScannedResult(result)
+                                        viewModel.showToast("QR decoded successfully", CustomToastType.SUCCESS)
+                                    }
+                                }
+                            })
+                        }
 
-                // TOP SCREEN INFO BAR
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
-                        .align(Alignment.TopCenter),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Position QR inside the frame",
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.45f), shape = RoundedCornerShape(12.dp))
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    try {
+                        cameraProvider.unbindAll()
+                        val camera = cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            imageAnalyzer
+                        )
+                        cameraControlState = camera.cameraControl
+                    } catch (e: Exception) {
+                        viewModel.showToast("Camera failed to start", CustomToastType.ERROR)
+                    }
+                }, mainExecutor)
+
+                previewView
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        ScannerOverlay(
+            primaryColor = primaryColor,
+            secondaryColor = secondaryColor,
+            scannerLineOffset = scannerLineOffset
+        )
+
+        ScannerTopBar(
+            isFlashOn = isFlashOn,
+            onFlashToggle = {
+                HapticUtils.vibrate(context, 30)
+                cameraControlState?.let { control ->
+                    isFlashOn = !isFlashOn
+                    control.enableTorch(isFlashOn)
+                    viewModel.showToast(
+                        if (isFlashOn) "Torch switched on" else "Torch switched off",
+                        CustomToastType.INFO
                     )
+                } ?: viewModel.showToast("Camera is still starting", CustomToastType.INFO)
+            }
+        )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+        AnimatedVisibility(
+            visible = scannedContent != null,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 90.dp)
+                .padding(horizontal = 16.dp)
+        ) {
+            scannedContent?.let { content ->
+                ScanResultCard(
+                    content = content,
+                    primaryColor = primaryColor,
+                    onDismiss = { scannedContent = null },
+                    onCopy = {
+                        HapticUtils.vibrate(context, 30)
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Decoded QR", content))
+                        viewModel.showToast("Copied to clipboard", CustomToastType.SUCCESS)
+                    },
+                    onOpenUrl = {
+                        openScannedUrl(context, content, viewModel)
+                    },
+                    onShare = {
+                        shareScannedText(context, content)
+                    }
+                )
+            }
+        }
+    }
+}
 
-                    // FLASH LIGHT SWITCH CAPSULE
+@Composable
+private fun CameraPermissionGate(
+    primaryColor: Color,
+    onRequestPermission: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
+                .background(primaryColor.copy(alpha = 0.15f))
+                .border(1.5.dp, primaryColor.copy(alpha = 0.40f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.CameraAlt,
+                contentDescription = "Camera access required",
+                tint = primaryColor,
+                modifier = Modifier.size(42.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(28.dp))
+        Text(
+            text = "Activate Scanner",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            fontFamily = FontFamily.SansSerif
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Camera access is required to scan QR codes. Scanning stays offline on your device.",
+            fontSize = 14.sp,
+            color = Color.White.copy(alpha = 0.70f),
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onRequestPermission,
+            colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(52.dp)
+                .testTag("request_camera_button")
+        ) {
+            Text(
+                text = "Enable Scanner",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScannerOverlay(
+    primaryColor: Color,
+    secondaryColor: Color,
+    scannerLineOffset: Float
+) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    ) {
+        val width = size.width
+        val height = size.height
+        val squareSize = 250.dp.toPx()
+        val left = (width - squareSize) / 2
+        val top = (height - squareSize) / 2
+
+        drawRect(
+            color = Color.Black.copy(alpha = 0.65f),
+            size = size
+        )
+        drawRoundRect(
+            color = Color.Transparent,
+            topLeft = Offset(left, top),
+            size = Size(squareSize, squareSize),
+            cornerRadius = CornerRadius(24f, 24f),
+            blendMode = BlendMode.Clear
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(250.dp)
+                .border(2.dp, primaryColor.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .offset(y = 247.dp * scannerLineOffset)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color.Transparent,
+                                primaryColor,
+                                secondaryColor,
+                                primaryColor,
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScannerTopBar(
+    isFlashOn: Boolean,
+    onFlashToggle: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Position QR inside the frame",
+            color = Color.White,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.5f))
+                .clickable(onClick = onFlashToggle)
+                .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isFlashOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
+                contentDescription = "Toggle torch",
+                tint = if (isFlashOn) Color.Yellow else Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScanResultCard(
+    content: String,
+    primaryColor: Color,
+    onDismiss: () -> Unit,
+    onCopy: () -> Unit,
+    onOpenUrl: () -> Unit,
+    onShare: () -> Unit
+) {
+    val isUrl = content.trim().startsWith("http://", ignoreCase = true) ||
+        content.trim().startsWith("https://", ignoreCase = true) ||
+        content.trim().startsWith("www.", ignoreCase = true)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(primaryColor.copy(alpha = 0.5f), Color.White.copy(alpha = 0.05f))
+                ),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .testTag("scanned_result_card"),
+        colors = CardDefaults.cardColors(containerColor = Color(0xEB1A1A1A)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(50.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.5f))
-                            .clickable {
-                                HapticUtils.vibrate(context, 30)
-                                cameraControlState?.let { controller ->
-                                    isFlashOn = !isFlashOn
-                                    controller.enableTorch(isFlashOn)
-                                    viewModel.showToast(
-                                        if (isFlashOn) "Torch Switched On" else "Torch Switched Off",
-                                        CustomToastType.INFO
-                                    )
-                                }
-                            }
-                            .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape),
+                            .size(36.dp)
+                            .background(primaryColor.copy(alpha = 0.20f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (isFlashOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                            contentDescription = "Toggle Torch",
-                            tint = if (isFlashOn) Color.Yellow else Color.White,
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Scan success",
+                            tint = primaryColor,
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Scan Parsed",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Dismiss result",
+                        tint = Color.White.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            SelectionContainer {
+                Text(
+                    text = content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                        .padding(14.dp),
+                    maxLines = 6
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = onCopy,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.12f)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Outlined.ContentCopy, contentDescription = "Copy", tint = Color.White, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Copy", color = Color.White, fontSize = 13.sp)
                 }
 
-                // SCREEN OVERLAY RESULT DRAWER (IF SCAN HAS RESULT DETECTED)
-                AnimatedVisibility(
-                    visible = scannedContent != null,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 90.dp) // Leave spacing for navigation bar capsule
-                        .padding(horizontal = 16.dp)
+                Button(
+                    onClick = if (isUrl) onOpenUrl else onShare,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    scannedContent?.let { content ->
-                        // Premium frosted card display
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(
-                                    width = 1.dp,
-                                    brush = Brush.linearGradient(
-                                        listOf(primaryColor.copy(alpha = 0.5f), Color.White.copy(alpha = 0.05f))
-                                    ),
-                                    shape = RoundedCornerShape(20.dp)
-                                )
-                                .testTag("scanned_result_card"),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xEB1A1A1A)
-                            ),
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(20.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .background(primaryColor.copy(alpha = 0.20f), CircleShape),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.CheckCircle,
-                                                contentDescription = "Success",
-                                                tint = primaryColor,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        Text(
-                                            text = "Scan Parsed",
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 16.sp
-                                        )
-                                    }
-
-                                    IconButton(
-                                        onClick = {
-                                            HapticUtils.vibrate(context, 20)
-                                            scannedContent = null
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = "Dismiss",
-                                            tint = Color.White.copy(alpha = 0.6f)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                // Content field box
-                                SelectionContainer {
-                                    Text(
-                                        text = content,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White.copy(alpha = 0.9f),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(
-                                                Color.White.copy(alpha = 0.05f),
-                                                RoundedCornerShape(12.dp)
-                                            )
-                                            .border(
-                                                1.dp,
-                                                Color.White.copy(alpha = 0.1f),
-                                                RoundedCornerShape(12.dp)
-                                            )
-                                            .padding(14.dp),
-                                        maxLines = 6
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(18.dp))
-
-                                // Quick operational row
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    // COPY BUTTON
-                                    Button(
-                                        onClick = {
-                                            HapticUtils.vibrate(context, 30)
-                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                            val clip = ClipData.newPlainText("Decoded QR", content)
-                                            clipboard.setPrimaryClip(clip)
-                                            viewModel.showToast("Copied to clipboard", CustomToastType.SUCCESS)
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color.White.copy(alpha = 0.12f)
-                                        ),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Outlined.ContentCopy,
-                                            contentDescription = "Copy",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Copy", color = Color.White, fontSize = 13.sp)
-                                    }
-
-                                    // ACTION NAVIGATE (ONLY IF WEB LINK)
-                                    val isUrl = content.trim().startsWith("http://", ignoreCase = true) ||
-                                            content.trim().startsWith("https://", ignoreCase = true) ||
-                                            content.trim().startsWith("www.", ignoreCase = true)
-
-                                    if (isUrl) {
-                                        Button(
-                                            onClick = {
-                                                HapticUtils.vibrate(context, 40)
-                                                try {
-                                                    val rawUrl = content.trim()
-                                                    val cleanUrl = if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
-                                                        "https://$rawUrl"
-                                                    } else rawUrl
-                                                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(cleanUrl))
-                                                    context.startActivity(browserIntent)
-                                                } catch (e: Exception) {
-                                                    viewModel.showToast("Failed to launch browser", CustomToastType.ERROR)
-                                                }
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = primaryColor
-                                            ),
-                                            shape = RoundedCornerShape(12.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Language,
-                                                contentDescription = "Open Link",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text("Go To URL", color = Color.White, fontSize = 13.sp)
-                                        }
-                                    } else {
-                                        // Standard text share
-                                        Button(
-                                            onClick = {
-                                                HapticUtils.vibrate(context, 30)
-                                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                                    type = "text/plain"
-                                                    putExtra(Intent.EXTRA_TEXT, content)
-                                                }
-                                                context.startActivity(Intent.createChooser(shareIntent, "Share Scanned QR"))
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = primaryColor
-                                            ),
-                                            shape = RoundedCornerShape(12.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.IosShare,
-                                                contentDescription = "Share text",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text("Share", color = Color.White, fontSize = 13.sp)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Icon(
+                        imageVector = if (isUrl) Icons.Outlined.Language else Icons.Outlined.IosShare,
+                        contentDescription = if (isUrl) "Open link" else "Share text",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(if (isUrl) "Open" else "Share", color = Color.White, fontSize = 13.sp)
                 }
             }
         }
     }
 }
 
-// Inline fallback since Compose SelectionContainer can sometimes cause runtime errors in some versions
-@Composable
-fun SelectionContainer(content: @Composable () -> Unit) {
-    androidx.compose.foundation.text.selection.SelectionContainer {
-        content()
+private fun openScannedUrl(context: Context, content: String, viewModel: QRViewModel) {
+    try {
+        val rawUrl = content.trim()
+        val cleanUrl = if (!rawUrl.startsWith("http://", true) && !rawUrl.startsWith("https://", true)) {
+            "https://$rawUrl"
+        } else {
+            rawUrl
+        }
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(cleanUrl)))
+    } catch (_: Exception) {
+        viewModel.showToast("Failed to open link", CustomToastType.ERROR)
     }
+}
+
+private fun shareScannedText(context: Context, content: String) {
+    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, content)
+    }
+    context.startActivity(Intent.createChooser(shareIntent, "Share scanned QR"))
 }
