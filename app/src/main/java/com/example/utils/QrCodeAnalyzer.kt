@@ -2,48 +2,84 @@ package com.example.utils
 
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.google.zxing.*
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.BinaryBitmap
+import com.google.zxing.DecodeHintType
+import com.google.zxing.MultiFormatReader
+import com.google.zxing.NotFoundException
+import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
-import java.nio.ByteBuffer
 
 class QrCodeAnalyzer(
     private val onQrCodeScanned: (String) -> Unit
 ) : ImageAnalysis.Analyzer {
 
     private val reader = MultiFormatReader().apply {
-        val hints = mapOf(
-            DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE)
+        setHints(
+            mapOf(
+                DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE),
+                DecodeHintType.TRY_HARDER to true,
+                DecodeHintType.CHARACTER_SET to "UTF-8"
+            )
         )
-        setHints(hints)
     }
 
     override fun analyze(image: ImageProxy) {
-        val buffer = image.planes[0].buffer
-        val data = buffer.toByteArray()
-        val width = image.width
-        val height = image.height
-
-        // Plane 0 is the Y plane in YUV, perfect for luminance
-        val source = PlanarYUVLuminanceSource(
-            data, width, height, 0, 0, width, height, false
-        )
-        val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
-
         try {
-            val result = reader.decodeWithState(binaryBitmap)
-            onQrCodeScanned(result.text)
-        } catch (e: Exception) {
-            // Failed to find QR
+            val luminanceBytes = image.toLuminanceByteArray()
+            val source = PlanarYUVLuminanceSource(
+                luminanceBytes,
+                image.width,
+                image.height,
+                0,
+                0,
+                image.width,
+                image.height,
+                false
+            )
+            val bitmap = BinaryBitmap(HybridBinarizer(source))
+            val result = reader.decodeWithState(bitmap)
+            val text = result.text.orEmpty().trim()
+            if (text.isNotEmpty()) {
+                onQrCodeScanned(text)
+            }
+        } catch (_: NotFoundException) {
+            // No QR code found in this frame.
+        } catch (_: Exception) {
+            // Keep the camera analyzer alive even when one frame fails.
         } finally {
             reader.reset()
             image.close()
         }
     }
 
-    private fun ByteBuffer.toByteArray(): ByteArray {
-        rewind()
-        val data = ByteArray(remaining())
-        get(data)
-        return data
+    private fun ImageProxy.toLuminanceByteArray(): ByteArray {
+        val plane = planes.first()
+        val buffer = plane.buffer
+        val width = width
+        val height = height
+        val rowStride = plane.rowStride
+        val pixelStride = plane.pixelStride
+        val luminance = ByteArray(width * height)
+        val row = ByteArray(rowStride)
+        var outputOffset = 0
+
+        buffer.rewind()
+        for (rowIndex in 0 until height) {
+            val bytesToRead = minOf(rowStride, buffer.remaining())
+            if (bytesToRead <= 0) break
+            buffer.get(row, 0, bytesToRead)
+
+            var column = 0
+            while (column < width) {
+                val sourceIndex = column * pixelStride
+                if (sourceIndex < bytesToRead && outputOffset < luminance.size) {
+                    luminance[outputOffset++] = row[sourceIndex]
+                }
+                column++
+            }
+        }
+
+        return luminance
     }
 }
