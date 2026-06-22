@@ -6,15 +6,9 @@
 
 ## Download APK
 
-The latest APK is published automatically from GitHub Actions.
+The APK is built automatically by GitHub Actions after every push to the `main` branch.
 
-**Latest release:** [Rock QR Latest APK](https://github.com/SayanthRock/Rock-QR-Code/releases/tag/latest)
-
-Recommended APK file names from Releases:
-
-- `Rock QR.apk`
-- `Rock_QR.apk`
-- `Rock-QR-release-v*.apk`
+Go to **Actions → Build Android APK → latest successful run → Artifacts → Rock-QR-debug-apk**.
 
 > Install note: if an older APK was signed with a different temporary key, uninstall the old app once, then install the new APK. After that, future APK updates should install normally.
 
@@ -74,26 +68,26 @@ app/build/outputs/apk/debug/app-debug.apk
 app/build/outputs/apk/release/app-release.apk
 ```
 
-## GitHub Actions release flow
+## GitHub Actions APK build flow
 
-The workflow in `.github/workflows/build.yml` runs on pushes to `main` or `master`, version tags, pull requests, and manual dispatch.
+The workflow in `.github/workflows/build.yml` runs on pushes to `main`, pull requests to `main`, and manual workflow dispatch.
 
-It now does the following:
+It does the following:
 
-1. Sets up JDK 17 and Gradle.
-2. Decodes the stable debug keystore for repeat install compatibility.
-3. Runs unit tests.
-4. Builds both debug and release APKs.
-5. Uploads APK artifacts.
-6. Updates the `latest` tag on main/master pushes.
-7. Publishes or updates the GitHub Release with APK files attached.
+1. Checks out the repository code.
+2. Sets up Java 17 using Temurin.
+3. Makes `gradlew` executable.
+4. Prepares a debug keystore.
+5. Runs Gradle unit tests.
+6. Builds the debug APK with `./gradlew assembleDebug --stacktrace`.
+7. Uploads the generated APK as a GitHub Actions artifact.
 
 ## Current Android package
 
 ```text
 applicationId: com.aistudio.rockqr.qzlypm
-versionName: 1.0.2
-versionCode: 3
+versionName: 1.0.3
+versionCode: 4
 minSdk: 24
 targetSdk: 36
 ```
@@ -105,9 +99,10 @@ Rock QR keeps permissions minimal:
 ```xml
 android.permission.CAMERA
 android.permission.VIBRATE
+android.permission.WRITE_EXTERNAL_STORAGE, maxSdkVersion 28
 ```
 
-No wallpaper permissions, location permissions, or unnecessary network permissions are required for the Android APK.
+No wallpaper, location, or unnecessary network permissions are required for the Android APK.
 
 ## Project structure
 
@@ -120,19 +115,21 @@ app/
     viewmodel/     App state and actions
   src/main/res/    Icons, strings, theme resources, XML configs
 .github/workflows/
-  build.yml        Test, build, artifact upload, release publish
+  build.yml        Test, build, and upload APK artifact
 index.html         Web QR companion
 share/             Web share/import page
 sw.js              Service worker cache
 ```
 
-## Cleaned up
+## Recent fixes
 
-- Removed old wallpaper permissions from the Android manifest.
-- Removed unused Gradle dependency aliases and unused plugin entries.
-- Removed old root APK copy task clutter.
-- Removed unused Moshi, Retrofit, OkHttp, Firebase, Play Services, DataStore, Navigation, and Secrets plugin references from the Android build setup.
-- Kept CameraX, Room, Coil, ZXing, Compose, and testing dependencies that the app actually uses.
+- Added a clean GitHub Actions APK build workflow.
+- Added the missing Kotlin Android Gradle plugin.
+- Stabilized scanner camera callbacks by moving UI state updates onto the main thread.
+- Improved QR frame decoding for camera row stride and pixel stride handling.
+- Simplified Gradle configuration for CI stability.
+- Added older Android gallery-save support with scoped legacy storage permission.
+- Removed old wallpaper permissions and unused dependency clutter.
 
 ## Roadmap
 
