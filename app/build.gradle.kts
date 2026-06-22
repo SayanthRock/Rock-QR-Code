@@ -15,8 +15,8 @@ android {
     applicationId = "com.aistudio.rockqr.qzlypm"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = 2
+    versionName = "1.0.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -31,7 +31,7 @@ android {
         keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
         keyPassword = System.getenv("KEY_PASSWORD")
       } else {
-        // Fallback to debug configuration if release keystore is missing
+        // Fallback to the stable debug key so GitHub APK updates keep the same signature.
         storeFile = file("${rootDir}/debug.keystore")
         storePassword = "android"
         keyAlias = "androiddebugkey"
@@ -68,8 +68,7 @@ android {
   testOptions { unitTests { isIncludeAndroidResources = true } }
 }
 
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
+// Configure the Secrets Gradle Plugin to use .env and .env.example files// to match the convention used in Web projects.
 secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
@@ -153,9 +152,7 @@ abstract class CopyApkTask : DefaultTask() {
     if (src.exists()) {
       src.copyTo(File(destDir, "Rock QR.apk"), overwrite = true)
       src.copyTo(File(destDir, "Rock_QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo_QR.apk"), overwrite = true)
-      println("✅ Copied APK to root directory as both 'Rock QR.apk' and 'Chamo QR.apk'")
+      println("✅ Copied APK to root directory as Rock QR.apk and Rock_QR.apk")
     }
   }
 }
@@ -170,4 +167,3 @@ tasks.configureEach {
     finalizedBy(copyApkToWorkspace)
   }
 }
-
