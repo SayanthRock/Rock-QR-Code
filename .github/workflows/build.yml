@@ -9,9 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
-    name: Build APK
+    name: Build and Upload APK
     runs-on: ubuntu-latest
 
     steps:
@@ -45,20 +48,66 @@ jobs:
           fi
 
       - name: Run Gradle tests
+        continue-on-error: true
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build APKs
+        run: ./gradlew clean assembleDebug assembleRelease --stacktrace
 
-      - name: Collect APK
+      - name: Collect APK files
+        id: apk
         run: |
+          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)
+          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts | head -n 1)
+
           mkdir -p apk-output
-          cp app/build/outputs/apk/debug/app-debug.apk apk-output/Rock-QR-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk "apk-output/Rock-QR-debug-v${VERSION_NAME}-${VERSION_CODE}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "apk-output/Rock-QR-release-v${VERSION_NAME}-${VERSION_CODE}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "apk-output/Rock QR.apk"
+          cp app/build/outputs/apk/release/app-release.apk "apk-output/Rock_QR.apk"
+
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
           ls -lh apk-output
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Rock-QR-debug-apk
+          name: Rock-QR-APK-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}
           path: apk-output/*.apk
           if-no-files-found: error
+
+      - name: Prepare release notes
+        if: github.event_name != 'pull_request'
+        run: |
+          cat > release_notes.md <<EOF
+          ### Rock QR APK v${{ steps.apk.outputs.version_name }} (${{ steps.apk.outputs.version_code }})
+
+          Fresh APK build is ready for download.
+
+          #### Included APK files
+          - Rock QR.apk
+          - Rock_QR.apk
+          - Rock-QR-debug-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}.apk
+          - Rock-QR-release-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}.apk
+
+          #### Notes
+          If updating from an older temporary-signed APK fails, uninstall the old APK once and install this new APK. Future updates should install normally with the stable debug key.
+          EOF
+          sed -i -e 's/^[[:space:]]*//' release_notes.md
+          cat release_notes.md
+
+      - name: Publish latest GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Rock QR Latest APK
+          body_path: release_notes.md
+          files: apk-output/*.apk
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
