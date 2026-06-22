@@ -26,6 +26,20 @@ Go to **Actions → Build Android APK → latest successful run → Artifacts �
 
 > Install note: if an older APK was signed with a different temporary key, uninstall the old app once, then install the new APK. After that, future APK updates should install normally.
 
+## Everyone can contribute
+
+Everyone can suggest and make changes by using Pull Requests:
+
+1. Fork this repository.
+2. Create a branch in your fork.
+3. Make your change.
+4. Open a Pull Request into `main`.
+5. Wait for the Android APK workflow check.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+
+Direct write access is not open to everyone because that can break the APK or add unsafe code. Pull Requests keep the project open and safe.
+
 ## Features
 
 ### Android app
@@ -132,6 +146,7 @@ app/
 .github/workflows/
   build.yml                Test, build, upload artifact, publish latest APK release
   android-autoheal-ci.yml  Lightweight APK build check without wrapper regeneration
+CONTRIBUTING.md            Contribution guide for Pull Requests
 index.html                 Web QR companion
 share/                     Web share/import page
 sw.js                      Service worker cache
@@ -139,6 +154,7 @@ sw.js                      Service worker cache
 
 ## Recent fixes
 
+- Added a contribution guide so everyone can propose changes through Pull Requests.
 - Fixed the failing Android Auto-Heal workflow by removing the broken Gradle wrapper regeneration step.
 - Removed duplicate Kotlin Android plugin configuration that caused the `kotlin` extension conflict.
 - Added APK artifact upload and latest GitHub Release publishing.
