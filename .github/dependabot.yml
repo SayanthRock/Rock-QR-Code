@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # Gradle configurations & dependencies
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
@@ -16,18 +15,28 @@ updates:
           - "com.squareup.retrofit2:*"
           - "com.squareup.okhttp3:*"
     ignore:
-      # Keep Gradle pinned until the Android Gradle Plugin stack is explicitly verified.
       - dependency-name: "gradle-wrapper"
         versions:
           - ">9.4.1"
-      # KSP must track the Kotlin compiler line. Kotlin is pinned to 2.2.10 here.
       - dependency-name: "com.google.devtools.ksp"
         versions:
           - ">=2.3.0"
+      - dependency-name: "org.jetbrains.kotlin.plugin.compose"
+        versions:
+          - ">2.2.10"
 
-  # GitHub Actions pipelines & workflows
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "gradle/actions"
+        versions:
+          - ">4"
+      - dependency-name: "actions/upload-artifact"
+        versions:
+          - ">4"
+      - dependency-name: "softprops/action-gh-release"
+        versions:
+          - ">2"
