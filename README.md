@@ -1,4 +1,6 @@
+# Rock QR Code
 
+![Build Android APK](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)
 
 **Rock QR Code** is a clean, offline-first QR scanner and generator app built with Android Jetpack Compose, CameraX, Room, and ZXing. It also includes a lightweight GitHub Pages web companion for quick QR access from the browser.
 
@@ -6,7 +8,21 @@
 
 The APK is built automatically by GitHub Actions after every push to the `main` branch.
 
-Go to **Actions → Build Android APK → latest successful run → Artifacts → Rock-QR-debug-apk**.
+### Option 1: Download from Releases
+
+Open the latest release and download one of the APK assets:
+
+**Latest APK Release:** [Rock QR Latest APK](https://github.com/SayanthRock/Rock-QR-Code/releases/tag/latest)
+
+Recommended files:
+
+- `Rock QR.apk`
+- `Rock_QR.apk`
+- `Rock-QR-release-v1.0.4-5.apk`
+
+### Option 2: Download from Actions
+
+Go to **Actions → Build Android APK → latest successful run → Artifacts → Rock-QR-APK-v1.0.4-5**.
 
 > Install note: if an older APK was signed with a different temporary key, uninstall the old app once, then install the new APK. After that, future APK updates should install normally.
 
@@ -77,15 +93,16 @@ It does the following:
 3. Makes `gradlew` executable.
 4. Prepares a debug keystore.
 5. Runs Gradle unit tests.
-6. Builds the debug APK with `./gradlew assembleDebug --stacktrace`.
-7. Uploads the generated APK as a GitHub Actions artifact.
+6. Builds debug and release APKs with `./gradlew clean assembleDebug assembleRelease --stacktrace`.
+7. Uploads generated APKs as a GitHub Actions artifact.
+8. Publishes or updates the `latest` GitHub Release with APK files attached.
 
 ## Current Android package
 
 ```text
 applicationId: com.aistudio.rockqr.qzlypm
-versionName: 1.0.3
-versionCode: 4
+versionName: 1.0.4
+versionCode: 5
 minSdk: 24
 targetSdk: 36
 ```
@@ -113,7 +130,7 @@ app/
     viewmodel/     App state and actions
   src/main/res/    Icons, strings, theme resources, XML configs
 .github/workflows/
-  build.yml        Test, build, and upload APK artifact
+  build.yml        Test, build, upload artifact, publish latest APK release
 index.html         Web QR companion
 share/             Web share/import page
 sw.js              Service worker cache
@@ -121,7 +138,8 @@ sw.js              Service worker cache
 
 ## Recent fixes
 
-- Added a clean GitHub Actions APK build workflow.
+- Added APK artifact upload and latest GitHub Release publishing.
+- Bumped APK to version `1.0.4` with versionCode `5`.
 - Added the missing Kotlin Android Gradle plugin.
 - Stabilized scanner camera callbacks by moving UI state updates onto the main thread.
 - Improved QR frame decoding for camera row stride and pixel stride handling.
