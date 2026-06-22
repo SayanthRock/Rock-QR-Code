@@ -4,39 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    groups:
-      androidx-stack:
-        patterns:
-          - "androidx.*"
-      network-stack:
-        patterns:
-          - "com.squareup.*"
-          - "com.squareup.retrofit2:*"
-          - "com.squareup.okhttp3:*"
-    ignore:
-      - dependency-name: "gradle-wrapper"
-        versions:
-          - ">9.4.1"
-      - dependency-name: "com.google.devtools.ksp"
-        versions:
-          - ">=2.3.0"
-      - dependency-name: "org.jetbrains.kotlin.plugin.compose"
-        versions:
-          - ">2.2.10"
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    ignore:
-      - dependency-name: "gradle/actions"
-        versions:
-          - ">4"
-      - dependency-name: "actions/upload-artifact"
-        versions:
-          - ">4"
-      - dependency-name: "softprops/action-gh-release"
-        versions:
-          - ">2"
+    open-pull-requests-limit: 0
