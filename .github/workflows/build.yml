@@ -2,30 +2,32 @@ name: Rock QR CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
     tags:
-      - 'v*'
+      - "v*"
     paths:
-      - 'app/**'
-      - '.github/workflows/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle.properties'
-      - 'gradle/**'
+      - "app/**"
+      - ".github/workflows/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "debug.keystore.base64"
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
     paths:
-      - 'app/**'
-      - '.github/workflows/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle.properties'
-      - 'gradle/**'
+      - "app/**"
+      - ".github/workflows/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "debug.keystore.base64"
   workflow_dispatch:
 
 jobs:
   build:
-    name: Validate and Build Rock QR
+    name: Build and Release Rock QR APK
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -33,281 +35,134 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Fix Gradle permissions
-        run: chmod +x gradlew
-
-      - name: Clean broken wrapper cache
-        run: rm -rf ~/.gradle/wrapper/dists || true
-
-      - name: Validate Gradle Properties for KSP2 Compatibility
-        run: |
-          echo "🔍 Checking gradle.properties for incompatible legacy options..."
-          
-          # Check for legacy in-process compilation strategy
-          if grep -q "kotlin.compiler.execution.strategy=in-process" gradle.properties; then
-            echo "❌ ERROR: Legacy 'kotlin.compiler.execution.strategy=in-process' found in gradle.properties!"
-            echo "KSP2's compiler frontend expects a standalone Kotlin compiler daemon. Setting this property to 'in-process' will cause NullPointerException crashes."
-            exit 1
-          fi
-          
-          # Check for legacy ksp.useKSP2=false option (which is obsolete in newer KSP releases)
-          if grep -q "ksp.useKSP2=false" gradle.properties; then
-            echo "❌ ERROR: Obsolete 'ksp.useKSP2=false' found in gradle.properties!"
-            echo "Legacy KSP1 is no longer supported with the updated Gradle/Kotlin version. KSP2 must be used."
-            exit 1
-          fi
-          
-          echo "✅ gradle.properties validation passed. Ready for KSP2-based compilation."
+        run: chmod +x ./gradlew
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           validate-wrappers: false
-          # Restrict cache writes to main/master branches and tags to optimize build speeds and prevent cache pollution on PRs
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
-      - name: Validate or Regenerate Gradle Wrapper
-        run: |
-          echo "🔍 Checking Gradle Wrapper integrity..."
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || ! java -jar gradle/wrapper/gradle-wrapper.jar --version > /dev/null 2>&1; then
-            echo "⚠️ Corrupt or missing gradle-wrapper.jar detected! Regenerating using pre-installed system Gradle..."
-            gradle wrapper --gradle-version 9.3.1
-          fi
-          echo "✅ Gradle Wrapper is ready. Setting execute permissions..."
-          chmod +x ./gradlew
-
-      - name: Decode or Generate Debug Keystore
+      - name: Decode stable debug keystore
         run: |
           if [ -f debug.keystore.base64 ]; then
-            echo "🔑 Decoding debug.keystore.base64 to debug.keystore..."
+            echo "Decoding committed stable debug.keystore..."
             base64 --decode debug.keystore.base64 > debug.keystore
           else
-            echo "⚠️ debug.keystore.base64 not found! Generating fresh temporary debug.keystore..."
-            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            echo "debug.keystore.base64 missing, generating temporary key. Install-over-update may fail between builds."
+            keytool -genkeypair -v \
+              -keystore debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Rock QR Debug,O=Sayanth Rock,C=IN"
           fi
 
-      - name: Run Unit Tests
+      - name: Validate Gradle properties
+        run: |
+          if grep -q "kotlin.compiler.execution.strategy=in-process" gradle.properties 2>/dev/null; then
+            echo "Remove kotlin.compiler.execution.strategy=in-process because it can break modern KSP builds."
+            exit 1
+          fi
+          if grep -q "ksp.useKSP2=false" gradle.properties 2>/dev/null; then
+            echo "Remove ksp.useKSP2=false because this project expects KSP2."
+            exit 1
+          fi
+          echo "Gradle properties look safe."
+
+      - name: Run unit tests
         id: unit-tests
         continue-on-error: true
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Parse Test Reports and Generate Summary
-        if: always()
+      - name: Build debug and release APKs
+        run: ./gradlew clean assembleDebug assembleRelease --stacktrace
+
+      - name: Prepare APK files
+        id: prepare-apk
         run: |
-          python3 -c "
-          import os
-          import xml.etree.ElementTree as ET
+          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)
+          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts | head -n 1)
+          mkdir -p release-apk
 
-          results_dir = 'app/build/test-results/testDebugUnitTest'
-          summary = []
-          summary.append('### 📊 Rock QR Test Summary')
+          cp app/build/outputs/apk/debug/app-debug.apk "release-apk/Rock-QR-debug-v${VERSION_NAME}-${VERSION_CODE}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release-apk/Rock-QR-release-v${VERSION_NAME}-${VERSION_CODE}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release-apk/Rock QR.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release-apk/Rock_QR.apk"
 
-          if not os.path.exists(results_dir):
-              summary.append('❌ No JUnit XML test results found at ' + results_dir)
-          else:
-              total_tests = 0
-              total_failures = 0
-              total_errors = 0
-              total_skipped = 0
-              failed_details = []
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          ls -lh release-apk
 
-              for file in os.listdir(results_dir):
-                  if file.endswith('.xml'):
-                      try:
-                          tree = ET.parse(os.path.join(results_dir, file))
-                          root = tree.getroot()
-                          # Support single testsuite as root or nested testsuites
-                          suites = [root] if root.tag == 'testsuite' else root.findall('.//testsuite')
-                          for testsuite in suites:
-                              total_tests += int(testsuite.attrib.get('tests', 0))
-                              total_failures += int(testsuite.attrib.get('failures', 0))
-                              total_errors += int(testsuite.attrib.get('errors', 0))
-                              total_skipped += int(testsuite.attrib.get('skipped', 0))
-                              
-                              for testcase in testsuite.findall('.//testcase'):
-                                  classname = testcase.attrib.get('classname', 'Unknown')
-                                  name = testcase.attrib.get('name', 'Unknown')
-                                  failure = testcase.find('failure')
-                                  error = testcase.find('error')
-                                  if failure is not None or error is not None:
-                                      msg = (failure.attrib.get('message', '') if failure is not None else error.attrib.get('message', ''))
-                                      failed_details.append(f'- **{classname}** ➜ *{name}*\n  > ❌ {msg}')
-                      except Exception as e:
-                          print(f'Error parsing {file}: {e}')
-
-              passed = total_tests - total_failures - total_errors - total_skipped
-              
-              summary.append(f'**Test Status Matrix:**')
-              summary.append(f'- **Total Tests runs:** {total_tests}')
-              summary.append(f'- **Passed:** {passed} ✅')
-              summary.append(f'- **Failed / Errors:** {total_failures + total_errors} ❌')
-              summary.append(f'- **Skipped:** {total_skipped} 🦘')
-
-              if failed_details:
-                  summary.append('\n#### ❌ Failed Test Cases')
-                  summary.extend(failed_details)
-              else:
-                  summary.append('\n#### 🎉 All JVM/Robolectric unit tests passed cleanly!')
-
-          with open(os.environ.get('GITHUB_STEP_SUMMARY', 'step_summary.md'), 'w') as f:
-              f.write('\n'.join(summary))
-          "
-
-      - name: Upload Test Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rock-qr-test-reports
-          path: app/build/reports/tests/testDebugUnitTest/
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
-
-      - name: Rename APK for Release
-        run: |
-          echo "🏷️ Renaming app-debug.apk to Rock QR.apk and Chamo QR.apk..."
-          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Rock QR.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Chamo QR.apk"
-
-      - name: Upload Build Artifacts
+      - name: Upload APK artifact
         id: upload-apk
         uses: actions/upload-artifact@v4
         with:
-          name: Rock-QR-Artifacts
-          path: |
-            app/build/outputs/apk/debug/Rock QR.apk
-            app/build/outputs/apk/debug/Chamo QR.apk
-            app/build/outputs/apk/debug/app-debug.apk
+          name: Rock-QR-APK-v${{ steps.prepare-apk.outputs.version_name }}-${{ steps.prepare-apk.outputs.version_code }}
+          path: release-apk/*.apk
+          if-no-files-found: error
 
-      - name: Add APK to Job Summary
-        if: always()
+      - name: Move latest tag to this commit
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Downloadable Build Artifacts" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.upload-apk.outcome }}" = "success" ]; then
-            echo "#### 🎉 APK Generation Succeeded!" >> $GITHUB_STEP_SUMMARY
-            echo "The following artifacts have been built, signed with debug certificates, and uploaded directly to this GitHub Action run summary page:" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- **📱 [Download Rock QR APKs](${{ steps.upload-apk.outputs.artifact-url }})** (Direct ZIP containing all built APK variants)" >> $GITHUB_STEP_SUMMARY
-            echo "- **Alternative Access:** You can also download files individually from the **Artifacts** section at the bottom of this run summary page." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "#### ❌ APK Generation Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Please check the build and upload logs to identify compile or packaging errors." >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f latest "$GITHUB_SHA"
+          git push origin refs/tags/latest --force
 
-      - name: Generate Automatic Changelog
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Generate release notes
+        if: github.event_name != 'pull_request'
         run: |
-          echo "📝 Fetching full git history for accurate changelog generation..."
-          git fetch --prune --unshallow || true
-          
-          echo "🔍 Locating previous release tag..."
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
-          
-          if [ -n "$PREV_TAG" ]; then
-            echo "📄 Previous tag found: $PREV_TAG"
-            git log ${PREV_TAG}..HEAD --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Incremental package adjustments (v0.0.0) by CI" > raw_commits.txt
-          else
-            echo "📄 No previous tag in repository history. Extrapolating commit logs..."
-            git log -n 25 --pretty=format:"%s (%h) by %an" > raw_commits.txt || echo "chore: Initial repository setup (v1.0.0) by CI" > raw_commits.txt
-          fi
+          cat > release_notes.md <<EOF
+          ### Rock QR APK
 
-          # Parse and group commit entries into standardized conventional categories
-          touch feats.txt fixes.txt docs.txt chores.txt others.txt
-          while IFS= read -r line; do
-            # Cover case-insensitivity cleanly
-            lower_line=$(echo "$line" | tr '[:upper:]' '[:lower:]')
-            if [[ "$lower_line" =~ ^feat || "$lower_line" =~ ^add ]]; then
-              echo "- $line" >> feats.txt
-            elif [[ "$lower_line" =~ ^fix ]]; then
-              echo "- $line" >> fixes.txt
-            elif [[ "$lower_line" =~ ^docs || "$lower_line" =~ ^readme ]]; then
-              echo "- $line" >> docs.txt
-            elif [[ "$lower_line" =~ ^chore || "$lower_line" =~ ^refactor || "$lower_line" =~ ^ci || "$lower_line" =~ ^test || "$lower_line" =~ ^style || "$lower_line" =~ ^perf ]]; then
-              echo "- $line" >> chores.txt
-            else
-              echo "- $line" >> others.txt
-            fi
-          done < raw_commits.txt
+          Fresh APK build: v${{ steps.prepare-apk.outputs.version_name }} (${{ steps.prepare-apk.outputs.version_code }})
 
-          # Build release notes template header
-          cat << 'EOF' > release_notes.md
-          ### 📱 Rock QR Release
+          #### Fixed in this build
+          - Added Android camera permission for QR scanner access.
+          - Bumped APK versionCode so phone installs detect this as a newer update.
+          - Added stable GitHub Actions signing key so future APKs can install over previous APKs.
+          - Added launcher icon fallback resources for better icon consistency across devices and launchers.
+          - Built both debug and release APK outputs.
 
-          This is a stable release of Rock QR!
-
-          #### Key Highlights:
-          - **Expressive Neon Matrix (Material 10)**: Sweeping hologram laser effects, live emission effects, and interactive mode switching.
-          - **Tactile Material 3 Theme**: Fluid custom animations, high-contrast chiseled preset coordinates, and glassmorphism.
-          - **Robust SQLite Room Database**: Local persistency for recent scans and generated QR codes.
-          - **KSP2/Gradle-native compilation**: Fast, highly optimized builds.
-
-          #### 📝 Structured Changelog:
+          #### Download
+          Use `Rock QR.apk` or `Rock_QR.apk` from the release assets.
           EOF
-          
-          # Remove leading whitespaces from templated header
           sed -i -e 's/^[[:space:]]*//' release_notes.md
-
-          # Append grouped segments to build structured release logs
-          {
-            if [ -s feats.txt ]; then
-              echo ""
-              echo "##### 🚀 New Features & Capabilities"
-              cat feats.txt
-            fi
-            if [ -s fixes.txt ]; then
-              echo ""
-              echo "##### 🐛 Bug Fixes & Resilience"
-              cat fixes.txt
-            fi
-            if [ -s docs.txt ]; then
-              echo ""
-              echo "##### 📖 Documentation & Guides"
-              cat docs.txt
-            fi
-            if [ -s chores.txt ]; then
-              echo ""
-              echo "##### ⚙️ Maintenance, Refactoring & CI/CD"
-              cat chores.txt
-            fi
-            if [ -s others.txt ]; then
-              echo ""
-              echo "##### 📝 Other Incremental Adjustments"
-              cat others.txt
-            fi
-          } >> release_notes.md
-
-          # Add closing quality assurances
-          cat << 'EOF' >> release_notes.md
-
-          #### 📦 Attached Quality Artifacts:
-          - **`Rock QR.apk`**: Dual-branded high-performance release build under Rock branding.
-          - **`Chamo QR.apk`**: Dual-branded stable release build under Chamo branding.
-          EOF
-
-          echo "✅ Category-based structural release note compiled successfully."
           cat release_notes.md
 
-      - name: Create or Update GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Create or update GitHub Release
+        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            app/build/outputs/apk/debug/Rock QR.apk
-            app/build/outputs/apk/debug/Chamo QR.apk
-          tag_name: ${{ github.ref_name }}
-          name: Rock QR ${{ github.ref_name }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'latest' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('Rock QR {0}', github.ref_name) || 'Rock QR Latest APK' }}
           body_path: release_notes.md
-          generate_release_notes: true
+          files: release-apk/*.apk
+          fail_on_unmatched_files: true
           draft: false
           prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add build summary
+        if: always()
+        run: |
+          echo "### Rock QR Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: v${{ steps.prepare-apk.outputs.version_name }} (${{ steps.prepare-apk.outputs.version_code }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- APK artifact: ${{ steps.upload-apk.outputs.artifact-url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Unit tests outcome: ${{ steps.unit-tests.outcome }}" >> "$GITHUB_STEP_SUMMARY"
