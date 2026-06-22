@@ -130,17 +130,19 @@ app/
     viewmodel/     App state and actions
   src/main/res/    Icons, strings, theme resources, XML configs
 .github/workflows/
-  build.yml        Test, build, upload artifact, publish latest APK release
-index.html         Web QR companion
-share/             Web share/import page
-sw.js              Service worker cache
+  build.yml                Test, build, upload artifact, publish latest APK release
+  android-autoheal-ci.yml  Lightweight APK build check without wrapper regeneration
+index.html                 Web QR companion
+share/                     Web share/import page
+sw.js                      Service worker cache
 ```
 
 ## Recent fixes
 
+- Fixed the failing Android Auto-Heal workflow by removing the broken Gradle wrapper regeneration step.
+- Removed duplicate Kotlin Android plugin configuration that caused the `kotlin` extension conflict.
 - Added APK artifact upload and latest GitHub Release publishing.
 - Bumped APK to version `1.0.4` with versionCode `5`.
-- Added the missing Kotlin Android Gradle plugin.
 - Stabilized scanner camera callbacks by moving UI state updates onto the main thread.
 - Improved QR frame decoding for camera row stride and pixel stride handling.
 - Simplified Gradle configuration for CI stability.
