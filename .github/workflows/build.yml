@@ -76,7 +76,7 @@ jobs:
           fi
 
       - name: Upload APK Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ROCK-Qr-debug-apk
           path: release_outputs/*.apk
