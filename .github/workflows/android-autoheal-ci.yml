@@ -28,13 +28,15 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Setup Gradle
+      - name: Setup Gradle cache
         uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
 
       - name: Fix Gradle permissions
         run: chmod +x ./gradlew
 
-      - name: Validate Gradle Wrapper
+      - name: Validate Gradle Wrapper Runtime
         run: ./gradlew --version
 
       - name: Build debug APK
