@@ -55,64 +55,19 @@
 
   <style>
     /* Styling backdrop filters and custom animations */
-     .glass-bg {
-       background: var(--luxury-glass);
-       backdrop-filter: blur(20px);
-       -webkit-backdrop-filter: blur(20px);
-       transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-     }
-     .glass-bg:hover {
-       border-color: rgba(167, 139, 250, 0.16);
-       box-shadow: 0 16px 36px -12px rgba(139, 92, 246, 0.15);
-     }
-     
-     /* Full compatibility rules for disabled glass blur / high performance mode */
-     body.no-blur-mode {
-       --blur-value: none !important;
-     }
-     body.no-blur-mode .glass-bg {
-       backdrop-filter: none !important;
-       -webkit-backdrop-filter: none !important;
-       background: rgba(10, 14, 23, 0.95) !important;
-       border-color: rgba(255, 255, 255, 0.12) !important;
-     }
-     body.no-blur-mode header {
-       backdrop-filter: none !important;
-       -webkit-backdrop-filter: none !important;
-       background: rgba(10, 14, 23, 0.95) !important;
-     }
-     body.no-blur-mode .neon-glow-bg,
-     body.no-blur-mode .blur-\[80px\],
-     body.no-blur-mode .blur-\[90px\],
-     body.no-blur-mode .blur-\[110px\],
-     body.no-blur-mode .blur-\[130px\] {
-       filter: none !important;
-       opacity: 0.03 !important;
-       background-color: rgba(139, 92, 246, 0.04) !important;
-     }
+    .glass-bg {
+      background: var(--luxury-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
     
     body {
       background-color: #03050a;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.18) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.06) 0px, transparent 40%);
+        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.05) 0px, transparent 40%);
       background-attachment: fixed;
-      position: relative;
-    }
-
-    /* Elegant Cyber Grid pattern background */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-      background-size: 32px 32px;
-      pointer-events: none;
-      z-index: -1;
-      opacity: 0.8;
     }
 
     /* Custom Hide default scrollbars */
@@ -138,75 +93,9 @@
     .neon-glow-bg {
       animation: pulse-slow 8s infinite ease-in-out;
     }
-
-    /* Pop animation for the QR canvas wrapper */
-    @keyframes qr-pop {
-      0% {
-        transform: scale(1);
-        filter: brightness(1);
-      }
-      35% {
-        transform: scale(1.08);
-        filter: brightness(1.25);
-        border-color: rgba(167, 139, 250, 0.85);
-        box-shadow: 0 0 40px rgba(139, 92, 246, 0.45);
-      }
-      100% {
-        transform: scale(1);
-        filter: brightness(1);
-      }
-    }
-    .animate-qr-pop {
-      animation: qr-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    /* Input focus glow states */
-    textarea:focus, input:focus, select:focus {
-      border-color: rgba(167, 139, 250, 0.5) !important;
-      box-shadow: 0 0 16px rgba(139, 92, 246, 0.15) !important;
-      background-color: rgba(3, 5, 10, 0.7) !important;
-    }
-
-    /* Micro-interactions on clicks */
-    .qr-type-btn {
-      transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .qr-type-btn:active {
-      transform: scale(0.94);
-    }
-    button, a {
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    button:active {
-      transform: scale(0.97);
-    }
-
-    /* Scanner Laser line effect */
-    @keyframes scanner-laser {
-      0% { top: 3%; opacity: 0.1; }
-      15% { opacity: 0.95; }
-      85% { opacity: 0.95; }
-      100% { top: 97%; opacity: 0.1; }
-    }
-    .scanner-laser-line {
-      position: absolute;
-      left: 5%;
-      right: 5%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.9), transparent);
-      box-shadow: 0 0 14px rgba(167, 139, 250, 0.9);
-      animation: scanner-laser 2s infinite ease-in-out;
-      pointer-events: none;
-    }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen flex flex-col font-sans selection:bg-purple-500/30 selection:text-white antialiased">
-  <script>
-    // Immediate script execution to prevent FOUC (Flash of Unstyled Content) for blur
-    if (localStorage.getItem("glass-blur-disabled") === "true") {
-      document.body.classList.add("no-blur-mode");
-    }
-  </script>
 
   <!-- Ambient background glow blobs -->
   <div class="fixed top-[15%] left-[20%] w-[350px] h-[350px] rounded-full bg-purple-600/20 blur-[110px] pointer-events-none neon-glow-bg"></div>
@@ -228,11 +117,6 @@
       
       <!-- Nav Tabs -->
       <div class="flex items-center gap-2">
-        <!-- Live Glass Blur Toggle Switch -->
-        <button id="toggle-blur-btn" class="p-2 aspect-square rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all outline-none border border-white/5 flex items-center justify-center focus:outline-none" title="Toggle Glass Blur Effects">
-          <i id="blur-btn-icon" data-lucide="eye" class="w-4 h-4 text-purple-400"></i>
-        </button>
-        <div class="h-6 w-px bg-white/10 mx-1"></div>
         <button id="tab-btn-generator" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 bg-white/10 text-white border border-white/10 shadow-lg shadow-purple-950/25">
           <i data-lucide="wrench" class="w-4 h-4"></i>
           <span>Generator</span>
@@ -506,7 +390,7 @@
               When copying the <strong class="text-purple-300">Share Link</strong>, you receive an automated redirection URL. Any person who opens that URL will automatically import your forged QR code structure. Sharing links can also trigger the native scanner in your partner Android App!
             </p>
             <div class="p-2.5 rounded-xl bg-luxury-black/30 border border-white/5 flex items-center justify-between text-xs text-gray-500 gap-4">
-              <span class="truncate text-mono text-[10px]" id="current-web-link-preview">https://sayanthrock.github.io/Rock-QR-Code/share/?content=...</span>
+              <span class="truncate text-mono text-[10px]" id="current-web-link-preview">https://sayanthrock.github.io/Rock-QR-Code/share?content=...</span>
               <button id="btn-copy-raw-link" class="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white transition-all">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
@@ -541,8 +425,6 @@
             <!-- Absolute overlay showing targeted boundaries -->
             <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
               <div class="w-48 h-48 border-2 border-dashed border-purple-500/60 rounded-xl relative">
-                <!-- Laser line moving effect -->
-                <div class="scanner-laser-line"></div>
                 <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-purple-400 -mt-0.5 -ml-0.5"></div>
                 <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-purple-400 -mt-0.5 -mr-0.5"></div>
                 <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-purple-400 -mb-0.5 -ml-0.5"></div>
@@ -670,18 +552,14 @@
       </div>
 
       <!-- Live Release Download Trigger -->
-      <div class="flex flex-col md:flex-row items-center justify-center gap-4 z-10 flex-wrap">
-        <a id="btn-download-rock-apk" href="./Rock_QR.apk" download class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-purple-900/30 border border-white/10 flex items-center gap-2 group">
-          <i data-lucide="download" class="w-4 h-4 text-purple-200 group-hover:scale-110 transition-transform"></i>
-          <span>Download Rock QR APK</span>
-        </a>
-        <a id="btn-download-apk-release" href="https://github.com/sayanthrock/Rock-QR-Code/releases" target="_blank" class="px-5 py-3.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 font-medium text-sm transition-all duration-200 flex items-center gap-2">
+      <div class="flex flex-col sm:flex-row items-center gap-4 z-10">
+        <a id="btn-download-apk-release" href="https://github.com/sayanthrock/Rock-QR-Code/releases" target="_blank" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-purple-900/30 border border-white/10 flex items-center gap-2">
           <i data-lucide="github" class="w-4 h-4"></i>
           <span>View GitHub Releases</span>
         </a>
         <div class="px-5 py-3.5 rounded-xl bg-white/5 border border-white/5 text-gray-400 text-xs flex items-center gap-2 font-medium">
           <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
-          <span>Website Auto-Sync Engine Active</span>
+          <span>Release Auto APK Pipeline Active</span>
         </div>
       </div>
     </section>
@@ -713,39 +591,6 @@
     document.addEventListener("DOMContentLoaded", function () {
       // Initialize Lucide Icons
       lucide.createIcons();
-
-      // Glass Blur Switch Logic
-      const toggleBlurBtn = document.getElementById("toggle-blur-btn");
-      const blurBtnIcon = document.getElementById("blur-btn-icon");
-
-      function updateBlurUI() {
-        if (!blurBtnIcon || !toggleBlurBtn) return;
-        const isBlurDisabled = document.body.classList.contains("no-blur-mode");
-        if (isBlurDisabled) {
-          blurBtnIcon.setAttribute("data-lucide", "eye-off");
-          blurBtnIcon.classList.remove("text-purple-400");
-          blurBtnIcon.classList.add("text-gray-500");
-          toggleBlurBtn.setAttribute("title", "Enable Liquid Glass Blur Style");
-        } else {
-          blurBtnIcon.setAttribute("data-lucide", "eye");
-          blurBtnIcon.classList.remove("text-gray-500");
-          blurBtnIcon.classList.add("text-purple-400");
-          toggleBlurBtn.setAttribute("title", "Disable Glass Blur (Performance Mode)");
-        }
-        lucide.createIcons();
-      }
-
-      // Initialize icon state on load
-      updateBlurUI();
-
-      if (toggleBlurBtn) {
-        toggleBlurBtn.addEventListener("click", function () {
-          const currentlyDisabled = document.body.classList.toggle("no-blur-mode");
-          localStorage.setItem("glass-blur-disabled", currentlyDisabled);
-          updateBlurUI();
-          triggerToast(currentlyDisabled ? "Glass blur disabled (High Performance Mode)!" : "Liquid Glass blur enabled!", true);
-        });
-      }
 
       // State Management
       let selectedType = "text";
@@ -787,16 +632,6 @@
         }, 2200);
       }
 
-      // Pop element definition and trigger function
-      const qrWrapper = document.getElementById("qrcode-canvas-wrapper");
-      function triggerQrPop() {
-        if (!qrWrapper) return;
-        qrWrapper.classList.remove("animate-qr-pop");
-        // Trigger reflow to restart animation
-        void qrWrapper.offsetWidth;
-        qrWrapper.classList.add("animate-qr-pop");
-      }
-
       // Live payload construction depending on selected type
       function computePayload() {
         switch (selectedType) {
@@ -833,8 +668,8 @@
         const content = computePayload();
         
         // Match the exact Android companion shared link format:
-        // https://sayanthrock.github.io/Rock-QR-Code/share/?content=CONTENT&type=TYPE&title=TITLE
-        const baseShareUrl = "https://sayanthrock.github.io/Rock-QR-Code/share/";
+        // https://sayanthrock.github.io/Rock-QR-Code/share?content=CONTENT&type=TYPE&title=TITLE
+        const baseShareUrl = "https://sayanthrock.github.io/Rock-QR-Code/share";
         const finalUrl = `${baseShareUrl}?content=${encodeURIComponent(content)}&type=${selectedType}&title=${encodeURIComponent(title)}`;
         return finalUrl;
       }
@@ -854,10 +689,6 @@
               dark: "#0a0e17",
               light: "#1e1e2e"
             }
-          }, function (error) {
-            if (!error) {
-              triggerQrPop();
-            }
           });
           return;
         }
@@ -874,8 +705,6 @@
         }, function (error) {
           if (error) {
             console.error("QR Draw Error: ", error);
-          } else {
-            triggerQrPop();
           }
         });
 
@@ -1059,7 +888,6 @@
         parsedTimeBadge.textContent = new Date().toLocaleTimeString();
 
         triggerToast("QR Scanned Successfully!", true);
-        triggerQrPop();
       }
 
       function stopScanCamera() {

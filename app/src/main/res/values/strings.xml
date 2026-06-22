@@ -1,1 +1,7 @@
-<resources><string name="app_name">Rock QR Code</string><string name="tab_scan">Scan</string><string name="tab_generate">Generate</string><string name="tab_history">History</string><string name="tab_settings">Settings</string></resources>
+<resources>
+    <string name="app_name">Rock QR Code</string>
+    <string name="tab_scan">Scan</string>
+    <string name="tab_generate">Generate</string>
+    <string name="tab_history">History</string>
+    <string name="tab_settings">Settings</string>
+</resources>

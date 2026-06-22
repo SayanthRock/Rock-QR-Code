@@ -338,12 +338,9 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
 
     // Liquid Glass settings
     val glassBlurRadius = MutableStateFlow(prefs.getFloat("glass_blur_radius", 18f))
-    val glassBlurEnabled = MutableStateFlow(prefs.getBoolean("glass_blur_enabled", true))
     val glassOpacity = MutableStateFlow(prefs.getFloat("glass_opacity", 0.22f))
     val glassBorderThickness = MutableStateFlow(prefs.getFloat("glass_border_thickness", 1.2f))
     val glassGlowEnabled = MutableStateFlow(prefs.getBoolean("glass_glow_enabled", true))
-    val liquidGlassEnabled = MutableStateFlow(prefs.getBoolean("liquid_glass_enabled", true))
-    val fullScreenEnabled = MutableStateFlow(prefs.getBoolean("fullscreen_enabled", false))
 
     fun setThemeMode(mode: String) {
         themeMode.value = mode
@@ -360,24 +357,9 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
         prefs.edit().putString("color_preset", preset).apply()
     }
 
-    fun setLiquidGlassEnabled(enabled: Boolean) {
-        liquidGlassEnabled.value = enabled
-        prefs.edit().putBoolean("liquid_glass_enabled", enabled).apply()
-    }
-
-    fun setFullScreenEnabled(enabled: Boolean) {
-        fullScreenEnabled.value = enabled
-        prefs.edit().putBoolean("fullscreen_enabled", enabled).apply()
-    }
-
     fun setGlassBlurRadius(value: Float) {
         glassBlurRadius.value = value
         prefs.edit().putFloat("glass_blur_radius", value).apply()
-    }
-
-    fun setGlassBlurEnabled(enabled: Boolean) {
-        glassBlurEnabled.value = enabled
-        prefs.edit().putBoolean("glass_blur_enabled", enabled).apply()
     }
 
     fun setGlassOpacity(value: Float) {

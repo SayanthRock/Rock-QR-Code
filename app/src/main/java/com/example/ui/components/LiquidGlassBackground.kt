@@ -142,65 +142,62 @@ fun LiquidGlassBackground(
                     .background(Color.Black.copy(alpha = 0.55f))
             )
         } else {
-            if (config.isLiquidGlassEnabled) {
-                val blurModifier = if (config.glassBlur > 0.dp) Modifier.blur(radius = config.glassBlur) else Modifier
-                // 1. Blurred background fluid glowing orbits
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .then(blurModifier)
-                ) {
-                    val w = size.width
-                    val h = size.height
+            // 1. Blurred background fluid glowing orbits
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(radius = config.glassBlur)
+            ) {
+                val w = size.width
+                val h = size.height
 
-                    // Draw glowing liquid Blur Orbit 1
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(colorBlob1, Color.Transparent),
-                            center = Offset(w * blob1StateX, h * blob1StateY),
-                            radius = size.minDimension * 0.45f
+                // Draw glowing liquid Blur Orbit 1
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colorBlob1, Color.Transparent),
+                        center = Offset(w * blob1StateX, h * blob1StateY),
+                        radius = size.minDimension * 0.45f
+                    ),
+                    radius = size.minDimension * 0.45f,
+                    center = Offset(w * blob1StateX, h * blob1StateY)
+                )
+
+                // Draw glowing liquid Blur Orbit 2
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colorBlob2, Color.Transparent),
+                        center = Offset(w * blob2StateX, h * blob2StateY),
+                        radius = size.minDimension * 0.5f
+                    ),
+                    radius = size.minDimension * 0.5f,
+                    center = Offset(w * blob2StateX, h * blob2StateY)
+                )
+
+                // Draw glowing liquid Blur Orbit 3
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colorBlob3, Color.Transparent),
+                        center = Offset(w * blob3StateX, h * blob3StateY),
+                        radius = size.minDimension * 0.4f
+                    ),
+                    radius = size.minDimension * 0.4f,
+                    center = Offset(w * blob3StateX, h * blob3StateY)
+                )
+
+                // 3D Glass linear highlight lustre sweeping slowly across the frosted pane
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = if (useDarkTheme) 0.012f else 0.03f),
+                            Color.White.copy(alpha = if (useDarkTheme) 0.035f else 0.07f),
+                            Color.White.copy(alpha = if (useDarkTheme) 0.012f else 0.03f),
+                            Color.Transparent
                         ),
-                        radius = size.minDimension * 0.45f,
-                        center = Offset(w * blob1StateX, h * blob1StateY)
+                        start = Offset(w * (glassSheenShift - 0.25f), 0f),
+                        end = Offset(w * (glassSheenShift + 0.25f), h)
                     )
-
-                    // Draw glowing liquid Blur Orbit 2
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(colorBlob2, Color.Transparent),
-                            center = Offset(w * blob2StateX, h * blob2StateY),
-                            radius = size.minDimension * 0.5f
-                        ),
-                        radius = size.minDimension * 0.5f,
-                        center = Offset(w * blob2StateX, h * blob2StateY)
-                    )
-
-                    // Draw glowing liquid Blur Orbit 3
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(colorBlob3, Color.Transparent),
-                            center = Offset(w * blob3StateX, h * blob3StateY),
-                            radius = size.minDimension * 0.4f
-                        ),
-                        radius = size.minDimension * 0.4f,
-                        center = Offset(w * blob3StateX, h * blob3StateY)
-                    )
-
-                    // 3D Glass linear highlight lustre sweeping slowly across the frosted pane
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.White.copy(alpha = if (useDarkTheme) 0.012f else 0.03f),
-                                Color.White.copy(alpha = if (useDarkTheme) 0.035f else 0.07f),
-                                Color.White.copy(alpha = if (useDarkTheme) 0.012f else 0.03f),
-                                Color.Transparent
-                            ),
-                            start = Offset(w * (glassSheenShift - 0.25f), 0f),
-                            end = Offset(w * (glassSheenShift + 0.25f), h)
-                        )
-                    )
-                }
+                )
             }
         }
 

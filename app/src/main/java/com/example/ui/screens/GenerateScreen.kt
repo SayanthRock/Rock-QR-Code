@@ -37,18 +37,6 @@ import com.example.viewmodel.CustomToastType
 import com.example.viewmodel.QRViewModel
 
 @Composable
-fun themedTextFieldColors(primaryColor: Color, themeConfig: com.example.ui.theme.LiquidGlassTheme.Config) = TextFieldDefaults.colors(
-    focusedTextColor = themeConfig.textColor,
-    unfocusedTextColor = themeConfig.textColor,
-    focusedContainerColor = themeConfig.containerBgColor,
-    unfocusedContainerColor = themeConfig.containerBgColor,
-    focusedLabelColor = primaryColor,
-    unfocusedLabelColor = themeConfig.subTextColor,
-    focusedIndicatorColor = primaryColor,
-    unfocusedIndicatorColor = themeConfig.textColor.copy(alpha = 0.10f)
-)
-
-@Composable
 fun GenerateScreen(
     viewModel: QRViewModel,
     modifier: Modifier = Modifier
@@ -93,7 +81,7 @@ fun GenerateScreen(
             text = "Quartz Forge Generator",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = themeConfig.textColor,
+            color = Color.White,
             fontFamily = FontFamily.SansSerif,
             modifier = Modifier.fillMaxWidth().testTag("generate_title")
         )
@@ -101,7 +89,7 @@ fun GenerateScreen(
         Text(
             text = "Craft local QR codes with customizable crystal mineral dyes.",
             fontSize = 13.sp,
-            color = themeConfig.subTextColor,
+            color = Color.White.copy(alpha = 0.5f),
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp)
         )
 
@@ -118,11 +106,11 @@ fun GenerateScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(themeConfig.containerBgColor, RoundedCornerShape(24.dp))
+                        .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(24.dp))
                         .border(
                             1.dp,
                             Brush.linearGradient(
-                                listOf(primaryColor.copy(alpha = 0.4f), themeConfig.textColor.copy(alpha = 0.05f))
+                                listOf(primaryColor.copy(alpha = 0.4f), Color.White.copy(alpha = 0.05f))
                             ),
                             RoundedCornerShape(24.dp)
                         )
@@ -193,12 +181,12 @@ fun GenerateScreen(
                                 )
                             },
                             modifier = Modifier.weight(1f).height(48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = themeConfig.textColor.copy(alpha = 0.10f)),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.10f)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Image", tint = themeConfig.textColor)
+                            Icon(Icons.Default.Share, contentDescription = "Share Image", tint = Color.White)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Share", color = themeConfig.textColor, fontSize = 13.sp)
+                            Text("Share", color = Color.White, fontSize = 13.sp)
                         }
                     }
 
@@ -211,7 +199,7 @@ fun GenerateScreen(
                             val rawContent = viewModel.inputText.value.ifEmpty { viewModel.wifiSsid.value }
                             val title = viewModel.inputTitle.value.ifEmpty { "Shared Code" }
                             val type = viewModel.inputType.value
-                            val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share/?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
+                            val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
 
                             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 this.type = "text/plain"
@@ -249,7 +237,7 @@ fun GenerateScreen(
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = themeConfig.textColor),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                         border = ButtonDefaults.outlinedButtonBorder.copy(
                             width = 1.dp
                         )
@@ -269,7 +257,7 @@ fun GenerateScreen(
                         text = "Select Data Compound",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = themeConfig.subTextColor,
+                        color = Color.White.copy(alpha = 0.5f),
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
 
@@ -295,12 +283,12 @@ fun GenerateScreen(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(
                                         if (isSelected) primaryColor.copy(alpha = 0.20f)
-                                        else themeConfig.containerBgColor
+                                        else Color.White.copy(alpha = 0.04f)
                                     )
                                     .border(
                                         1.dp,
                                         if (isSelected) primaryColor.copy(alpha = 0.50f)
-                                        else themeConfig.textColor.copy(alpha = 0.08f),
+                                        else Color.White.copy(alpha = 0.08f),
                                         RoundedCornerShape(12.dp)
                                     )
                                     .clickable {
@@ -314,7 +302,7 @@ fun GenerateScreen(
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = label,
-                                        tint = if (isSelected) primaryColor else themeConfig.subTextColor,
+                                        tint = if (isSelected) primaryColor else Color.White.copy(alpha = 0.6f),
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -322,7 +310,7 @@ fun GenerateScreen(
                                         text = label,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = if (isSelected) primaryColor else themeConfig.subTextColor
+                                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
                                     )
                                 }
                             }
@@ -334,7 +322,7 @@ fun GenerateScreen(
                         text = "Content Details",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = themeConfig.subTextColor,
+                        color = Color.White.copy(alpha = 0.5f),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
@@ -342,10 +330,19 @@ fun GenerateScreen(
                     OutlinedTextField(
                         value = inputTitle,
                         onValueChange = { viewModel.inputTitle.value = it },
-                        label = { Text("Core Title (Optional label for History)", color = themeConfig.subTextColor) },
+                        label = { Text("Core Title (Optional label for History)") },
                         modifier = Modifier.fillMaxWidth().testTag("input_field_title"),
                         shape = RoundedCornerShape(14.dp),
-                        colors = themedTextFieldColors(primaryColor, themeConfig),
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                            unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                            focusedLabelColor = primaryColor,
+                            unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
+                            focusedIndicatorColor = primaryColor,
+                            unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                        ),
                         singleLine = true
                     )
 
@@ -357,11 +354,20 @@ fun GenerateScreen(
                             OutlinedTextField(
                                 value = inputText,
                                 onValueChange = { viewModel.inputText.value = it },
-                                label = { Text("Website Link URL", color = themeConfig.subTextColor) },
-                                placeholder = { Text("URL Link (e.g. google.com)", color = themeConfig.subTextColor.copy(alpha = 0.6f)) },
+                                label = { Text("Website Link URL") },
+                                placeholder = { Text("URL Link (e.g. google.com)") },
                                 modifier = Modifier.fillMaxWidth().testTag("input_field_content"),
                                 shape = RoundedCornerShape(14.dp),
-                                colors = themedTextFieldColors(primaryColor, themeConfig),
+                                colors = TextFieldDefaults.colors(
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                    unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                    focusedLabelColor = primaryColor,
+                                    unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                    focusedIndicatorColor = primaryColor,
+                                    unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                ),
                                 singleLine = true
                             )
                         }
@@ -370,20 +376,38 @@ fun GenerateScreen(
                                 OutlinedTextField(
                                     value = wifiSsid,
                                     onValueChange = { viewModel.wifiSsid.value = it },
-                                    label = { Text("Network SSID (Name)", color = themeConfig.subTextColor) },
+                                    label = { Text("Network SSID (Name)") },
                                     modifier = Modifier.fillMaxWidth().testTag("input_field_ssid"),
                                     shape = RoundedCornerShape(14.dp),
-                                    colors = themedTextFieldColors(primaryColor, themeConfig),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        focusedLabelColor = primaryColor,
+                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                        focusedIndicatorColor = primaryColor,
+                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                    ),
                                     singleLine = true
                                 )
 
                                 OutlinedTextField(
                                     value = wifiPassword,
                                     onValueChange = { viewModel.wifiPassword.value = it },
-                                    label = { Text("Access Password", color = themeConfig.subTextColor) },
+                                    label = { Text("Access Password") },
                                     modifier = Modifier.fillMaxWidth().testTag("input_field_password"),
                                     shape = RoundedCornerShape(14.dp),
-                                    colors = themedTextFieldColors(primaryColor, themeConfig),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        focusedLabelColor = primaryColor,
+                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                        focusedIndicatorColor = primaryColor,
+                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                    ),
                                     singleLine = true
                                 )
 
@@ -408,7 +432,7 @@ fun GenerateScreen(
                                                 .background(if (isPSelected) primaryColor.copy(alpha = 0.15f) else Color.Transparent)
                                                 .border(
                                                     1.dp,
-                                                    if (isPSelected) primaryColor else themeConfig.textColor.copy(alpha = 0.1f),
+                                                    if (isPSelected) primaryColor else Color.White.copy(alpha = 0.1f),
                                                     RoundedCornerShape(8.dp)
                                                 )
                                                 .clickable {
@@ -420,7 +444,7 @@ fun GenerateScreen(
                                         ) {
                                             Text(
                                                 display,
-                                                color = if (isPSelected) primaryColor else themeConfig.subTextColor,
+                                                color = if (isPSelected) Color.White else Color.White.copy(alpha = 0.6f),
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
@@ -434,30 +458,57 @@ fun GenerateScreen(
                                 OutlinedTextField(
                                     value = contactName,
                                     onValueChange = { viewModel.contactName.value = it },
-                                    label = { Text("Full Name", color = themeConfig.subTextColor) },
+                                    label = { Text("Full Name") },
                                     modifier = Modifier.fillMaxWidth().testTag("input_field_contact_name"),
                                     shape = RoundedCornerShape(14.dp),
-                                    colors = themedTextFieldColors(primaryColor, themeConfig),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        focusedLabelColor = primaryColor,
+                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                        focusedIndicatorColor = primaryColor,
+                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                    ),
                                     singleLine = true
                                 )
 
                                 OutlinedTextField(
                                     value = contactPhone,
                                     onValueChange = { viewModel.contactPhone.value = it },
-                                    label = { Text("Phone Number", color = themeConfig.subTextColor) },
+                                    label = { Text("Phone Number") },
                                     modifier = Modifier.fillMaxWidth().testTag("input_field_contact_phone"),
                                     shape = RoundedCornerShape(14.dp),
-                                    colors = themedTextFieldColors(primaryColor, themeConfig),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        focusedLabelColor = primaryColor,
+                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                        focusedIndicatorColor = primaryColor,
+                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                    ),
                                     singleLine = true
                                 )
 
                                 OutlinedTextField(
                                     value = contactEmail,
                                     onValueChange = { viewModel.contactEmail.value = it },
-                                    label = { Text("Email Address", color = themeConfig.subTextColor) },
+                                    label = { Text("Email Address") },
                                     modifier = Modifier.fillMaxWidth().testTag("input_field_contact_email"),
                                     shape = RoundedCornerShape(14.dp),
-                                    colors = themedTextFieldColors(primaryColor, themeConfig),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        focusedLabelColor = primaryColor,
+                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                        focusedIndicatorColor = primaryColor,
+                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                    ),
                                     singleLine = true
                                 )
                             }
@@ -466,13 +517,22 @@ fun GenerateScreen(
                             OutlinedTextField(
                                 value = inputText,
                                 onValueChange = { viewModel.inputText.value = it },
-                                label = { Text("Decoded Statement", color = themeConfig.subTextColor) },
+                                label = { Text("Decoded Statement") },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(120.dp)
                                     .testTag("input_field_content"),
                                 shape = RoundedCornerShape(14.dp),
-                                colors = themedTextFieldColors(primaryColor, themeConfig)
+                                colors = TextFieldDefaults.colors(
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                    unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                    focusedLabelColor = primaryColor,
+                                    unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                    focusedIndicatorColor = primaryColor,
+                                    unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                )
                             )
                         }
                     }
@@ -484,7 +544,7 @@ fun GenerateScreen(
                         text = "Core QR Dye Tint",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = themeConfig.subTextColor,
+                        color = Color.White.copy(alpha = 0.5f),
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
 
@@ -505,12 +565,12 @@ fun GenerateScreen(
                                     }
                                     .border(
                                         width = 3.dp,
-                                        color = if (isColorSelected) themeConfig.textColor else Color.Transparent,
+                                        color = if (isColorSelected) Color.White else Color.Transparent,
                                         shape = CircleShape
                                     )
                                     .border(
                                         width = 1.dp,
-                                        color = if (isColorSelected) Color.Transparent else themeConfig.textColor.copy(alpha = 0.2f),
+                                        color = if (isColorSelected) Color.Transparent else Color.White.copy(alpha = 0.2f),
                                         shape = CircleShape
                                     )
                             )
