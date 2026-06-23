@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Android CI Debug APK
 
 on:
   push:
@@ -10,27 +10,25 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 defaults:
   run:
     shell: bash
 
 concurrency:
-  group: android-apk-${{ github.ref }}
+  group: android-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-apk:
-    name: Build, Upload, and Publish APK
+  debug-apk:
+    name: Validate, Test, and Build Debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -39,36 +37,24 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
+
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Prepare stable debug keystore
-        run: |
-          if [ -f debug.keystore.base64 ]; then
-            base64 --decode debug.keystore.base64 > debug.keystore
-          else
-            keytool -genkeypair -v \
-              -keystore debug.keystore \
-              -storepass android \
-              -alias androiddebugkey \
-              -keypass android \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -dname "CN=Rock QR Debug,O=Sayanth Rock,C=IN"
-          fi
-
-      - name: Validate Gradle wrapper
+      - name: Validate Gradle Wrapper Runtime
         run: ./gradlew --version
 
-      - name: Run Gradle tests
-        continue-on-error: true
+      - name: Run unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Build APKs
-        run: ./gradlew clean assembleDebug assembleRelease --stacktrace
+      - name: Build debug APK
+        run: ./gradlew clean assembleDebug --stacktrace
 
-      - name: Collect APK files
+      - name: Collect debug APK
         id: apk
         run: |
           VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)
@@ -81,61 +67,14 @@ jobs:
 
           mkdir -p apk-output
           cp app/build/outputs/apk/debug/app-debug.apk "apk-output/Rock-QR-debug-v${VERSION_NAME}-${VERSION_CODE}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "apk-output/Rock-QR-release-v${VERSION_NAME}-${VERSION_CODE}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "apk-output/Rock QR.apk"
-          cp app/build/outputs/apk/release/app-release.apk "apk-output/Rock_QR.apk"
-
           echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
           echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
           ls -lh apk-output
 
-      - name: Upload APK artifact
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Rock-QR-APK-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}
+          name: Rock-QR-debug-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}
           path: apk-output/*.apk
           if-no-files-found: error
-
-      - name: Prepare release notes
-        if: github.event_name != 'pull_request'
-        run: |
-          cat > release_notes.md <<EOF
-          ### Rock QR APK v${{ steps.apk.outputs.version_name }} (${{ steps.apk.outputs.version_code }})
-
-          Fresh APK build is ready for download.
-
-          #### Fixes in this update
-          - Restored the Kotlin Android Gradle plugin so Kotlin app sources compile correctly.
-          - Hardened the build workflow for repeatable APK generation.
-          - Rebuilds the latest GitHub Release from the newest main-branch commit.
-          - Keeps APK filenames simple for mobile download and install.
-
-          #### Included APK files
-          - Rock QR.apk
-          - Rock_QR.apk
-          - Rock-QR-debug-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}.apk
-          - Rock-QR-release-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}.apk
-
-          #### Install note
-          If updating from an older temporary-signed APK fails, uninstall the old APK once and install this new APK. Future updates should install normally with the stable debug key.
-          EOF
-          sed -i -e 's/^[[:space:]]*//' release_notes.md
-          cat release_notes.md
-
-      - name: Publish latest GitHub Release
-        if: github.event_name != 'pull_request'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          gh release delete latest --yes --cleanup-tag || true
-          git push origin :refs/tags/latest || true
-          git tag -f latest "$GITHUB_SHA"
-          git push origin refs/tags/latest --force
-
-          gh release create latest apk-output/*.apk \
-            --title "Rock QR Latest APK" \
-            --notes-file release_notes.md \
-            --latest
+          retention-days: 14
