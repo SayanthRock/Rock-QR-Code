@@ -1,32 +1,24 @@
 # Rock QR Code
 
-![Build Android APK](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)
-
-Build trigger: 2026-06-23T00:00:00Z
+![Android CI Debug APK](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)
 
 **Rock QR Code** is a clean, offline-first QR scanner and generator app built with Android Jetpack Compose, CameraX, Room, and ZXing. It also includes a lightweight GitHub Pages web companion for quick QR access from the browser.
 
 ## Download APK
 
-The APK is built automatically by GitHub Actions after every push to the `main` branch.
+Debug APKs are built automatically by GitHub Actions after every push to the `main` branch.
 
-### Option 1: Download from Releases
+Go to **Actions → Android CI Debug APK → latest successful run → Artifacts → Rock-QR-debug-v1.0.6-7**.
 
-Open the latest release and download one of the APK assets:
+## Production package workflow
 
-**Latest APK Release:** [Rock QR Latest APK](https://github.com/SayanthRock/Rock-QR-Code/releases/tag/latest)
+Use **Actions → Production Release APK and AAB → Run workflow** to build release package artifacts.
 
-Recommended files:
+Generated artifacts:
 
-- `Rock QR.apk`
 - `Rock_QR.apk`
-- `Rock-QR-release-v1.0.5-6.apk`
-
-### Option 2: Download from Actions
-
-Go to **Actions → Build Android APK → latest successful run → Artifacts → Rock-QR-APK-v1.0.5-6**.
-
-> Install note: if an older APK was signed with a different temporary key, uninstall the old app once, then install the new APK. After that, future APK updates should install normally with the stable debug key.
+- `Rock-QR-release-v1.0.6-7.apk`
+- `Rock-QR-release-v1.0.6-7.aab`
 
 ## Everyone can contribute
 
@@ -36,7 +28,7 @@ Everyone can suggest and make changes by using Pull Requests:
 2. Create a branch in your fork.
 3. Make your change.
 4. Open a Pull Request into `main`.
-5. Wait for the Android APK workflow check.
+5. Wait for the Android CI workflow check.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
@@ -81,47 +73,61 @@ Direct write access is not open to everyone because that can break the APK or ad
 ## Build locally
 
 ```bash
-# Run tests
+./gradlew --version
 ./gradlew testDebugUnitTest
-
-# Build debug APK
 ./gradlew assembleDebug
-
-# Build release APK
-./gradlew assembleRelease
+./gradlew assembleRelease bundleRelease
 ```
 
-Generated APK paths:
+Generated output paths:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
-app/build/outputs/apk/release/app-release.apk
+app/build/outputs/apk/release/*.apk
+app/build/outputs/bundle/release/*.aab
 ```
 
-## GitHub Actions APK build flow
+## Production stable build flow
 
-The workflow in `.github/workflows/build.yml` runs on pushes to `main`, pull requests to `main`, and manual workflow dispatch.
+### `.github/workflows/build.yml`
 
-It does the following:
+Runs on every push and Pull Request to `main`:
 
-1. Checks out the repository code with full tag history.
+1. Checks out the repository code.
 2. Sets up Java 17 using Temurin.
-3. Makes `gradlew` executable.
-4. Prepares a stable debug keystore.
-5. Validates the Gradle wrapper.
-6. Runs Gradle unit tests without blocking APK creation if a non-critical test flakes.
-7. Builds debug and release APKs with `./gradlew clean assembleDebug assembleRelease --stacktrace`.
-8. Uploads generated APKs as a GitHub Actions artifact.
-9. Recreates the `latest` GitHub Release from the newest `main` commit and attaches APK files.
+3. Validates the Gradle wrapper.
+4. Runs `./gradlew --version`.
+5. Runs unit tests.
+6. Builds the debug APK.
+7. Uploads the debug APK as a GitHub Actions artifact.
+
+### `.github/workflows/release.yml`
+
+Runs manually or from `v*` tags:
+
+1. Validates Gradle wrapper runtime.
+2. Runs unit tests.
+3. Builds release APK and AAB.
+4. Uploads release artifacts.
 
 ## Current Android package
 
 ```text
 applicationId: com.aistudio.rockqr.qzlypm
-versionName: 1.0.5
-versionCode: 6
+versionName: 1.0.6
+versionCode: 7
 minSdk: 24
-targetSdk: 36
+targetSdk: 37
+compileSdk: 37
+```
+
+## Build toolchain
+
+```text
+Android Gradle Plugin: 9.2.0
+Gradle Wrapper: 9.4.1
+Kotlin: 2.2.10
+Java: 17
 ```
 
 ## Permissions
@@ -147,33 +153,32 @@ app/
     viewmodel/     App state and actions
   src/main/res/    Icons, strings, theme resources, XML configs
 .github/workflows/
-  build.yml                Test, build, upload artifact, publish latest APK release
-  android-autoheal-ci.yml  Lightweight APK build check without wrapper regeneration
-CONTRIBUTING.md            Contribution guide for Pull Requests
-index.html                 Web QR companion
-share/                     Web share/import page
-sw.js                      Service worker cache
+  build.yml       Stable debug APK CI
+  release.yml     Manual/tagged release APK and AAB build
+.github/dependabot.yml
+CONTRIBUTING.md   Contribution guide for Pull Requests
+LICENSE           MIT License
+index.html        Web QR companion
+share/            Web share/import page
+sw.js             Service worker cache
 ```
 
 ## Recent fixes
 
+- Upgraded the Android build toolchain to AGP `9.2.0` and Gradle `9.4.1`.
+- Updated app build target to API `37`.
+- Bumped APK to version `1.0.6` with versionCode `7`.
+- Split CI into debug build and release package workflows.
+- Removed the duplicate Auto-Heal workflow.
+- Enabled strict Gradle wrapper validation in CI.
+- Added Dependabot monitoring for Gradle and GitHub Actions updates.
 - Restored the Kotlin Android plugin so Kotlin app source files compile correctly.
 - Fixed a Compose outlined-button border call that could break APK compilation.
-- Hardened the GitHub Actions release step so the `latest` tag/release is recreated cleanly.
-- Bumped APK to version `1.0.5` with versionCode `6`.
-- Added a contribution guide so everyone can propose changes through Pull Requests.
-- Fixed the failing Android Auto-Heal workflow by removing the broken Gradle wrapper regeneration step.
-- Removed duplicate Kotlin plugin configuration mistakes while keeping the required Android Kotlin plugin.
-- Added APK artifact upload and latest GitHub Release publishing.
-- Stabilized scanner camera callbacks by moving UI state updates onto the main thread.
-- Improved QR frame decoding for camera row stride and pixel stride handling.
-- Simplified Gradle configuration for CI stability.
-- Added older Android gallery-save support with scoped legacy storage permission.
-- Removed old wallpaper permissions and unused dependency clutter.
+- Added MIT License.
 
 ## Roadmap
 
-- Add Play Store-ready signed release support using repository secrets.
+- Add signed release setup.
 - Add better scanner permission UI for first launch.
 - Add export/import history backup.
 - Add more QR styles and brand presets.
