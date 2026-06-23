@@ -36,16 +36,14 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.4.1
         uses: gradle/actions/setup-gradle@v4
         with:
+          gradle-version: '9.4.1'
           validate-wrappers: false
 
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
-
-      - name: Validate Gradle Wrapper Runtime
-        run: ./gradlew --version
+      - name: Validate Gradle Runtime
+        run: gradle --version
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -54,7 +52,7 @@ jobs:
           build-mode: manual
 
       - name: Build project for CodeQL
-        run: ./gradlew clean assembleDebug --stacktrace
+        run: gradle clean assembleDebug --stacktrace
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
