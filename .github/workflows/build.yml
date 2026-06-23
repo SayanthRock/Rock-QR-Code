@@ -12,14 +12,25 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-apk:
-    name: Build and Upload APK
+    name: Build, Upload, and Publish APK
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -31,7 +42,7 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Prepare debug keystore
+      - name: Prepare stable debug keystore
         run: |
           if [ -f debug.keystore.base64 ]; then
             base64 --decode debug.keystore.base64 > debug.keystore
@@ -47,6 +58,9 @@ jobs:
               -dname "CN=Rock QR Debug,O=Sayanth Rock,C=IN"
           fi
 
+      - name: Validate Gradle wrapper
+        run: ./gradlew --version
+
       - name: Run Gradle tests
         continue-on-error: true
         run: ./gradlew testDebugUnitTest --stacktrace
@@ -59,6 +73,11 @@ jobs:
         run: |
           VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)
           VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts | head -n 1)
+
+          if [ -z "$VERSION_NAME" ] || [ -z "$VERSION_CODE" ]; then
+            echo "Could not read app version from app/build.gradle.kts" >&2
+            exit 1
+          fi
 
           mkdir -p apk-output
           cp app/build/outputs/apk/debug/app-debug.apk "apk-output/Rock-QR-debug-v${VERSION_NAME}-${VERSION_CODE}.apk"
@@ -85,13 +104,19 @@ jobs:
 
           Fresh APK build is ready for download.
 
+          #### Fixes in this update
+          - Restored the Kotlin Android Gradle plugin so Kotlin app sources compile correctly.
+          - Hardened the build workflow for repeatable APK generation.
+          - Rebuilds the latest GitHub Release from the newest main-branch commit.
+          - Keeps APK filenames simple for mobile download and install.
+
           #### Included APK files
           - Rock QR.apk
           - Rock_QR.apk
           - Rock-QR-debug-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}.apk
           - Rock-QR-release-v${{ steps.apk.outputs.version_name }}-${{ steps.apk.outputs.version_code }}.apk
 
-          #### Notes
+          #### Install note
           If updating from an older temporary-signed APK fails, uninstall the old APK once and install this new APK. Future updates should install normally with the stable debug key.
           EOF
           sed -i -e 's/^[[:space:]]*//' release_notes.md
@@ -99,15 +124,18 @@ jobs:
 
       - name: Publish latest GitHub Release
         if: github.event_name != 'pull_request'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: Rock QR Latest APK
-          body_path: release_notes.md
-          files: apk-output/*.apk
-          fail_on_unmatched_files: true
-          draft: false
-          prerelease: false
-          make_latest: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          gh release delete latest --yes --cleanup-tag || true
+          git push origin :refs/tags/latest || true
+          git tag -f latest "$GITHUB_SHA"
+          git push origin refs/tags/latest --force
+
+          gh release create latest apk-output/*.apk \
+            --title "Rock QR Latest APK" \
+            --notes-file release_notes.md \
+            --latest
