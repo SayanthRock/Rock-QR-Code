@@ -8,7 +8,18 @@
 
 Debug APKs are built automatically by GitHub Actions after every push to the `main` branch.
 
-Go to **Actions → Android CI Debug APK → latest successful run → Artifacts → Rock-QR-debug-v1.0.6-7**.
+Go to **Actions → Android CI Debug APK → latest successful run → Artifacts → Rock-QR-debug-v1.0.7-8**.
+
+## Older Android phone support
+
+This build supports Android 5.0 and newer:
+
+```text
+minimum Android version: Android 5.0 Lollipop
+minimum SDK: 21
+```
+
+That makes the APK installable on more older phones than the previous build, which required SDK 24.
 
 ## Production package workflow
 
@@ -17,8 +28,8 @@ Use **Actions → Production Release APK and AAB → Run workflow** to build rel
 Generated artifacts:
 
 - `Rock_QR.apk`
-- `Rock-QR-release-v1.0.6-7.apk`
-- `Rock-QR-release-v1.0.6-7.aab`
+- `Rock-QR-release-v1.0.7-8.apk`
+- `Rock-QR-release-v1.0.7-8.aab`
 
 ## Everyone can contribute
 
@@ -114,9 +125,9 @@ Runs manually or from `v*` tags:
 
 ```text
 applicationId: com.aistudio.rockqr.qzlypm
-versionName: 1.0.6
-versionCode: 7
-minSdk: 24
+versionName: 1.0.7
+versionCode: 8
+minSdk: 21
 targetSdk: 37
 compileSdk: 37
 ```
@@ -165,9 +176,10 @@ sw.js             Service worker cache
 
 ## Recent fixes
 
+- Lowered `minSdk` from 24 to 21 for older Android phone installation.
 - Upgraded the Android build toolchain to AGP `9.2.0` and Gradle `9.4.1`.
 - Updated app build target to API `37`.
-- Bumped APK to version `1.0.6` with versionCode `7`.
+- Bumped APK to version `1.0.7` with versionCode `8`.
 - Split CI into debug build and release package workflows.
 - Removed the duplicate Auto-Heal workflow.
 - Enabled strict Gradle wrapper validation in CI.
