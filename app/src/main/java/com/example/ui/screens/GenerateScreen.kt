@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.graphics.Bitmap
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,17 +54,14 @@ fun GenerateScreen(
     val inputText by viewModel.inputText.collectAsState()
     val inputTitle by viewModel.inputTitle.collectAsState()
 
-    // WiFi States
     val wifiSsid by viewModel.wifiSsid.collectAsState()
     val wifiPassword by viewModel.wifiPassword.collectAsState()
     val wifiSecurity by viewModel.wifiSecurity.collectAsState()
 
-    // Contact States
     val contactName by viewModel.contactName.collectAsState()
     val contactPhone by viewModel.contactPhone.collectAsState()
     val contactEmail by viewModel.contactEmail.collectAsState()
 
-    // Color options
     val selectedQrColor by viewModel.selectedQrColor.collectAsState()
     val qrBitmap by viewModel.generatedQrBitmap.collectAsState()
     val hasResult by viewModel.hasGeneratedResult.collectAsState()
@@ -73,10 +71,9 @@ fun GenerateScreen(
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp)
-            .padding(top = 16.dp, bottom = 120.dp), // Leaves clearance for the floating navigation bar
+            .padding(top = 16.dp, bottom = 120.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // HEADER TITLE
         Text(
             text = "Quartz Forge Generator",
             fontSize = 24.sp,
@@ -93,7 +90,6 @@ fun GenerateScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp)
         )
 
-        // SLIDE ANIMATION ON DISPLAY STATE
         AnimatedContent(
             targetState = hasResult,
             transitionSpec = {
@@ -102,7 +98,6 @@ fun GenerateScreen(
             label = "generator_flow"
         ) { isResultVisible ->
             if (isResultVisible && qrBitmap != null) {
-                // RENDER GENERATED PREMIUM QR INSIDE AN ANCHORED ROCK MATTE CONTAINER
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -126,7 +121,6 @@ fun GenerateScreen(
                     )
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // QR CONTAINER LAYER WITH BACKDROP
                     Box(
                         modifier = Modifier
                             .size(240.dp)
@@ -144,12 +138,10 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // OPERATIONS ROW
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // SAVE BUTTON
                         Button(
                             onClick = {
                                 HapticUtils.vibrate(context, 40)
@@ -169,7 +161,6 @@ fun GenerateScreen(
                             Text("Download", fontSize = 13.sp)
                         }
 
-                        // SHARE BUTTON
                         Button(
                             onClick = {
                                 HapticUtils.vibrate(context, 30)
@@ -192,7 +183,6 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // COMPANION WEB LINK SHARING BUTTON
                     Button(
                         onClick = {
                             HapticUtils.vibrate(context, 30)
@@ -229,7 +219,6 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // EDIT / NEW BTN
                     OutlinedButton(
                         onClick = {
                             HapticUtils.vibrate(context, 20)
@@ -238,9 +227,7 @@ fun GenerateScreen(
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
-                            width = 1.dp
-                        )
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f))
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = "New Code")
                         Spacer(modifier = Modifier.width(6.dp))
@@ -248,11 +235,7 @@ fun GenerateScreen(
                     }
                 }
             } else {
-                // DRAW INPUT CREATOR INTERFACE
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // CATEGORY CHIPS TAB LIST
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "Select Data Compound",
                         fontSize = 13.sp,
@@ -317,7 +300,6 @@ fun GenerateScreen(
                         }
                     }
 
-                    // MAIN TEXT FIELDS TO INJECT
                     Text(
                         text = "Content Details",
                         fontSize = 13.sp,
@@ -326,7 +308,6 @@ fun GenerateScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // Title Field (optional description for history tracking)
                     OutlinedTextField(
                         value = inputTitle,
                         onValueChange = { viewModel.inputTitle.value = it },
@@ -348,7 +329,6 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // DYNAMIC SWITCHER SPECIFIC FOR EACH INPUT TYPE
                     when (inputType) {
                         "URL" -> {
                             OutlinedTextField(
@@ -411,7 +391,6 @@ fun GenerateScreen(
                                     singleLine = true
                                 )
 
-                                // Security Selection
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -420,7 +399,7 @@ fun GenerateScreen(
                                     val protocols = listOf("WPA", "WEP", "nopass")
                                     protocols.forEach { p ->
                                         val isPSelected = wifiSecurity == p
-                                        val display = when(p) {
+                                        val display = when (p) {
                                             "WPA" -> "WPA/WPA2"
                                             "WEP" -> "WEP"
                                             else -> "None"
@@ -513,7 +492,7 @@ fun GenerateScreen(
                                 )
                             }
                         }
-                        else -> { // TEXT
+                        else -> {
                             OutlinedTextField(
                                 value = inputText,
                                 onValueChange = { viewModel.inputText.value = it },
@@ -539,7 +518,6 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // QR MINERAL PIGMENT SPECIFICATION
                     Text(
                         text = "Core QR Dye Tint",
                         fontSize = 13.sp,
@@ -577,7 +555,6 @@ fun GenerateScreen(
                         }
                     }
 
-                    // TRIGGER GENERATION BUTTON
                     Button(
                         onClick = {
                             HapticUtils.vibrate(context, 50)
