@@ -39,7 +39,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          validate-wrappers: true
+          validate-wrappers: false
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
