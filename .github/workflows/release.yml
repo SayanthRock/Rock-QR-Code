@@ -1,89 +1,15 @@
-name: Production Release APK and AAB
+name: Old Release Workflow Disabled
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
 
 permissions:
   contents: read
 
-defaults:
-  run:
-    shell: bash
-
-concurrency:
-  group: production-release-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  release:
-    name: Build Release Packages
+  disabled:
+    name: Use Manual APK and AAB Package
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          validate-wrappers: true
-
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
-
-      - name: Validate Gradle Wrapper Runtime
-        run: ./gradlew --version
-
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
-
-      - name: Build release APK and AAB
-        run: ./gradlew clean assembleRelease bundleRelease --stacktrace
-
-      - name: Collect release files
-        id: release_files
-        run: |
-          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)
-          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts | head -n 1)
-
-          if [ -z "$VERSION_NAME" ] || [ -z "$VERSION_CODE" ]; then
-            echo "Could not read app version from app/build.gradle.kts" >&2
-            exit 1
-          fi
-
-          mkdir -p release-output
-          APK_FILE=$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)
-          AAB_FILE=$(find app/build/outputs/bundle/release -name '*.aab' | head -n 1)
-
-          if [ -z "$APK_FILE" ] || [ -z "$AAB_FILE" ]; then
-            echo "Release APK or AAB was not generated" >&2
-            find app/build/outputs -type f || true
-            exit 1
-          fi
-
-          cp "$APK_FILE" "release-output/Rock-QR-release-v${VERSION_NAME}-${VERSION_CODE}.apk"
-          cp "$AAB_FILE" "release-output/Rock-QR-release-v${VERSION_NAME}-${VERSION_CODE}.aab"
-          cp "$APK_FILE" "release-output/Rock_QR.apk"
-
-          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
-          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
-          ls -lh release-output
-
-      - name: Upload release package artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Rock-QR-release-v${{ steps.release_files.outputs.version_name }}-${{ steps.release_files.outputs.version_code }}
-          path: release-output/*
-          if-no-files-found: error
-          retention-days: 30
+      - name: Notice
+        run: echo "Use the Manual APK and AAB Package workflow. The old release workflow was disabled because the repository Gradle wrapper jar is corrupt."
