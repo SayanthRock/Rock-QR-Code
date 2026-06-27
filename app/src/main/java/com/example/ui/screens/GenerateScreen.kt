@@ -33,7 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContactMail
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TextFields

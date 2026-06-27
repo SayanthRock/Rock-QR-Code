@@ -26,9 +26,12 @@ android {
       val keystoreFile = file(keystorePath)
       if (keystoreFile.exists()) {
         storeFile = keystoreFile
-        storePassword = System.getenv("STORE_PASSWORD") ?: "android"
-        keyAlias = System.getenv("KEY_ALIAS") ?: "androiddebugkey"
-        keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
+        storePassword = System.getenv("STORE_PASSWORD")
+            ?: error("STORE_PASSWORD env var is required for release signing")
+        keyAlias = System.getenv("KEY_ALIAS")
+            ?: error("KEY_ALIAS env var is required for release signing")
+        keyPassword = System.getenv("KEY_PASSWORD")
+            ?: error("KEY_PASSWORD env var is required for release signing")
       }
     }
   }
@@ -111,6 +114,7 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
 
   ksp(libs.androidx.room.compiler)
+  ksp(libs.moshi.kotlin.codegen)
 }
 
 tasks.withType<Test>().configureEach {
