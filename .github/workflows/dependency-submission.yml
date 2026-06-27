@@ -25,18 +25,19 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup trusted Gradle runtime
+      - name: Setup Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.10.2"
           validate-wrappers: false
 
-      - name: Disable incomplete wrapper for this job
+      - name: Provide stub gradlew (avoids missing wrapper jar)
         run: |
-          rm -f ./gradlew
-          rm -f ./gradlew.bat
-          rm -rf ./gradle/wrapper
-          gradle --version --no-daemon
+          cat <<'EOF' > ./gradlew
+          #!/usr/bin/env sh
+          exec gradle "$@"
+          EOF
+          chmod +x ./gradlew
 
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v4
