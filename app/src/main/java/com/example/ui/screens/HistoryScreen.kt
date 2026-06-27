@@ -44,7 +44,6 @@ fun HistoryScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val activePreset by viewModel.colorPreset.collectAsState()
     val themeConfig = LiquidGlassTheme.LocalConfig.current
     val primaryColor = themeConfig.primaryColor
 
@@ -61,7 +60,6 @@ fun HistoryScreen(
             .padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // TOP ARCHIVE TITLE AND CLEAN BUTTON
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -99,7 +97,6 @@ fun HistoryScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp)
         )
 
-        // SEARCH INPUT FILTER BAR
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { viewModel.searchQuery.value = it },
@@ -127,7 +124,6 @@ fun HistoryScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // FILTER PILLS BAR
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -174,7 +170,6 @@ fun HistoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // RECORDS EMPTY STATE vs LIST VIEW
         if (records.isEmpty()) {
             Column(
                 modifier = Modifier
@@ -221,7 +216,7 @@ fun HistoryScreen(
                     .fillMaxWidth()
                     .testTag("history_list"),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 120.dp) // Leaves space for bar
+                contentPadding = PaddingValues(bottom = 120.dp)
             ) {
                 items(records, key = { it.id }) { record ->
                     HistoryCardItem(
@@ -242,7 +237,6 @@ fun HistoryScreen(
         }
     }
 
-    // PURGE CONFIRMATION BOX
     if (showClearConfirm) {
         AlertDialog(
             onDismissRequest = { showClearConfirm = false },
@@ -300,9 +294,7 @@ fun HistoryCardItem(
                 shape = RoundedCornerShape(16.dp)
             )
             .testTag("history_record_item"),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.03f)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.03f)),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -311,7 +303,6 @@ fun HistoryCardItem(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // INDICATOR TYPE LOGO WITH BACKDROP
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -338,13 +329,8 @@ fun HistoryCardItem(
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            // TITLE AND DETAILS
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = record.title,
                         fontWeight = FontWeight.Bold,
@@ -357,7 +343,6 @@ fun HistoryCardItem(
 
                     Spacer(modifier = Modifier.width(6.dp))
 
-                    // SCAN vs FORGED ACCENTS
                     Text(
                         text = if (record.isScanned) "SCANNED" else "FORGED",
                         fontSize = 8.sp,
@@ -392,12 +377,10 @@ fun HistoryCardItem(
                 )
             }
 
-            // ACTIONS BUTTONS COLUMN OR ROW
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                // COPY ACTIONS
                 IconButton(onClick = { onCopyText(record.content) }) {
                     Icon(
                         imageVector = Icons.Outlined.ContentCopy,
@@ -407,30 +390,23 @@ fun HistoryCardItem(
                     )
                 }
 
-                // SHARE COMPANION LINK
                 IconButton(onClick = {
                     HapticUtils.vibrate(context, 20)
-                    val rawContent = record.content
-                    val title = record.title
-                    val type = record.type
-                    val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
-
                     val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                         this.type = "text/plain"
-                        putExtra(android.content.Intent.EXTRA_SUBJECT, "Import Rock QR Code: $title")
-                        putExtra(android.content.Intent.EXTRA_TEXT, "Look at my Rock-forged QR code: $webLink")
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, record.title)
+                        putExtra(android.content.Intent.EXTRA_TEXT, record.content)
                     }
-                    context.startActivity(android.content.Intent.createChooser(intent, "Share Companion Web Link"))
+                    context.startActivity(android.content.Intent.createChooser(intent, "Share QR Content"))
                 }) {
                     Icon(
                         imageVector = Icons.Outlined.Share,
-                        contentDescription = "Share Web Link",
+                        contentDescription = "Share QR Content",
                         tint = Color.White.copy(alpha = 0.5f),
                         modifier = Modifier.size(17.dp)
                     )
                 }
 
-                // BOOKMARK SWITCH
                 IconButton(onClick = onFavoriteToggle) {
                     Icon(
                         imageVector = if (record.isFavorite) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
@@ -440,7 +416,6 @@ fun HistoryCardItem(
                     )
                 }
 
-                // ERASE FROM LOG
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Close,
