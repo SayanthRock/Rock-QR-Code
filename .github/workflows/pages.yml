@@ -1,0 +1,72 @@
+name: Deploy Rock QR Web
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - "index.html"
+      - "share/**"
+      - "assets/**"
+      - "manifest.json"
+      - "sw.js"
+      - "404.html"
+      - ".nojekyll"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rock-qr-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Publish GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare static web bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf public
+          mkdir -p public
+
+          cp index.html public/index.html
+          cp manifest.json public/manifest.json
+          cp sw.js public/sw.js
+          cp 404.html public/404.html
+          cp .nojekyll public/.nojekyll
+
+          if [ -d assets ]; then
+            cp -R assets public/assets
+          fi
+
+          if [ -d share ]; then
+            cp -R share public/share
+          fi
+
+          test -f public/index.html
+          test -f public/share/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
