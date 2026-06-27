@@ -2,9 +2,9 @@ name: Android Auto-Heal CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ jobs:
   build:
     name: Auto-Healing Android CI Build
     runs-on: ubuntu-latest
-
+    timeout-minutes: 45
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,46 +23,23 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: "17"
           cache: gradle
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Setup Gradle 8.10.2
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
 
-      # 🧠 AUTO-HEAL STEP 1: Fix permissions
-      - name: Fix Gradle permissions
-        run: chmod +x gradlew || true
+      - name: Validate Gradle Runtime
+        run: gradle --version --no-daemon
 
-      # 🧠 AUTO-HEAL STEP 2: Validate wrapper
-      - name: Validate Gradle Wrapper
-        id: validate
-        run: |
-          ./gradlew --version || echo "WRAPPER_FAIL=true" >> $GITHUB_ENV
+      - name: Build Debug APK
+        run: gradle clean assembleDebug --stacktrace --no-daemon
 
-      # 🧠 AUTO-HEAL STEP 3: Repair cache/wrappers if failure detected
-      - name: Repair Gradle Cache & Wrapper (if failure detected)
-        if: env.WRAPPER_FAIL == 'true'
-        run: |
-          echo "🧹 WARNING: Broken or corrupt wrapper wrapper/caches discovered. Initializing self-repair routines..."
-          rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
-          if [ -x "$(command -v gradle)" ]; then
-            echo "🔧 Regenerating proper gradle-wrapper using system gradle..."
-            gradle wrapper --gradle-version 8.4
-          else
-            echo "❌ No local gradle runtime found on host to regenerate."
-          fi
-
-      # 🧠 AUTO-HEAL STEP 4: Try/Retry build safely
-      - name: Clean & Assemble Debug Build
-        run: |
-          ./gradlew clean || true
-          ./gradlew assembleDebug --stacktrace || ./gradlew assembleDebug --stacktrace
-
-      # 📦 Upload built APK artifact to run actions
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
