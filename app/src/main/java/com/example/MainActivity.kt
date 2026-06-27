@@ -1,6 +1,5 @@
 package com.example
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,14 +38,11 @@ import com.example.viewmodel.QRViewModel
 import com.example.viewmodel.CustomToastType
 
 class MainActivity : ComponentActivity() {
-    private var qrViewModel: QRViewModel? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val viewModel: QRViewModel = viewModel()
-            qrViewModel = viewModel
             val themeMode by viewModel.themeMode.collectAsState()
             val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
             val colorPreset by viewModel.colorPreset.collectAsState()
@@ -55,11 +51,6 @@ class MainActivity : ComponentActivity() {
                 "DARK" -> true
                 "LIGHT" -> false
                 else -> isSystemInDarkTheme()
-            }
-
-            val currentIntent = intent
-            LaunchedEffect(currentIntent) {
-                handleIntent(currentIntent, viewModel)
             }
 
             MyApplicationTheme(
@@ -79,21 +70,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    override fun onNewIntent(intent: android.content.Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        qrViewModel?.let { handleIntent(intent, it) }
-    }
-
-    private fun handleIntent(intent: android.content.Intent?, viewModel: QRViewModel) {
-        intent?.dataString?.let { dataStr ->
-            if (dataStr.contains("sayanthrock.github.io/Rock-QR-Code")) {
-                viewModel.importFromDeepLink(dataStr)
-                intent.data = null
-            }
-        }
-    }
 }
 
 @Composable
@@ -105,7 +81,6 @@ fun MainAppContent(
     val toastMessage by viewModel.toastEvent.collectAsState()
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Core View Switcher via crossfade
         Crossfade(
             targetState = activeTab,
             animationSpec = tween(350),
@@ -120,13 +95,11 @@ fun MainAppContent(
             }
         }
 
-        // Custom Bottom Capsule Navigation Panel
         DraggableFloatingActionBar(
             viewModel = viewModel,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
-        // Custom High-Fidelity Quartz Toast overlays
         CustomToastOverlay(
             toastMessage = toastMessage,
             onDismiss = { viewModel.clearToast() }
@@ -157,10 +130,9 @@ fun LocalSettingsScreen(
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp)
-            .padding(top = 16.dp, bottom = 260.dp), // Clearance for bottom and theme slider drawers
+            .padding(top = 16.dp, bottom = 260.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // TITLE HEADER
         Text(
             text = "Quartz Panel",
             fontSize = 24.sp,
@@ -177,7 +149,6 @@ fun LocalSettingsScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 24.dp)
         )
 
-        // LOG STATISTICS CHIPS
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -197,7 +168,6 @@ fun LocalSettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Total Entry Item
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -209,7 +179,6 @@ fun LocalSettingsScreen(
                         Text(text = "Total Logs", fontSize = 11.sp, color = Color.White.copy(alpha = 0.5f))
                     }
 
-                    // Favorites Item
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -226,7 +195,6 @@ fun LocalSettingsScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // THEME CONFIGURATION LIST
         Text(
             text = "General Preferences",
             fontSize = 13.sp,
@@ -235,7 +203,6 @@ fun LocalSettingsScreen(
             modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
         )
 
-        // Theme preference Selector row
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -244,7 +211,6 @@ fun LocalSettingsScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // DARK MODE SWITCH SWITCH
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -263,7 +229,6 @@ fun LocalSettingsScreen(
                         }
                     }
 
-                    // Text-based options switcher
                     Row(
                         modifier = Modifier
                             .background(Color.White.copy(alpha = 0.05f), CircleShape)
@@ -296,7 +261,6 @@ fun LocalSettingsScreen(
 
                 Divider(color = Color.White.copy(alpha = 0.05f))
 
-                // VIBRATION FEEDBACK ROW
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -330,7 +294,6 @@ fun LocalSettingsScreen(
 
                 Divider(color = Color.White.copy(alpha = 0.05f))
 
-                // DYNAMIC COLOR ENGINE ROW
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -365,7 +328,6 @@ fun LocalSettingsScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // DISCLAIMER DETAILS
         Card(
             modifier = Modifier
                 .fillMaxWidth()
