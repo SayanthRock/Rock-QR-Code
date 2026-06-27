@@ -2,9 +2,27 @@ name: Android Auto-Heal CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
+    paths:
+      - "app/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - ".github/workflows/android-autoheal-ci.yml"
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
+    paths:
+      - "app/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - ".github/workflows/android-autoheal-ci.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,45 +42,57 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-          cache: gradle
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Setup trusted Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.3.1
+          cache-read-only: false
 
-      # 🧠 AUTO-HEAL STEP 1: Fix permissions
       - name: Fix Gradle permissions
         run: chmod +x gradlew || true
 
-      # 🧠 AUTO-HEAL STEP 2: Validate wrapper
-      - name: Validate Gradle Wrapper
-        id: validate
+      - name: Print Gradle runtime
         run: |
-          ./gradlew --version || echo "WRAPPER_FAIL=true" >> $GITHUB_ENV
-
-      # 🧠 AUTO-HEAL STEP 3: Repair cache/wrappers if failure detected
-      - name: Repair Gradle Cache & Wrapper (if failure detected)
-        if: env.WRAPPER_FAIL == 'true'
-        run: |
-          echo "🧹 WARNING: Broken or corrupt wrapper wrapper/caches discovered. Initializing self-repair routines..."
-          rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
-          if [ -x "$(command -v gradle)" ]; then
-            echo "🔧 Regenerating proper gradle-wrapper using system gradle..."
-            gradle wrapper --gradle-version 8.4
-          else
-            echo "❌ No local gradle runtime found on host to regenerate."
+          gradle --version
+          if [ -f gradle/wrapper/gradle-wrapper.properties ]; then
+            echo "Wrapper config:"
+            cat gradle/wrapper/gradle-wrapper.properties
           fi
 
-      # 🧠 AUTO-HEAL STEP 4: Try/Retry build safely
-      - name: Clean & Assemble Debug Build
+      - name: Validate Gradle Wrapper without blocking build
         run: |
-          ./gradlew clean || true
-          ./gradlew assembleDebug --stacktrace || ./gradlew assembleDebug --stacktrace
+          set +e
+          ./gradlew --version
+          WRAPPER_STATUS=$?
+          set -e
+          if [ "$WRAPPER_STATUS" -ne 0 ]; then
+            echo "::warning::Gradle wrapper failed validation. Continuing with trusted Gradle 9.3.1 from setup-gradle."
+          fi
 
-      # 📦 Upload built APK artifact to run actions
+      - name: Generate debug keystore if missing
+        run: |
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair \
+              -v \
+              -keystore debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Clean & Assemble Debug Build
+        run: gradle clean assembleDebug --no-daemon --stacktrace
+
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            *.apk
