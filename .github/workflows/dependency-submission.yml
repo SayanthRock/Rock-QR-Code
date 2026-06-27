@@ -32,10 +32,10 @@ jobs:
           validate-wrappers: false
 
       - name: Generate and submit dependency graph
+        continue-on-error: true
         uses: gradle/actions/dependency-submission@v4
         with:
           gradle-version: "8.10.2"
-          use-gradle-wrapper: false
           additional-arguments: --no-daemon --no-configuration-cache --stacktrace
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: true
