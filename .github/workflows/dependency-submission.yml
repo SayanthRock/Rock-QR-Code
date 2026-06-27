@@ -31,18 +31,11 @@ jobs:
           gradle-version: "8.10.2"
           validate-wrappers: false
 
-      - name: Provide stub gradlew (avoids missing wrapper jar)
-        run: |
-          cat <<'EOF' > ./gradlew
-          #!/usr/bin/env sh
-          exec gradle "$@"
-          EOF
-          chmod +x ./gradlew
-
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v4
         with:
           gradle-version: "8.10.2"
+          use-gradle-wrapper: false
           additional-arguments: --no-daemon --no-configuration-cache --stacktrace
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: true
