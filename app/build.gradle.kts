@@ -21,22 +21,22 @@ android {
   }
 
   signingConfigs {
+    getByName("debug")
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/debug.keystore"
-      val keystoreFile = file(keystorePath)
-      if (keystoreFile.exists()) {
-        storeFile = keystoreFile
-        storePassword = System.getenv("STORE_PASSWORD")
-            ?: error("STORE_PASSWORD env var is required for release signing")
-        keyAlias = System.getenv("KEY_ALIAS")
-            ?: error("KEY_ALIAS env var is required for release signing")
-        keyPassword = System.getenv("KEY_PASSWORD")
-            ?: error("KEY_PASSWORD env var is required for release signing")
+      val keystorePath = System.getenv("KEYSTORE_PATH")
+      if (!keystorePath.isNullOrBlank()) {
+        storeFile = file(keystorePath)
+        storePassword = System.getenv("STORE_PASSWORD") ?: "android"
+        keyAlias = System.getenv("KEY_ALIAS") ?: "androiddebugkey"
+        keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
       }
     }
   }
 
   buildTypes {
+    debug {
+      signingConfig = signingConfigs.getByName("debug")
+    }
     release {
       isCrunchPngs = false
       isMinifyEnabled = false
@@ -114,7 +114,6 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
 
   ksp(libs.androidx.room.compiler)
-  ksp(libs.moshi.kotlin.codegen)
 }
 
 tasks.withType<Test>().configureEach {
@@ -123,35 +122,4 @@ tasks.withType<Test>().configureEach {
     maxFailures.set(10)
     failOnPassedAfterRetry.set(false)
   }
-}
-
-abstract class CopyApkTask : DefaultTask() {
-  @get:InputFile
-  abstract val sourceApk: RegularFileProperty
-
-  @get:org.gradle.api.tasks.OutputDirectory
-  abstract val targetDir: DirectoryProperty
-
-  @TaskAction
-  fun copy() {
-    val src = sourceApk.get().asFile
-    val destDir = targetDir.get().asFile
-    if (src.exists()) {
-      destDir.mkdirs()
-      src.copyTo(File(destDir, "Rock QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Rock_QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo_QR.apk"), overwrite = true)
-      println("Copied APK to root directory with Rock QR and Chamo QR names.")
-    }
-  }
-}
-
-val copyApkToWorkspace = tasks.register<CopyApkTask>("copyApkToWorkspace") {
-  sourceApk.set(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
-  targetDir.set(layout.projectDirectory.dir(".."))
-}
-
-tasks.named("assembleDebug") {
-  finalizedBy(copyApkToWorkspace)
 }
