@@ -6,6 +6,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import java.util.EnumMap
 
 object QRGenerator {
@@ -16,6 +17,7 @@ object QRGenerator {
     ): Bitmap {
         val hints = EnumMap<EncodeHintType, Any>(EncodeHintType::class.java)
         hints[EncodeHintType.CHARACTER_SET] = "UTF-8"
+        hints[EncodeHintType.ERROR_CORRECTION] = ErrorCorrectionLevel.H
         hints[EncodeHintType.MARGIN] = 1 // Compact elegant margin
 
         val size = 512

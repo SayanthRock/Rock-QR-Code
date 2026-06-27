@@ -2,26 +2,23 @@ name: Dependency Submission
 
 on:
   push:
-    branches: ["main", "master"]
-  pull_request:
-    branches: ["main", "master"]
-  workflow_dispatch:
+    branches: [ "main", "master" ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   dependency-submission:
-    name: Dependency Snapshot Guard
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Dependency snapshot status
-        run: |
-          echo "Dependency submission is temporarily disabled."
-          echo "Reason: gradle/wrapper/gradle-wrapper.jar is missing from this repository."
-          echo "APK build and GitHub Release workflows are not blocked by this optional job."
-          echo "To enable dependency submission later, restore gradle/wrapper/gradle-wrapper.jar and switch this workflow back to gradle/actions/dependency-submission@v4."
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4
