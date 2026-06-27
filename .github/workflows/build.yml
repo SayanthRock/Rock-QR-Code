@@ -39,9 +39,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Fix Gradle permissions
-        run: chmod +x ./gradlew
-
       - name: Validate Gradle Properties
         run: |
           if grep -q "kotlin.compiler.execution.strategy=in-process" gradle.properties; then
@@ -63,16 +60,16 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Set up Gradle
+      - name: Set up Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
+          gradle-version: "8.10.2"
 
-      - name: Validate Gradle Wrapper
-        run: ./gradlew --version --no-daemon
+      - name: Validate Gradle Runtime
+        run: gradle --version --no-daemon
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --stacktrace --no-daemon
+        run: gradle testDebugUnitTest --stacktrace --no-daemon
 
       - name: Upload Test Reports
         if: always()
@@ -83,7 +80,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: gradle assembleDebug --stacktrace --no-daemon
 
       - name: Rename APK for Artifact
         run: |
