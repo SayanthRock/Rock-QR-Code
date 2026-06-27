@@ -19,9 +19,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fix Gradle permissions
-        run: chmod +x ./gradlew
-
       - name: Validate Gradle Properties
         run: |
           if grep -q "kotlin.compiler.execution.strategy=in-process" gradle.properties; then
@@ -43,13 +40,13 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Set up Gradle
+      - name: Set up Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: false
+          gradle-version: "8.10.2"
 
-      - name: Validate Gradle Wrapper
-        run: ./gradlew --version --no-daemon
+      - name: Validate Gradle Runtime
+        run: gradle --version --no-daemon
 
       - name: Decode or Generate Debug Keystore
         run: |
@@ -60,7 +57,7 @@ jobs:
           fi
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+        run: gradle assembleRelease --stacktrace --no-daemon
 
       - name: Rename Release APK for Release Assets
         run: |
