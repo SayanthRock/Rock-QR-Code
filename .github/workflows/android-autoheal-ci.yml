@@ -46,12 +46,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-
-      - name: Setup Gradle 9.3.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 9.3.1
-          cache-read-only: false
+          cache: gradle
 
       - name: Fix Gradle permissions
         run: chmod +x gradlew || true
@@ -72,13 +67,13 @@ jobs:
           fi
 
       - name: Print Gradle runtime
-        run: gradle --version
+        run: ./gradlew --version --no-daemon
 
       - name: Clean and assemble debug APK
-        run: gradle clean assembleDebug --no-daemon --stacktrace
+        run: ./gradlew clean assembleDebug --no-daemon --stacktrace
 
       - name: Run unit tests
-        run: gradle testDebugUnitTest --no-daemon --stacktrace
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
       - name: Upload debug APK artifact
         if: success()
