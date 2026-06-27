@@ -1,15 +1,113 @@
-name: Old Release Workflow Disabled
+name: Android Release + Changelog
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  disabled:
-    name: Use Manual APK and AAB Package
+  release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Notice
-        run: echo "Use the Manual APK and AAB Package workflow. The old release workflow was disabled because the repository Gradle wrapper jar is corrupt."
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Gradle Properties for KSP2 Compatibility
+        run: |
+          echo "🔍 Checking gradle.properties for incompatible legacy options..."
+          if grep -q "ksp.useKSP2.in_process=false" gradle.properties; then
+            echo "❌ ERROR: Incompatible 'ksp.useKSP2.in_process=false' found in gradle.properties!"
+            echo "KSP2's compiler frontend expects a standalone Kotlin compiler daemon. Setting this property to 'in-process' will cause NullPointerException crashes."
+            exit 1
+          fi
+          
+          if grep -q "ksp.useKSP2=false" gradle.properties; then
+            echo "❌ ERROR: Obsolete 'ksp.useKSP2=false' found in gradle.properties!"
+            echo "Legacy KSP1 is no longer supported with the updated Gradle/Kotlin version. KSP2 must be used."
+            exit 1
+          fi
+          
+          echo "✅ gradle.properties validation passed. Ready for KSP2-based compilation."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
+          cache-read-only: false
+
+      - name: Validate or Regenerate Gradle Wrapper
+        run: |
+          echo "🔍 Checking Gradle Wrapper integrity..."
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || ! java -jar gradle/wrapper/gradle-wrapper.jar --version > /dev/null 2>&1; then
+            echo "⚠️ Corrupt or missing gradle-wrapper.jar detected! Regenerating using pre-installed system Gradle..."
+            gradle wrapper --gradle-version 9.3.1
+          fi
+          echo "✅ Gradle Wrapper is ready. Setting execute permissions..."
+          chmod +x ./gradlew
+
+      - name: Decode or Generate Debug Keystore
+        run: |
+          if [ -f debug.keystore.base64 ]; then
+            echo "🔑 Decoding debug.keystore.base64 to debug.keystore..."
+            base64 --decode debug.keystore.base64 > debug.keystore
+          else
+            echo "⚠️ debug.keystore.base64 not found! Generating fresh temporary debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+       - name: Rename Release APK for Release Assets
+        run: |
+          echo "🏷️ Renaming release APK for distribution..."
+          mkdir -p app/build/outputs/apk/release
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/Rock_QR.apk
+            cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/Chamo_QR.apk
+            echo "✅ Created Rock_QR.apk and Chamo_QR.apk"
+          else
+            echo "⚠️ Could not locate app-release.apk. Looking for any generated release APK..."
+            find app/build/outputs/apk/release/ -name "*.apk" -exec cp {} app/build/outputs/apk/release/Rock_QR.apk \;
+            find app/build/outputs/apk/release/ -name "*.apk" -exec cp {} app/build/outputs/apk/release/Chamo_QR.apk \;
+          fi
+
+      # 🧠 Generate automatic changelog from commits
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          # Get previous tag. If none exists, fetch all history.
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            echo "🔍 Comparing tag HEAD against previous tag: $PREV_TAG"
+            git log --pretty=format:"- %s" "$PREV_TAG..HEAD" >> $GITHUB_ENV
+          else
+            echo "🔍 No previous tag found. Extracting complete design log history."
+            git log --pretty=format:"- %s" >> $GITHUB_ENV
+          fi
+          echo "" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      # 🚀 Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ env.CHANGELOG }}
+          files: |
+            app/build/outputs/apk/release/Rock_QR.apk
+            app/build/outputs/apk/release/Chamo_QR.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

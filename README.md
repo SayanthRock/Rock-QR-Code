@@ -1,203 +1,91 @@
-# Rock QR Code
+# 📱 Rock QR Code Ecosystem
 
-![Android CI Debug APK](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)
+A high-fidelity, dual-platform QR Code suite delivering a premium user experience across both an **offline-first Android client** (Jetpack Compose) and a **luxury companion web app** (GitHub Pages / PWA). 
 
-**Rock QR Code** is a clean, offline-first QR scanner and generator app built with Android Jetpack Compose, CameraX, Room, and ZXing. It also includes a lightweight GitHub Pages web companion for quick QR access from the browser.
+[![Rock QR Code CI](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml)
 
-## Download APK
+---
 
-Debug APKs are built automatically by GitHub Actions after every push to the `main` branch.
+## 🌐 Live Companion Web App
 
-Go to **Actions → Android CI Debug APK → latest successful run → Artifacts → Rock-QR-debug-v1.0.7-8**.
+Experience the premium web suite instantly:
+👉 **[Try the Rock QR Web Console](https://sayanthrock.github.io/Rock-QR-Code/)**
 
-## Older Android phone support
+*Fully installable Progressive Web App (PWA) with complete offline support, real-time dynamic web links, custom metadata tags, and integrated camera scanner lens.*
 
-This build supports Android 5.0 and newer:
+---
 
-```text
-minimum Android version: Android 5.0 Lollipop
-minimum SDK: 21
-```
+## 💎 Ecosystem Feature Highlights
 
-That makes the APK installable on more older phones than the previous build, which required SDK 24.
+### 📱 Android Native Application
+- **Modern Jetpack Compose UI**: Designed around Material 3 fluid glassmorphic palettes, customizable geode styles, and tactile feedback.
+- **Offline Persistence**: Google Room Database integrated with modern flow architecture to manage historic scans securely on-device.
+- **Flexible Options**: Generate codes mapping unique structures, rounded pebbles, or metamorphic textures.
+- **Continuous Integration**: Configured with automated Robolectric and Roborazzi UI/Visual Regression testing suites.
 
-## Production package workflow
+### 🌐 Progressive Web App (Companion)
+- **Fluid glassmorphic client interface**: Designed with Tailwind CSS, Plus Jakarta Sans display typography, and beautiful frosted-glass backdrops.
+- **Web-to-App Synchronization Links**: Share generated QR matrices via universal deep-links that seamlessly import into the companion hub.
+- **Interactive Lens Scanner**: Embedded high-performance webcam scanning using local JS decoding routines.
+- **Dual-Mode Portability**: Fully compatible for home screen installations, functioning entirely offline without server dependencies.
 
-Use **Actions → Production Release APK and AAB → Run workflow** to build release package artifacts.
+---
 
-Generated artifacts:
+## 🛠️ Combined Architecture & Tech Stack
 
-- `Rock_QR.apk`
-- `Rock-QR-release-v1.0.7-8.apk`
-- `Rock-QR-release-v1.0.7-8.aab`
+### Native Client Core (Android)
+- **Framework**: Jetpack Compose, Jetpack Navigation, custom graphics canvas overlays, vector-drawn QR modules.
+- **Persistence**: SQLite Room Database with Kotlin Symbol Processing (KSP).
+- **Asynchronous Flow**: Kotlin Coroutines and StateFlow lifecycle elements.
 
-## Everyone can contribute
+### Web Console Core (PWA)
+- **Design & Layout**: Tailwind CSS custom configuration, Lucide premium symbols.
+- **Matrix Generation**: Client-side QR generation engine (QRCode.js).
+- **Capture Engine**: HTML5-QR webcam reader routines.
+- **Caching**: Service worker `sw.js` script with structured service-level resource interception.
 
-Everyone can suggest and make changes by using Pull Requests:
+---
 
-1. Fork this repository.
-2. Create a branch in your fork.
-3. Make your change.
-4. Open a Pull Request into `main`.
-5. Wait for the Android CI workflow check.
+## ⚙️ Automated CI/CD Pipelines
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+Our workflows run automatically inside `.github/workflows/`:
+1. **Build Checklist (`build.yml`)**: Restores dependencies, runs local Robolectric tests, and packages debug binaries.
+2. **Release pipeline (`release.yml`)**: Triggered automatically on tags (e.g. `v1.2.0`), auto-generating rich changelogs from commits and attaching production APK bundles to releases.
+3. **Dependency submission (`dependency-submission.yml`)**: Continuous tracking of dependency trees to ensure security compliance.
 
-Direct write access is not open to everyone because that can break the APK or add unsafe code. Pull Requests keep the project open and safe.
+---
 
-## Features
+## 📦 Run & Build Locally
 
-### Android app
-
-- Scan QR codes using the device camera.
-- Generate QR codes locally on-device.
-- Save scan and generated-code history with Room database.
-- Favorite important QR records.
-- Share generated QR images.
-- Modern Material 3 interface with liquid glass styling.
-- Dark and light theme controls.
-- Offline-first privacy, no server upload needed for QR generation or history.
-
-### Web companion
-
-- Live web version through GitHub Pages.
-- Browser QR generation and scanning support.
-- PWA-style service worker cache for basic offline use.
-- Deep-link support for sharing QR data into the Android app.
-
-**Web app:** [https://sayanthrock.github.io/Rock-QR-Code/](https://sayanthrock.github.io/Rock-QR-Code/)
-
-## Tech stack
-
-| Area | Technology |
-|---|---|
-| Android UI | Kotlin, Jetpack Compose, Material 3 |
-| Camera | CameraX |
-| QR engine | ZXing |
-| Local storage | Room Database |
-| Async state | Kotlin Coroutines, StateFlow |
-| Images/UI background | Coil, Compose Canvas |
-| Testing | JUnit, Robolectric, Roborazzi |
-| CI/CD | GitHub Actions |
-| Web | HTML, Tailwind CDN, JavaScript, Service Worker |
-
-## Build locally
-
+### 📱 Running the Android App
+Clone the repository and compile using Gradle:
 ```bash
-./gradlew --version
-./gradlew testDebugUnitTest
+# Compile and generate a local debug APK
 ./gradlew assembleDebug
-./gradlew assembleRelease bundleRelease
+
+# Execution of test suites
+./gradlew testDebugUnitTest
 ```
+The compiled APK is preserved at `app/build/outputs/apk/debug/app-debug.apk`.
 
-Generated output paths:
-
-```text
-app/build/outputs/apk/debug/app-debug.apk
-app/build/outputs/apk/release/*.apk
-app/build/outputs/bundle/release/*.aab
+### 🌐 Running the Web Console
+Double-click `index.html` or host a quick local server:
+```bash
+python3 -m http.server 8000
 ```
+Open `http://localhost:8000` to test local service workers and webcam support.
 
-## Production stable build flow
+---
 
-### `.github/workflows/build.yml`
+## ⚙️ Setting Up GitHub Pages
+To publish the live web version on your own repository branch:
+1. Navigate to your repository **Settings** tab.
+2. Select **Pages** from the left navigation.
+3. Under **Build and deployment**, select **Deploy from a branch** as the source.
+4. Set the branch to `main` (or your active default branch) and directory to `/ (root)`.
+5. Tap **Save**. Your site will be published at your custom GitHub Pages URL!
 
-Runs on every push and Pull Request to `main`:
+---
 
-1. Checks out the repository code.
-2. Sets up Java 17 using Temurin.
-3. Validates the Gradle wrapper.
-4. Runs `./gradlew --version`.
-5. Runs unit tests.
-6. Builds the debug APK.
-7. Uploads the debug APK as a GitHub Actions artifact.
-
-### `.github/workflows/release.yml`
-
-Runs manually or from `v*` tags:
-
-1. Validates Gradle wrapper runtime.
-2. Runs unit tests.
-3. Builds release APK and AAB.
-4. Uploads release artifacts.
-
-## Current Android package
-
-```text
-applicationId: com.aistudio.rockqr.qzlypm
-versionName: 1.0.7
-versionCode: 8
-minSdk: 21
-targetSdk: 37
-compileSdk: 37
-```
-
-## Build toolchain
-
-```text
-Android Gradle Plugin: 9.2.0
-Gradle Wrapper: 9.4.1
-Kotlin: 2.2.10
-Java: 17
-```
-
-## Permissions
-
-Rock QR keeps permissions minimal:
-
-```xml
-android.permission.CAMERA
-android.permission.VIBRATE
-android.permission.WRITE_EXTERNAL_STORAGE, maxSdkVersion 28
-```
-
-No wallpaper, location, or unnecessary network permissions are required for the Android APK.
-
-## Project structure
-
-```text
-app/
-  src/main/java/com/example/
-    data/          Room database, DAO, repository, records
-    ui/            Compose screens, components, theme
-    utils/         QR generation, scanning helpers, share helpers
-    viewmodel/     App state and actions
-  src/main/res/    Icons, strings, theme resources, XML configs
-.github/workflows/
-  build.yml       Stable debug APK CI
-  release.yml     Manual/tagged release APK and AAB build
-.github/dependabot.yml
-CONTRIBUTING.md   Contribution guide for Pull Requests
-LICENSE           MIT License
-index.html        Web QR companion
-share/            Web share/import page
-sw.js             Service worker cache
-```
-
-## Recent fixes
-
-- Lowered `minSdk` from 24 to 21 for older Android phone installation.
-- Upgraded the Android build toolchain to AGP `9.2.0` and Gradle `9.4.1`.
-- Updated app build target to API `37`.
-- Bumped APK to version `1.0.7` with versionCode `8`.
-- Split CI into debug build and release package workflows.
-- Removed the duplicate Auto-Heal workflow.
-- Enabled strict Gradle wrapper validation in CI.
-- Added Dependabot monitoring for Gradle and GitHub Actions updates.
-- Restored the Kotlin Android plugin so Kotlin app source files compile correctly.
-- Fixed a Compose outlined-button border call that could break APK compilation.
-- Added MIT License.
-
-## Roadmap
-
-- Add signed release setup.
-- Add better scanner permission UI for first launch.
-- Add export/import history backup.
-- Add more QR styles and brand presets.
-- Add screenshot previews to this README.
-
-## Author
-
-Made by **Sayanth Rock**.
-
-GitHub: [@SayanthRock](https://github.com/SayanthRock)
+## 📄 License & Integrity
+Designed, engineered, and developed by `@sayanthRock` | Licensed under the MIT License.
