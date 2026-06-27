@@ -40,12 +40,12 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -127,11 +127,7 @@ fun GenerateScreen(
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(Color.White.copy(alpha = 0.04f))
-            .border(
-              width = 1.dp,
-              color = primaryColor.copy(alpha = 0.35f),
-              shape = RoundedCornerShape(24.dp)
-            )
+            .border(1.dp, primaryColor.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
             .padding(24.dp),
           horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -505,11 +501,15 @@ private fun RockTextField(
   placeholder: String? = null,
   singleLine: Boolean = true
 ) {
+  val placeholderContent: (@Composable () -> Unit)? = placeholder?.let { text ->
+    { Text(text) }
+  }
+
   OutlinedTextField(
     value = value,
     onValueChange = onValueChange,
     label = { Text(label) },
-    placeholder = placeholder?.let { { Text(it) } },
+    placeholder = placeholderContent,
     modifier = modifier,
     shape = RoundedCornerShape(14.dp),
     colors = TextFieldDefaults.colors(
