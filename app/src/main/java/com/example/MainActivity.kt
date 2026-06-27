@@ -120,17 +120,6 @@ fun MainAppContent(
             }
         }
 
-        // Floating glass control cockpit panel (Settings / Presets live display) OVERLAY for nice UX
-        if (activeTab == "SETTINGS") {
-            // Can display LiquidThemeControlPanel on top of settings or embedded
-            LiquidThemeControlPanel(
-                viewModel = viewModel,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 96.dp) // Renders comfortably above bottom FAB bar
-            )
-        }
-
         // Custom Bottom Capsule Navigation Panel
         DraggableFloatingActionBar(
             viewModel = viewModel,
@@ -303,6 +292,40 @@ fun LocalSettingsScreen(
                             }
                         }
                     }
+                }
+
+                Divider(color = Color.White.copy(alpha = 0.05f))
+
+                // VIBRATION FEEDBACK ROW
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Vibration, contentDescription = "Vibration", tint = Color.White, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("Vibration Feedback", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Enable haptic feedback on actions", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                        }
+                    }
+
+                    var isVibrationEnabled by remember { mutableStateOf(HapticUtils.isVibrationEnabled(context)) }
+                    Switch(
+                        checked = isVibrationEnabled,
+                        onCheckedChange = {
+                            isVibrationEnabled = it
+                            HapticUtils.setVibrationEnabled(context, it)
+                            HapticUtils.vibrate(context, 20)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = primaryColor,
+                            checkedTrackColor = primaryColor.copy(alpha = 0.3f),
+                            uncheckedThumbColor = Color.White.copy(alpha = 0.4f),
+                            uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
+                        )
+                    )
                 }
 
                 Divider(color = Color.White.copy(alpha = 0.05f))

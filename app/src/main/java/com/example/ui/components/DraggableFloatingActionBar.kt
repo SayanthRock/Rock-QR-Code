@@ -253,38 +253,6 @@ fun DraggableFloatingActionBar(
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .height(24.dp)
-                    .width(1.dp)
-                    .background(Color.White.copy(alpha = 0.15f))
-            )
-
-            Box(
-                modifier = Modifier
-                    .testTag("fab_theme_cycler")
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(primaryColor.copy(alpha = 0.15f))
-                    .border(1.dp, primaryColor.copy(alpha = 0.40f), CircleShape)
-                    .clickable {
-                        com.example.utils.HapticUtils.vibrate(context, 50)
-                        isRotating += 72f
-                        val currIdx = AndroidPresetsInfo.indexOfFirst { it.key == activePreset.uppercase() }
-                        val nextIdx = if (currIdx == -1) 0 else (currIdx + 1) % AndroidPresetsInfo.size
-                        viewModel.setColorPreset(AndroidPresetsInfo[nextIdx].key)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                     imageVector = Icons.Default.Palette,
-                     contentDescription = "Cycle themes",
-                     tint = primaryColor,
-                     modifier = Modifier
-                         .size(18.dp)
-                         .scale(rotationAnimation.let { 1f + (it % 72f) / 180f })
-                )
-            }
         }
     }
 }

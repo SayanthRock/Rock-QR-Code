@@ -81,7 +81,7 @@ fun GenerateScreen(
             text = "Quartz Forge Generator",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
             fontFamily = FontFamily.SansSerif,
             modifier = Modifier.fillMaxWidth().testTag("generate_title")
         )
@@ -89,7 +89,7 @@ fun GenerateScreen(
         Text(
             text = "Craft local QR codes with customizable crystal mineral dyes.",
             fontSize = 13.sp,
-            color = Color.White.copy(alpha = 0.5f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp)
         )
 
@@ -320,222 +320,232 @@ fun GenerateScreen(
                     // MAIN TEXT FIELDS TO INJECT
                     Text(
                         text = "Content Details",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall,
                         color = Color.White.copy(alpha = 0.5f),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // Title Field (optional description for history tracking)
-                    OutlinedTextField(
-                        value = inputTitle,
-                        onValueChange = { viewModel.inputTitle.value = it },
-                        label = { Text("Core Title (Optional label for History)") },
-                        modifier = Modifier.fillMaxWidth().testTag("input_field_title"),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                            focusedLabelColor = primaryColor,
-                            unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
-                            focusedIndicatorColor = primaryColor,
-                            unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
-                        ),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // DYNAMIC SWITCHER SPECIFIC FOR EACH INPUT TYPE
-                    when (inputType) {
-                        "URL" -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.White.copy(alpha = 0.03f),
+                        shape = RoundedCornerShape(16.dp),
+                        tonalElevation = 2.dp
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Title Field
                             OutlinedTextField(
-                                value = inputText,
-                                onValueChange = { viewModel.inputText.value = it },
-                                label = { Text("Website Link URL") },
-                                placeholder = { Text("URL Link (e.g. google.com)") },
-                                modifier = Modifier.fillMaxWidth().testTag("input_field_content"),
+                                value = inputTitle,
+                                onValueChange = { viewModel.inputTitle.value = it },
+                                label = { Text("Core Title (Optional label for History)") },
+                                modifier = Modifier.fillMaxWidth().testTag("input_field_title"),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = TextFieldDefaults.colors(
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White,
-                                    focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                    unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
                                     focusedLabelColor = primaryColor,
-                                    unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                    unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
                                     focusedIndicatorColor = primaryColor,
                                     unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
                                 ),
                                 singleLine = true
                             )
-                        }
-                        "WIFI" -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                OutlinedTextField(
-                                    value = wifiSsid,
-                                    onValueChange = { viewModel.wifiSsid.value = it },
-                                    label = { Text("Network SSID (Name)") },
-                                    modifier = Modifier.fillMaxWidth().testTag("input_field_ssid"),
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White,
-                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        focusedLabelColor = primaryColor,
-                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
-                                        focusedIndicatorColor = primaryColor,
-                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
-                                    ),
-                                    singleLine = true
-                                )
 
-                                OutlinedTextField(
-                                    value = wifiPassword,
-                                    onValueChange = { viewModel.wifiPassword.value = it },
-                                    label = { Text("Access Password") },
-                                    modifier = Modifier.fillMaxWidth().testTag("input_field_password"),
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White,
-                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        focusedLabelColor = primaryColor,
-                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
-                                        focusedIndicatorColor = primaryColor,
-                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
-                                    ),
-                                    singleLine = true
-                                )
+                            // DYNAMIC SWITCHER SPECIFIC FOR EACH INPUT TYPE
+                            when (inputType) {
+                                "URL" -> {
+                                    OutlinedTextField(
+                                        value = inputText,
+                                        onValueChange = { viewModel.inputText.value = it },
+                                        label = { Text("Website Link URL") },
+                                        placeholder = { Text("URL Link (e.g. google.com)") },
+                                        modifier = Modifier.fillMaxWidth().testTag("input_field_content"),
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = TextFieldDefaults.colors(
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White,
+                                            focusedContainerColor = Color.Transparent,
+                                            unfocusedContainerColor = Color.Transparent,
+                                            focusedLabelColor = primaryColor,
+                                            unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                            focusedIndicatorColor = primaryColor,
+                                            unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                        ),
+                                        singleLine = true
+                                    )
+                                }
+                                "WIFI" -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        OutlinedTextField(
+                                            value = wifiSsid,
+                                            onValueChange = { viewModel.wifiSsid.value = it },
+                                            label = { Text("Network SSID (Name)") },
+                                            modifier = Modifier.fillMaxWidth().testTag("input_field_ssid"),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = Color.White,
+                                                unfocusedTextColor = Color.White,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedLabelColor = primaryColor,
+                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                focusedIndicatorColor = primaryColor,
+                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                            ),
+                                            singleLine = true
+                                        )
 
-                                // Security Selection
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    val protocols = listOf("WPA", "WEP", "nopass")
-                                    protocols.forEach { p ->
-                                        val isPSelected = wifiSecurity == p
-                                        val display = when(p) {
-                                            "WPA" -> "WPA/WPA2"
-                                            "WEP" -> "WEP"
-                                            else -> "None"
-                                        }
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(if (isPSelected) primaryColor.copy(alpha = 0.15f) else Color.Transparent)
-                                                .border(
-                                                    1.dp,
-                                                    if (isPSelected) primaryColor else Color.White.copy(alpha = 0.1f),
-                                                    RoundedCornerShape(8.dp)
-                                                )
-                                                .clickable {
-                                                    HapticUtils.vibrate(context, 15)
-                                                    viewModel.wifiSecurity.value = p
-                                                }
-                                                .padding(vertical = 10.dp),
-                                            contentAlignment = Alignment.Center
+                                        OutlinedTextField(
+                                            value = wifiPassword,
+                                            onValueChange = { viewModel.wifiPassword.value = it },
+                                            label = { Text("Access Password") },
+                                            modifier = Modifier.fillMaxWidth().testTag("input_field_password"),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = Color.White,
+                                                unfocusedTextColor = Color.White,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedLabelColor = primaryColor,
+                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                focusedIndicatorColor = primaryColor,
+                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                            ),
+                                            singleLine = true
+                                        )
+
+                                        // Security Selection
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            Text(
-                                                display,
-                                                color = if (isPSelected) Color.White else Color.White.copy(alpha = 0.6f),
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                            val protocols = listOf("WPA", "WEP", "nopass")
+                                            protocols.forEach { p ->
+                                                val isPSelected = wifiSecurity == p
+                                                val display = when(p) {
+                                                    "WPA" -> "WPA/WPA2"
+                                                    "WEP" -> "WEP"
+                                                    else -> "None"
+                                                }
+                                                Box(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .background(if (isPSelected) primaryColor.copy(alpha = 0.15f) else Color.Transparent)
+                                                        .border(
+                                                            1.dp,
+                                                            if (isPSelected) primaryColor else Color.White.copy(alpha = 0.1f),
+                                                            RoundedCornerShape(8.dp)
+                                                        )
+                                                        .clickable {
+                                                            HapticUtils.vibrate(context, 15)
+                                                            viewModel.wifiSecurity.value = p
+                                                        }
+                                                        .padding(vertical = 10.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        display,
+                                                        color = if (isPSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }
-                        "CONTACT" -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                OutlinedTextField(
-                                    value = contactName,
-                                    onValueChange = { viewModel.contactName.value = it },
-                                    label = { Text("Full Name") },
-                                    modifier = Modifier.fillMaxWidth().testTag("input_field_contact_name"),
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White,
-                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        focusedLabelColor = primaryColor,
-                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
-                                        focusedIndicatorColor = primaryColor,
-                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
-                                    ),
-                                    singleLine = true
-                                )
+                                "CONTACT" -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        OutlinedTextField(
+                                            value = contactName,
+                                            onValueChange = { viewModel.contactName.value = it },
+                                            label = { Text("Full Name") },
+                                            modifier = Modifier.fillMaxWidth().testTag("input_field_contact_name"),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = Color.White,
+                                                unfocusedTextColor = Color.White,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedLabelColor = primaryColor,
+                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                focusedIndicatorColor = primaryColor,
+                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                            ),
+                                            singleLine = true
+                                        )
 
-                                OutlinedTextField(
-                                    value = contactPhone,
-                                    onValueChange = { viewModel.contactPhone.value = it },
-                                    label = { Text("Phone Number") },
-                                    modifier = Modifier.fillMaxWidth().testTag("input_field_contact_phone"),
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White,
-                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        focusedLabelColor = primaryColor,
-                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
-                                        focusedIndicatorColor = primaryColor,
-                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
-                                    ),
-                                    singleLine = true
-                                )
+                                        OutlinedTextField(
+                                            value = contactPhone,
+                                            onValueChange = { viewModel.contactPhone.value = it },
+                                            label = { Text("Phone Number") },
+                                            modifier = Modifier.fillMaxWidth().testTag("input_field_contact_phone"),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = Color.White,
+                                                unfocusedTextColor = Color.White,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedLabelColor = primaryColor,
+                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                focusedIndicatorColor = primaryColor,
+                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                            ),
+                                            singleLine = true
+                                        )
 
-                                OutlinedTextField(
-                                    value = contactEmail,
-                                    onValueChange = { viewModel.contactEmail.value = it },
-                                    label = { Text("Email Address") },
-                                    modifier = Modifier.fillMaxWidth().testTag("input_field_contact_email"),
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White,
-                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                        focusedLabelColor = primaryColor,
-                                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
-                                        focusedIndicatorColor = primaryColor,
-                                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
-                                    ),
-                                    singleLine = true
-                                )
+                                        OutlinedTextField(
+                                            value = contactEmail,
+                                            onValueChange = { viewModel.contactEmail.value = it },
+                                            label = { Text("Email Address") },
+                                            modifier = Modifier.fillMaxWidth().testTag("input_field_contact_email"),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = TextFieldDefaults.colors(
+                                                focusedTextColor = Color.White,
+                                                unfocusedTextColor = Color.White,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedLabelColor = primaryColor,
+                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                focusedIndicatorColor = primaryColor,
+                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                            ),
+                                            singleLine = true
+                                        )
+                                    }
+                                }
+                                else -> { // TEXT
+                                    OutlinedTextField(
+                                        value = inputText,
+                                        onValueChange = { viewModel.inputText.value = it },
+                                        label = { Text("Decoded Statement") },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(120.dp)
+                                            .testTag("input_field_content"),
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = TextFieldDefaults.colors(
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White,
+                                            focusedContainerColor = Color.Transparent,
+                                            unfocusedContainerColor = Color.Transparent,
+                                            focusedLabelColor = primaryColor,
+                                            unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                            focusedIndicatorColor = primaryColor,
+                                            unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                        )
+                                    )
+                                }
                             }
-                        }
-                        else -> { // TEXT
-                            OutlinedTextField(
-                                value = inputText,
-                                onValueChange = { viewModel.inputText.value = it },
-                                label = { Text("Decoded Statement") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(120.dp)
-                                    .testTag("input_field_content"),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = TextFieldDefaults.colors(
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
-                                    focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                    unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                                    focusedLabelColor = primaryColor,
-                                    unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
-                                    focusedIndicatorColor = primaryColor,
-                                    unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
-                                )
-                            )
                         }
                     }
+
 
                     Spacer(modifier = Modifier.height(24.dp))
 
