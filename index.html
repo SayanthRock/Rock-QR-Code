@@ -13,13 +13,12 @@
     :root {
       color-scheme: dark;
       --bg: #070b16;
-      --panel: rgba(255, 255, 255, 0.08);
-      --panel-strong: rgba(255, 255, 255, 0.14);
+      --card: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.16);
       --text: #f7f8ff;
       --muted: #aeb6d2;
       --accent: #e2b884;
       --accent-2: #80e7ff;
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -31,19 +30,8 @@
       background:
         radial-gradient(circle at top left, rgba(128, 231, 255, 0.22), transparent 34rem),
         radial-gradient(circle at 80% 10%, rgba(226, 184, 132, 0.20), transparent 30rem),
-        linear-gradient(145deg, #070b16 0%, #0e1426 50%, #070b16 100%);
+        linear-gradient(145deg, #070b16 0%, #0e1426 55%, #070b16 100%);
       color: var(--text);
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image: linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
-      background-size: 56px 56px;
-      mask-image: linear-gradient(to bottom, black, transparent 78%);
     }
 
     a { color: inherit; text-decoration: none; }
@@ -51,7 +39,7 @@
     .wrap {
       width: min(1120px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 28px 0 46px;
+      padding: 28px 0 42px;
     }
 
     .nav {
@@ -59,14 +47,14 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 72px;
+      margin-bottom: 70px;
     }
 
     .brand {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      font-weight: 800;
+      font-weight: 850;
       letter-spacing: -0.04em;
     }
 
@@ -75,17 +63,15 @@
       height: 42px;
       display: grid;
       place-items: center;
-      border: 1px solid var(--panel-strong);
+      border: 1px solid var(--border);
       border-radius: 14px;
       background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
-      box-shadow: var(--shadow);
     }
 
-    .nav-actions {
+    .actions, .hero-actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
-      justify-content: flex-end;
     }
 
     .btn {
@@ -95,43 +81,34 @@
       min-height: 44px;
       padding: 0 18px;
       border-radius: 999px;
-      border: 1px solid var(--panel-strong);
+      border: 1px solid var(--border);
       background: rgba(255,255,255,0.08);
-      color: var(--text);
-      font-weight: 700;
-      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      font-weight: 760;
       backdrop-filter: blur(18px);
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      border-color: rgba(226,184,132,0.65);
-      background: rgba(255,255,255,0.12);
     }
 
     .btn.primary {
       color: #141006;
       background: linear-gradient(135deg, var(--accent), #ffe6bf);
-      border-color: rgba(255,255,255,0.28);
     }
 
     .hero {
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-columns: 1.08fr 0.92fr;
       gap: 42px;
       align-items: center;
     }
 
-    .eyebrow {
+    .badge {
       display: inline-flex;
       margin-bottom: 18px;
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(128,231,255,0.10);
       border: 1px solid rgba(128,231,255,0.24);
+      background: rgba(128,231,255,0.10);
       color: #c6f6ff;
       font-size: 0.9rem;
-      font-weight: 700;
+      font-weight: 760;
     }
 
     h1 {
@@ -149,66 +126,31 @@
       line-height: 1.65;
     }
 
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 32px;
-    }
+    .hero-actions { margin-top: 32px; }
 
-    .phone {
-      position: relative;
-      min-height: 560px;
+    .preview {
+      min-height: 520px;
       border-radius: 38px;
-      padding: 20px;
-      background: linear-gradient(145deg, rgba(255,255,255,0.17), rgba(255,255,255,0.06));
-      border: 1px solid rgba(255,255,255,0.18);
-      box-shadow: var(--shadow);
+      padding: 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+      box-shadow: 0 24px 80px rgba(0,0,0,0.42);
       backdrop-filter: blur(20px);
     }
 
     .screen {
       height: 100%;
-      min-height: 520px;
+      min-height: 476px;
       border-radius: 28px;
-      padding: 22px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.12);
       background:
         radial-gradient(circle at 20% 0%, rgba(226,184,132,0.22), transparent 18rem),
         linear-gradient(160deg, #10172c, #080d19);
-      border: 1px solid rgba(255,255,255,0.12);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      overflow: hidden;
     }
-
-    .qr-card {
-      margin: 44px auto 0;
-      width: min(280px, 82%);
-      aspect-ratio: 1;
-      padding: 18px;
-      border-radius: 30px;
-      background: #f9fbff;
-      box-shadow: 0 18px 45px rgba(0,0,0,0.32);
-    }
-
-    .qr-grid {
-      width: 100%;
-      height: 100%;
-      display: grid;
-      grid-template-columns: repeat(9, 1fr);
-      grid-template-rows: repeat(9, 1fr);
-      gap: 4px;
-    }
-
-    .dot {
-      border-radius: 6px;
-      background: #0b1020;
-      opacity: 0.95;
-    }
-
-    .dot.soft { opacity: 0.38; }
-    .dot.gold { background: var(--accent); }
 
     .screen-title {
       display: flex;
@@ -223,12 +165,33 @@
       background: rgba(255,255,255,0.10);
       color: var(--muted);
       font-size: 0.8rem;
-      font-weight: 700;
+      font-weight: 760;
     }
+
+    .qr-card {
+      width: min(280px, 82%);
+      aspect-ratio: 1;
+      margin: 30px auto 0;
+      padding: 18px;
+      border-radius: 30px;
+      background: #f9fbff;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.32);
+    }
+
+    .qr-grid {
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      grid-template-rows: repeat(9, 1fr);
+      gap: 4px;
+    }
+
+    .dot { border-radius: 6px; background: #0b1020; }
+    .dot.soft { opacity: 0.38; }
+    .dot.gold { background: var(--accent); }
 
     .scan-line {
       height: 4px;
-      width: 100%;
       margin-top: 18px;
       border-radius: 999px;
       background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
@@ -245,22 +208,13 @@
     .card {
       padding: 22px;
       border-radius: 26px;
-      background: var(--panel);
-      border: 1px solid var(--panel-strong);
+      border: 1px solid var(--border);
+      background: var(--card);
       backdrop-filter: blur(18px);
     }
 
-    .card h2 {
-      margin: 0 0 10px;
-      font-size: 1.05rem;
-      letter-spacing: -0.03em;
-    }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
-    }
+    .card h2 { margin: 0 0 10px; font-size: 1.05rem; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.55; }
 
     footer {
       margin-top: 60px;
@@ -272,18 +226,15 @@
     @media (max-width: 820px) {
       .nav { margin-bottom: 46px; align-items: flex-start; }
       .hero { grid-template-columns: 1fr; }
-      .phone { min-height: auto; }
       .features { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 540px) {
       .wrap { width: min(100% - 24px, 1120px); padding-top: 18px; }
       .nav { flex-direction: column; }
-      .nav-actions { justify-content: flex-start; }
+      .actions, .hero-actions { width: 100%; }
       .btn { width: 100%; }
-      .hero-actions { flex-direction: column; }
       .screen { min-height: 430px; }
-      .qr-card { margin-top: 26px; }
     }
   </style>
 </head>
@@ -294,7 +245,7 @@
         <span class="logo" aria-hidden="true">▦</span>
         <span>Rock QR Code</span>
       </a>
-      <div class="nav-actions">
+      <div class="actions">
         <a class="btn" href="https://github.com/SayanthRock/Rock-QR-Code">GitHub</a>
         <a class="btn primary" href="https://github.com/SayanthRock/Rock-QR-Code/releases">Download APK</a>
       </div>
@@ -302,7 +253,7 @@
 
     <section class="hero">
       <div>
-        <span class="eyebrow">Offline-first Android QR generator and scanner</span>
+        <span class="badge">Offline-first Android QR generator and scanner</span>
         <h1>Scan fast.<br />Generate clean.</h1>
         <p class="lead">
           Rock QR Code is a modern Android app built with Kotlin and Jetpack Compose.
@@ -315,7 +266,7 @@
         </div>
       </div>
 
-      <div class="phone" aria-label="App preview illustration">
+      <div class="preview" aria-label="App preview illustration">
         <div class="screen">
           <div class="screen-title">
             <strong>Rock QR</strong>
@@ -358,7 +309,7 @@
     </section>
 
     <footer>
-      Built by Sayanth Rock. Static GitHub Pages landing page added so the public link stops face-planting into 404 oblivion.
+      © Sayanth Rock · Rock QR Code
     </footer>
   </main>
 </body>
