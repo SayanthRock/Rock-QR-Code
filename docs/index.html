@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="Rock QR Code is an offline-first Android QR generator and scanner built with Kotlin and Jetpack Compose." />
+  <title>Rock QR Code</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --text: #f7f8ff;
+      --muted: #aeb6d2;
+      --accent: #e2b884;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at top left, rgba(128, 231, 255, 0.22), transparent 32rem),
+        radial-gradient(circle at 80% 10%, rgba(226, 184, 132, 0.20), transparent 28rem),
+        linear-gradient(145deg, #070b16 0%, #10172c 55%, #070b16 100%);
+      color: var(--text);
+    }
+    main {
+      width: min(880px, 100%);
+      padding: clamp(28px, 7vw, 64px);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 32px;
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.42);
+      backdrop-filter: blur(18px);
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(128,231,255,0.26);
+      background: rgba(128,231,255,0.10);
+      color: #c6f6ff;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    h1 {
+      margin: 20px 0 0;
+      font-size: clamp(3rem, 10vw, 6.5rem);
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+    }
+    p {
+      max-width: 680px;
+      margin: 24px auto 0;
+      color: var(--muted);
+      font-size: 1.12rem;
+      line-height: 1.7;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 32px;
+    }
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 800;
+      background: rgba(255,255,255,0.08);
+    }
+    a.primary {
+      color: #141006;
+      background: linear-gradient(135deg, var(--accent), #ffe6bf);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="badge">GitHub Pages Ready</span>
+    <h1>Rock QR Code</h1>
+    <p>
+      Offline-first Android QR generator and scanner built with Kotlin and Jetpack Compose.
+      Generate QR codes, scan with camera support, save local history, style codes, and share cleanly.
+    </p>
+    <div class="actions">
+      <a class="primary" href="https://github.com/SayanthRock/Rock-QR-Code/releases">Download APK</a>
+      <a href="https://github.com/SayanthRock/Rock-QR-Code">View GitHub Repo</a>
+    </div>
+  </main>
+</body>
+</html>
