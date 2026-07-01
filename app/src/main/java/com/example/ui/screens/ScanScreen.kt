@@ -143,7 +143,7 @@ fun ScanScreen(
                     text = "Activate Crystal Lens",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center,
                     fontFamily = FontFamily.SansSerif
                 )
@@ -153,7 +153,7 @@ fun ScanScreen(
                 Text(
                     text = "To decode QR barcodes instantly, authorize camera access. Scanning is completed fully offline to respect your data privacy.",
                     fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.70f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.70f),
                     textAlign = TextAlign.Center,
                     lineHeight = 22.sp
                 )

@@ -13,5 +13,11 @@ data class QrRecord(
     val timestamp: Long = System.currentTimeMillis(),
     val isFavorite: Boolean = false,
     val isScanned: Boolean = false, // True if scanned, False if generated
-    val colorHex: String? = null
+    val colorHex: String? = null,
+    val isDynamic: Boolean = false,
+    val shortCode: String? = null,
+    val scanCount: Int = 0,
+    val selectedStyle: String = "Classic",
+    val eyeColorHex: String? = null,
+    val innerEyeColorHex: String? = null
 ) : Serializable

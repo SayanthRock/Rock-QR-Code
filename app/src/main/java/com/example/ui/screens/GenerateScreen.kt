@@ -27,11 +27,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.LiquidGlassTheme
 import com.example.utils.HapticUtils
 import com.example.utils.ShareUtils
+import com.example.viewmodel.CustomToastType
 import com.example.viewmodel.QRViewModel
 
 @Composable
@@ -42,33 +44,45 @@ fun GenerateScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
+    val activePreset by viewModel.colorPreset.collectAsState()
     val themeConfig = LiquidGlassTheme.LocalConfig.current
     val primaryColor = themeConfig.primaryColor
+    val secondaryColor = themeConfig.secondaryColor
 
     val inputType by viewModel.inputType.collectAsState()
     val inputText by viewModel.inputText.collectAsState()
     val inputTitle by viewModel.inputTitle.collectAsState()
 
+    // WiFi States
     val wifiSsid by viewModel.wifiSsid.collectAsState()
     val wifiPassword by viewModel.wifiPassword.collectAsState()
     val wifiSecurity by viewModel.wifiSecurity.collectAsState()
 
+    // Contact States
     val contactName by viewModel.contactName.collectAsState()
     val contactPhone by viewModel.contactPhone.collectAsState()
     val contactEmail by viewModel.contactEmail.collectAsState()
 
+    // Color options
     val selectedQrColor by viewModel.selectedQrColor.collectAsState()
     val qrBitmap by viewModel.generatedQrBitmap.collectAsState()
     val hasResult by viewModel.hasGeneratedResult.collectAsState()
 
+    val selectedStyle by viewModel.selectedQrStyle.collectAsState()
+    val selectedEyeColor by viewModel.selectedEyeColor.collectAsState()
+    val selectedInnerEyeColor by viewModel.selectedInnerEyeColor.collectAsState()
+    val isDynamic by viewModel.isDynamicQr.collectAsState()
+
     Column(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp)
-            .padding(top = 16.dp, bottom = 120.dp),
+            .padding(top = 16.dp, bottom = 120.dp), // Leaves clearance for the floating navigation bar
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // HEADER TITLE
         Text(
             text = "Quartz Forge Generator",
             fontSize = 24.sp,
@@ -85,6 +99,7 @@ fun GenerateScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp)
         )
 
+        // SLIDE ANIMATION ON DISPLAY STATE
         AnimatedContent(
             targetState = hasResult,
             transitionSpec = {
@@ -93,14 +108,15 @@ fun GenerateScreen(
             label = "generator_flow"
         ) { isResultVisible ->
             if (isResultVisible && qrBitmap != null) {
+                // RENDER GENERATED PREMIUM QR INSIDE AN ANCHORED ROCK MATTE CONTAINER
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f), RoundedCornerShape(24.dp))
                         .border(
                             1.dp,
                             Brush.linearGradient(
-                                listOf(primaryColor.copy(alpha = 0.4f), Color.White.copy(alpha = 0.05f))
+                                listOf(primaryColor.copy(alpha = 0.4f), MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
                             ),
                             RoundedCornerShape(24.dp)
                         )
@@ -116,6 +132,7 @@ fun GenerateScreen(
                     )
                     Spacer(modifier = Modifier.height(18.dp))
 
+                    // QR CONTAINER LAYER WITH BACKDROP
                     Box(
                         modifier = Modifier
                             .size(240.dp)
@@ -133,10 +150,12 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // OPERATIONS ROW
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        // SAVE BUTTON
                         Button(
                             onClick = {
                                 HapticUtils.vibrate(context, 40)
@@ -156,6 +175,7 @@ fun GenerateScreen(
                             Text("Download", fontSize = 13.sp)
                         }
 
+                        // SHARE BUTTON
                         Button(
                             onClick = {
                                 HapticUtils.vibrate(context, 30)
@@ -167,50 +187,46 @@ fun GenerateScreen(
                                 )
                             },
                             modifier = Modifier.weight(1f).height(48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.10f)),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Image", tint = Color.White)
+                            Icon(Icons.Default.Share, contentDescription = "Share Image", tint = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Share", color = Color.White, fontSize = 13.sp)
+                            Text("Share", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    // COMPANION WEB LINK SHARING BUTTON
                     Button(
                         onClick = {
                             HapticUtils.vibrate(context, 30)
-                            val title = viewModel.inputTitle.value.ifEmpty { "Rock QR Code" }
-                            val rawContent = when (viewModel.inputType.value) {
-                                "WIFI" -> viewModel.wifiSsid.value
-                                "CONTACT" -> listOf(
-                                    viewModel.contactName.value,
-                                    viewModel.contactPhone.value,
-                                    viewModel.contactEmail.value
-                                ).filter { it.isNotBlank() }.joinToString(separator = "\n")
-                                else -> viewModel.inputText.value
-                            }
+                            val rawContent = viewModel.inputText.value.ifEmpty { viewModel.wifiSsid.value }
+                            val title = viewModel.inputTitle.value.ifEmpty { "Shared Code" }
+                            val type = viewModel.inputType.value
+                            val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
+
                             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 this.type = "text/plain"
-                                putExtra(android.content.Intent.EXTRA_SUBJECT, title)
-                                putExtra(android.content.Intent.EXTRA_TEXT, rawContent.ifBlank { title })
+                                putExtra(android.content.Intent.EXTRA_SUBJECT, "Import Rock QR Code: $title")
+                                putExtra(android.content.Intent.EXTRA_TEXT, "Look at my Rock-forged QR code: $webLink")
                             }
-                            context.startActivity(android.content.Intent.createChooser(intent, "Share QR Content"))
+                            context.startActivity(android.content.Intent.createChooser(intent, "Share Companion Web Link"))
                         },
                         modifier = Modifier.fillMaxWidth().height(44.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Share QR Content",
+                            imageVector = Icons.Default.Link,
+                            contentDescription = "Share Link",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Share QR Content",
+                            text = "Share Companion Web Link",
                             color = MaterialTheme.colorScheme.primary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium
@@ -219,6 +235,7 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // EDIT / NEW BTN
                     OutlinedButton(
                         onClick = {
                             HapticUtils.vibrate(context, 20)
@@ -226,8 +243,10 @@ fun GenerateScreen(
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            width = 1.dp
+                        )
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = "New Code")
                         Spacer(modifier = Modifier.width(6.dp))
@@ -235,12 +254,16 @@ fun GenerateScreen(
                     }
                 }
             } else {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                // DRAW INPUT CREATOR INTERFACE
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // CATEGORY CHIPS TAB LIST
                     Text(
                         text = "Select Data Compound",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
 
@@ -266,12 +289,12 @@ fun GenerateScreen(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(
                                         if (isSelected) primaryColor.copy(alpha = 0.20f)
-                                        else Color.White.copy(alpha = 0.04f)
+                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                                     )
                                     .border(
                                         1.dp,
                                         if (isSelected) primaryColor.copy(alpha = 0.50f)
-                                        else Color.White.copy(alpha = 0.08f),
+                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                                         RoundedCornerShape(12.dp)
                                     )
                                     .clickable {
@@ -285,7 +308,7 @@ fun GenerateScreen(
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = label,
-                                        tint = if (isSelected) primaryColor else Color.White.copy(alpha = 0.6f),
+                                        tint = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -293,23 +316,24 @@ fun GenerateScreen(
                                         text = label,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
+                                        color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     )
                                 }
                             }
                         }
                     }
 
+                    // MAIN TEXT FIELDS TO INJECT
                     Text(
                         text = "Content Details",
                         style = MaterialTheme.typography.titleSmall,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        color = Color.White.copy(alpha = 0.03f),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(16.dp),
                         tonalElevation = 2.dp
                     ) {
@@ -317,6 +341,7 @@ fun GenerateScreen(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            // Title Field
                             OutlinedTextField(
                                 value = inputTitle,
                                 onValueChange = { viewModel.inputTitle.value = it },
@@ -324,18 +349,19 @@ fun GenerateScreen(
                                 modifier = Modifier.fillMaxWidth().testTag("input_field_title"),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = TextFieldDefaults.colors(
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
+                                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                     focusedContainerColor = Color.Transparent,
                                     unfocusedContainerColor = Color.Transparent,
                                     focusedLabelColor = primaryColor,
-                                    unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
+                                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                     focusedIndicatorColor = primaryColor,
-                                    unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                    unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                 ),
                                 singleLine = true
                             )
 
+                            // DYNAMIC SWITCHER SPECIFIC FOR EACH INPUT TYPE
                             when (inputType) {
                                 "URL" -> {
                                     OutlinedTextField(
@@ -346,14 +372,14 @@ fun GenerateScreen(
                                         modifier = Modifier.fillMaxWidth().testTag("input_field_content"),
                                         shape = RoundedCornerShape(14.dp),
                                         colors = TextFieldDefaults.colors(
-                                            focusedTextColor = Color.White,
-                                            unfocusedTextColor = Color.White,
+                                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             focusedContainerColor = Color.Transparent,
                                             unfocusedContainerColor = Color.Transparent,
                                             focusedLabelColor = primaryColor,
-                                            unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                             focusedIndicatorColor = primaryColor,
-                                            unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                         ),
                                         singleLine = true
                                     )
@@ -367,14 +393,14 @@ fun GenerateScreen(
                                             modifier = Modifier.fillMaxWidth().testTag("input_field_ssid"),
                                             shape = RoundedCornerShape(14.dp),
                                             colors = TextFieldDefaults.colors(
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White,
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
                                                 focusedLabelColor = primaryColor,
-                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 focusedIndicatorColor = primaryColor,
-                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                             ),
                                             singleLine = true
                                         )
@@ -386,18 +412,19 @@ fun GenerateScreen(
                                             modifier = Modifier.fillMaxWidth().testTag("input_field_password"),
                                             shape = RoundedCornerShape(14.dp),
                                             colors = TextFieldDefaults.colors(
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White,
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
                                                 focusedLabelColor = primaryColor,
-                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 focusedIndicatorColor = primaryColor,
-                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                             ),
                                             singleLine = true
                                         )
 
+                                        // Security Selection
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically,
@@ -406,7 +433,7 @@ fun GenerateScreen(
                                             val protocols = listOf("WPA", "WEP", "nopass")
                                             protocols.forEach { p ->
                                                 val isPSelected = wifiSecurity == p
-                                                val display = when (p) {
+                                                val display = when(p) {
                                                     "WPA" -> "WPA/WPA2"
                                                     "WEP" -> "WEP"
                                                     else -> "None"
@@ -418,7 +445,7 @@ fun GenerateScreen(
                                                         .background(if (isPSelected) primaryColor.copy(alpha = 0.15f) else Color.Transparent)
                                                         .border(
                                                             1.dp,
-                                                            if (isPSelected) primaryColor else Color.White.copy(alpha = 0.1f),
+                                                            if (isPSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                                                             RoundedCornerShape(8.dp)
                                                         )
                                                         .clickable {
@@ -430,7 +457,7 @@ fun GenerateScreen(
                                                 ) {
                                                     Text(
                                                         display,
-                                                        color = if (isPSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                                                        color = if (isPSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                                         style = MaterialTheme.typography.labelSmall,
                                                         fontWeight = FontWeight.Bold
                                                     )
@@ -448,14 +475,14 @@ fun GenerateScreen(
                                             modifier = Modifier.fillMaxWidth().testTag("input_field_contact_name"),
                                             shape = RoundedCornerShape(14.dp),
                                             colors = TextFieldDefaults.colors(
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White,
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
                                                 focusedLabelColor = primaryColor,
-                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 focusedIndicatorColor = primaryColor,
-                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                             ),
                                             singleLine = true
                                         )
@@ -467,14 +494,14 @@ fun GenerateScreen(
                                             modifier = Modifier.fillMaxWidth().testTag("input_field_contact_phone"),
                                             shape = RoundedCornerShape(14.dp),
                                             colors = TextFieldDefaults.colors(
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White,
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
                                                 focusedLabelColor = primaryColor,
-                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 focusedIndicatorColor = primaryColor,
-                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                             ),
                                             singleLine = true
                                         )
@@ -486,20 +513,20 @@ fun GenerateScreen(
                                             modifier = Modifier.fillMaxWidth().testTag("input_field_contact_email"),
                                             shape = RoundedCornerShape(14.dp),
                                             colors = TextFieldDefaults.colors(
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White,
+                                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
                                                 focusedLabelColor = primaryColor,
-                                                unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 focusedIndicatorColor = primaryColor,
-                                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                             ),
                                             singleLine = true
                                         )
                                     }
                                 }
-                                else -> {
+                                else -> { // TEXT
                                     OutlinedTextField(
                                         value = inputText,
                                         onValueChange = { viewModel.inputText.value = it },
@@ -510,14 +537,14 @@ fun GenerateScreen(
                                             .testTag("input_field_content"),
                                         shape = RoundedCornerShape(14.dp),
                                         colors = TextFieldDefaults.colors(
-                                            focusedTextColor = Color.White,
-                                            unfocusedTextColor = Color.White,
+                                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             focusedContainerColor = Color.Transparent,
                                             unfocusedContainerColor = Color.Transparent,
                                             focusedLabelColor = primaryColor,
-                                            unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                             focusedIndicatorColor = primaryColor,
-                                            unfocusedIndicatorColor = Color.White.copy(alpha = 0.12f)
+                                            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                         )
                                     )
                                 }
@@ -525,13 +552,188 @@ fun GenerateScreen(
                         }
                     }
 
+
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // DYNAMIC REDIRECTION TOGGLE (For URLs)
+                    if (inputType == "URL") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f), RoundedCornerShape(16.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Bolt,
+                                        contentDescription = "Dynamic Redirection",
+                                        tint = Color(0xFFFFB703),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Forge Redirection Core",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Text(
+                                    text = "Creates editable link target & enables tracking scan logs instantly.",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                            Switch(
+                                checked = isDynamic,
+                                onCheckedChange = {
+                                    HapticUtils.vibrate(context, 20)
+                                    viewModel.isDynamicQr.value = it
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = primaryColor,
+                                    checkedTrackColor = primaryColor.copy(alpha = 0.3f)
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    // QR NODE VISUAL STYLE PICKER
+                    Text(
+                        text = "QR Node Visual Structure",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(bottom = 10.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val styles = listOf("Classic", "Rounded", "Circles", "Thin", "Smooth")
+                        styles.forEach { styleOpt ->
+                            val isStyleSelected = selectedStyle == styleOpt
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        if (isStyleSelected) primaryColor.copy(alpha = 0.15f)
+                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isStyleSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable {
+                                        HapticUtils.vibrate(context, 15)
+                                        viewModel.selectedQrStyle.value = styleOpt
+                                    }
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = styleOpt,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isStyleSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+
+                    // OUTER EYE RING TINT SELECTOR
+                    Text(
+                        text = "Outer Eye Ring Tint",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(bottom = 10.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        viewModel.colorOptions.forEach { opt ->
+                            val isSelected = selectedEyeColor.name == opt.name
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(opt.primaryColor))
+                                    .clickable {
+                                        HapticUtils.vibrate(context, 15)
+                                        viewModel.selectedEyeColor.value = opt
+                                    }
+                                    .border(
+                                        width = 3.dp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                        shape = CircleShape
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    }
+
+                    // INNER EYE CORE TINT SELECTOR
+                    Text(
+                        text = "Inner Eye Core Tint",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(bottom = 10.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        viewModel.colorOptions.forEach { opt ->
+                            val isSelected = selectedInnerEyeColor.name == opt.name
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(opt.primaryColor))
+                                    .clickable {
+                                        HapticUtils.vibrate(context, 15)
+                                        viewModel.selectedInnerEyeColor.value = opt
+                                    }
+                                    .border(
+                                        width = 3.dp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                        shape = CircleShape
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    }
+
+                    // QR MINERAL PIGMENT SPECIFICATION
                     Text(
                         text = "Core QR Dye Tint",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
 
@@ -552,18 +754,19 @@ fun GenerateScreen(
                                     }
                                     .border(
                                         width = 3.dp,
-                                        color = if (isColorSelected) Color.White else Color.Transparent,
+                                        color = if (isColorSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
                                         shape = CircleShape
                                     )
                                     .border(
                                         width = 1.dp,
-                                        color = if (isColorSelected) Color.Transparent else Color.White.copy(alpha = 0.2f),
+                                        color = if (isColorSelected) Color.Transparent else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                                         shape = CircleShape
                                     )
                             )
                         }
                     }
 
+                    // TRIGGER GENERATION BUTTON
                     Button(
                         onClick = {
                             HapticUtils.vibrate(context, 50)
@@ -573,7 +776,9 @@ fun GenerateScreen(
                             .fillMaxWidth()
                             .height(52.dp)
                             .testTag("generate_code_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = primaryColor
+                        ),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Icon(Icons.Default.Tune, contentDescription = "Forge Key")
