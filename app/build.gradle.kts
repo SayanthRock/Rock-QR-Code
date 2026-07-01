@@ -1,49 +1,22 @@
 plugins {
   alias(libs.plugins.android.application)
+  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
-  alias(libs.plugins.roborazzi)
-  alias(libs.plugins.secrets)
-  alias(libs.plugins.test.retry)
 }
 
 android {
   namespace = "com.example"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  compileSdk = 35
 
   defaultConfig {
     applicationId = "com.aistudio.rockqr.qzlypm"
     minSdk = 24
-    targetSdk = 36
+    targetSdk = 35
     versionCode = 1
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      val keystoreFile = file(keystorePath)
-      if (keystoreFile.exists()) {
-        storeFile = keystoreFile
-        storePassword = System.getenv("STORE_PASSWORD")
-        keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
-        keyPassword = System.getenv("KEY_PASSWORD")
-      } else {
-        // Fallback to debug configuration if release keystore is missing
-        storeFile = file("${rootDir}/debug.keystore")
-        storePassword = "android"
-        keyAlias = "androiddebugkey"
-        keyPassword = "android"
-      }
-    }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
-    }
   }
 
   buildTypes {
@@ -51,28 +24,24 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
-    }
-    debug {
-      signingConfig = signingConfigs.getByName("debugConfig")
     }
   }
+
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
+
+  kotlinOptions {
+    jvmTarget = "17"
+  }
+
   buildFeatures {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
-}
 
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
+  testOptions { unitTests { isIncludeAndroidResources = true } }
 }
 
 // Some unused dependencies are commented out below instead of being removed.
@@ -131,14 +100,6 @@ dependencies {
   "ksp"(libs.moshi.kotlin.codegen)
 }
 
-tasks.withType<Test>().configureEach {
-  retry {
-    maxRetries.set(2)
-    maxFailures.set(10)
-    failOnPassedAfterRetry.set(false)
-  }
-}
-
 abstract class CopyApkTask : DefaultTask() {
   @get:InputFile
   abstract val sourceApk: RegularFileProperty
@@ -153,9 +114,7 @@ abstract class CopyApkTask : DefaultTask() {
     if (src.exists()) {
       src.copyTo(File(destDir, "Rock QR.apk"), overwrite = true)
       src.copyTo(File(destDir, "Rock_QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo QR.apk"), overwrite = true)
-      src.copyTo(File(destDir, "Chamo_QR.apk"), overwrite = true)
-      println("✅ Copied APK to root directory as both 'Rock QR.apk' and 'Chamo QR.apk'")
+      println("✅ Copied APK to root directory as 'Rock QR.apk' and 'Rock_QR.apk'")
     }
   }
 }
@@ -170,4 +129,3 @@ tasks.configureEach {
     finalizedBy(copyApkToWorkspace)
   }
 }
-
