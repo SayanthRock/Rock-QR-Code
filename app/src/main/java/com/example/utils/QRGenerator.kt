@@ -72,7 +72,7 @@ object QRGenerator {
                     val bottom = (y + 1) * cellSize
 
                     when (style) {
-                        "Circles" -> {
+                        "Circles", "Dot" -> {
                             val centerX = left + cellSize / 2f
                             val centerY = top + cellSize / 2f
                             canvas.drawCircle(centerX, centerY, cellSize * 0.42f, paint)
@@ -96,7 +96,7 @@ object QRGenerator {
                             )
                             canvas.drawRoundRect(rect, cellSize * 0.35f, cellSize * 0.35f, paint)
                         }
-                        "Smooth" -> {
+                        "Smooth", "Mosaic" -> {
                             // Smoothly connects with neighboring dark modules
                             val hasLeft = x > 0 && bitMatrix[x - 1, y] && !isFinder(x - 1, y, matrixWidth, matrixHeight)
                             val hasRight = x < matrixWidth - 1 && bitMatrix[x + 1, y] && !isFinder(x + 1, y, matrixWidth, matrixHeight)

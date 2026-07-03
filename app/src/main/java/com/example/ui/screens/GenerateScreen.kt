@@ -606,51 +606,170 @@ fun GenerateScreen(
 
                     // QR NODE VISUAL STYLE PICKER
                     Text(
-                        text = "QR Node Visual Structure",
+                        text = "QR Module Style",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
 
-                    Row(
+                    var dropdownExpanded by remember { mutableStateOf(false) }
+                    val styles = listOf("Square", "Rounded", "Dot", "Mosaic", "Thin")
+                    val currentStyleDisplay = when (selectedStyle) {
+                        "Classic", "Square" -> "Square"
+                        "Circles", "Dot" -> "Dot"
+                        "Smooth", "Mosaic" -> "Mosaic"
+                        else -> selectedStyle
+                    }
+
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 24.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                RoundedCornerShape(14.dp)
+                            )
+                            .clickable {
+                                HapticUtils.vibrate(context, 15)
+                                dropdownExpanded = !dropdownExpanded
+                            }
+                            .padding(horizontal = 16.dp)
+                            .testTag("style_dropdown_box"),
+                        contentAlignment = Alignment.CenterStart
                     ) {
-                        val styles = listOf("Classic", "Rounded", "Circles", "Thin", "Smooth")
-                        styles.forEach { styleOpt ->
-                            val isStyleSelected = selectedStyle == styleOpt
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(
-                                        if (isStyleSelected) primaryColor.copy(alpha = 0.15f)
-                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                val styleIcon = when (currentStyleDisplay) {
+                                    "Square" -> Icons.Default.GridOn
+                                    "Rounded" -> Icons.Default.RoundedCorner
+                                    "Dot" -> Icons.Default.Lens
+                                    "Mosaic" -> Icons.Default.BlurOn
+                                    "Thin" -> Icons.Default.BorderOuter
+                                    else -> Icons.Default.Category
+                                }
+                                Icon(
+                                    imageVector = styleIcon,
+                                    contentDescription = "Selected Style",
+                                    tint = primaryColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "Module Shape Style",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                     )
-                                    .border(
-                                        width = 1.dp,
-                                        color = if (isStyleSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                                        shape = RoundedCornerShape(10.dp)
+                                    Text(
+                                        text = currentStyleDisplay,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
-                                    .clickable {
-                                        HapticUtils.vibrate(context, 15)
+                                }
+                            }
+                            Icon(
+                                imageVector = if (dropdownExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                                contentDescription = "Toggle Style List",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = dropdownExpanded,
+                            onDismissRequest = { dropdownExpanded = false },
+                            modifier = Modifier
+                                .fillMaxWidth(0.88f)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    RoundedCornerShape(12.dp)
+                                )
+                        ) {
+                            styles.forEach { styleOpt ->
+                                val isSelected = currentStyleDisplay == styleOpt
+                                val styleDesc = when (styleOpt) {
+                                    "Square" -> "Classic solid blocks"
+                                    "Rounded" -> "Smooth, friendly corners"
+                                    "Dot" -> "Elegant circular matrices"
+                                    "Mosaic" -> "Interconnecting modules"
+                                    "Thin" -> "Minimalist fine lines"
+                                    else -> ""
+                                }
+                                val itemIcon = when (styleOpt) {
+                                    "Square" -> Icons.Default.GridOn
+                                    "Rounded" -> Icons.Default.RoundedCorner
+                                    "Dot" -> Icons.Default.Lens
+                                    "Mosaic" -> Icons.Default.BlurOn
+                                    "Thin" -> Icons.Default.BorderOuter
+                                    else -> Icons.Default.Category
+                                }
+
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    imageVector = itemIcon,
+                                                    contentDescription = null,
+                                                    tint = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Column {
+                                                    Text(
+                                                        text = styleOpt,
+                                                        fontSize = 14.sp,
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                        color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                    Text(
+                                                        text = styleDesc,
+                                                        fontSize = 11.sp,
+                                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                                    )
+                                                }
+                                            }
+                                            if (isSelected) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Selected",
+                                                    tint = primaryColor,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        HapticUtils.vibrate(context, 20)
                                         viewModel.selectedQrStyle.value = styleOpt
-                                    }
-                                    .padding(vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = styleOpt,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isStyleSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        dropdownExpanded = false
+                                    },
+                                    colors = MenuDefaults.itemColors(
+                                        textColor = MaterialTheme.colorScheme.onSurface,
+                                        leadingIconColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // OUTER EYE RING TINT SELECTOR
                     Text(
