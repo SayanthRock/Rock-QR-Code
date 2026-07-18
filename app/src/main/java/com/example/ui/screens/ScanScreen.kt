@@ -140,7 +140,7 @@ fun ScanScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
-                    text = "Activate Crystal Lens",
+                    text = "Camera Permission Required",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,

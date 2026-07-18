@@ -84,6 +84,7 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
     val selectedEyeColor = MutableStateFlow(colorOptions[0])
     val selectedInnerEyeColor = MutableStateFlow(colorOptions[0])
     val isDynamicQr = MutableStateFlow(false)
+    val isTransparentBg = MutableStateFlow(false)
 
     // Anonymous Unique Device ID
     val deviceId: String by lazy {
@@ -235,7 +236,8 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
                     secondaryColor = colorOption.secondaryColor,
                     style = styleOption,
                     eyeColor = eyeOption.primaryColor,
-                    innerEyeColor = innerEyeOption.primaryColor
+                    innerEyeColor = innerEyeOption.primaryColor,
+                    isTransparentBackground = isTransparentBg.value
                 )
 
                 _generatedQrBitmap.value = bitmap

@@ -19,7 +19,8 @@ object QRGenerator {
         secondaryColor: Int = android.graphics.Color.WHITE,
         style: String = "Classic", // "Classic", "Rounded", "Circles", "Thin", "Smooth"
         eyeColor: Int = primaryColor,
-        innerEyeColor: Int = eyeColor
+        innerEyeColor: Int = eyeColor,
+        isTransparentBackground: Boolean = false
     ): Bitmap {
         val hints = EnumMap<EncodeHintType, Any>(EncodeHintType::class.java)
         hints[EncodeHintType.CHARACTER_SET] = "UTF-8"
@@ -37,12 +38,14 @@ object QRGenerator {
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
 
-        // Draw solid background color
-        val bgPaint = Paint().apply {
-            color = secondaryColor
-            this.style = Paint.Style.FILL
+        // Draw solid background color if not transparent
+        if (!isTransparentBackground) {
+            val bgPaint = Paint().apply {
+                color = secondaryColor
+                this.style = Paint.Style.FILL
+            }
+            canvas.drawRect(0f, 0f, size.toFloat(), size.toFloat(), bgPaint)
         }
-        canvas.drawRect(0f, 0f, size.toFloat(), size.toFloat(), bgPaint)
 
         val cellSize = size.toFloat() / matrixWidth
 
@@ -72,7 +75,7 @@ object QRGenerator {
                     val bottom = (y + 1) * cellSize
 
                     when (style) {
-                        "Circles", "Dot" -> {
+                        "Circles", "Dot", "Dots" -> {
                             val centerX = left + cellSize / 2f
                             val centerY = top + cellSize / 2f
                             canvas.drawCircle(centerX, centerY, cellSize * 0.42f, paint)
@@ -128,9 +131,9 @@ object QRGenerator {
         }
 
         // Draw custom-styled high-fidelity Finder Patterns (Eyes)
-        drawPremiumFinderPattern(canvas, 0f, 0f, cellSize, eyeColor, innerEyeColor)
-        drawPremiumFinderPattern(canvas, (matrixWidth - 7) * cellSize, 0f, cellSize, eyeColor, innerEyeColor)
-        drawPremiumFinderPattern(canvas, 0f, (matrixHeight - 7) * cellSize, cellSize, eyeColor, innerEyeColor)
+        drawPremiumFinderPattern(canvas, 0f, 0f, cellSize, eyeColor, innerEyeColor, style)
+        drawPremiumFinderPattern(canvas, (matrixWidth - 7) * cellSize, 0f, cellSize, eyeColor, innerEyeColor, style)
+        drawPremiumFinderPattern(canvas, 0f, (matrixHeight - 7) * cellSize, cellSize, eyeColor, innerEyeColor, style)
 
         return bmp
     }
@@ -148,19 +151,20 @@ object QRGenerator {
         top: Float,
         cellSize: Float,
         eyeColor: Int,
-        innerEyeColor: Int
+        innerEyeColor: Int,
+        style: String
     ) {
         val outerPaint = Paint().apply {
             isAntiAlias = true
             color = eyeColor
-            style = Paint.Style.STROKE
-            strokeWidth = cellSize
+            this.style = Paint.Style.STROKE
+            strokeWidth = if (style == "Thin") cellSize * 0.6f else cellSize
         }
 
         val innerPaint = Paint().apply {
             isAntiAlias = true
             color = innerEyeColor
-            style = Paint.Style.FILL
+            this.style = Paint.Style.FILL
         }
 
         // Outer Ring: 7x7 modules. Border is half module width from edge.
@@ -171,8 +175,6 @@ object QRGenerator {
             left + 7 * cellSize - halfCell,
             top + 7 * cellSize - halfCell
         )
-        // Draw smooth rounded ring for Finder Pattern
-        canvas.drawRoundRect(outerRect, cellSize * 1.5f, cellSize * 1.5f, outerPaint)
 
         // Inner solid core: 3x3 modules centered
         val innerRect = RectF(
@@ -181,6 +183,27 @@ object QRGenerator {
             left + 5 * cellSize,
             top + 5 * cellSize
         )
-        canvas.drawRoundRect(innerRect, cellSize * 0.8f, cellSize * 0.8f, innerPaint)
+
+        when (style) {
+            "Classic", "Square" -> {
+                canvas.drawRect(outerRect, outerPaint)
+                canvas.drawRect(innerRect, innerPaint)
+            }
+            "Circles", "Dot", "Dots" -> {
+                val outerRadius = (7 * cellSize - cellSize) / 2f
+                val centerX = left + 3.5f * cellSize
+                val centerY = top + 3.5f * cellSize
+                canvas.drawCircle(centerX, centerY, outerRadius, outerPaint)
+                canvas.drawCircle(centerX, centerY, 1.5f * cellSize, innerPaint)
+            }
+            "Thin" -> {
+                canvas.drawRect(outerRect, outerPaint)
+                canvas.drawRoundRect(innerRect, cellSize * 0.3f, cellSize * 0.3f, innerPaint)
+            }
+            else -> { // Rounded, Smooth, Mosaic
+                canvas.drawRoundRect(outerRect, cellSize * 1.5f, cellSize * 1.5f, outerPaint)
+                canvas.drawRoundRect(innerRect, cellSize * 0.8f, cellSize * 0.8f, innerPaint)
+            }
+        }
     }
 }

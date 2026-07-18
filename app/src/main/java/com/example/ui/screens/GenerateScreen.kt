@@ -63,6 +63,31 @@ fun GenerateScreen(
     val contactPhone by viewModel.contactPhone.collectAsState()
     val contactEmail by viewModel.contactEmail.collectAsState()
 
+    val maxCapacity = 1200
+    val warningThreshold = 960
+    val currentPayloadLength = remember(inputType, inputText, wifiSsid, wifiPassword, wifiSecurity, contactName, contactPhone, contactEmail) {
+        when (inputType) {
+            "URL" -> {
+                val trimmed = inputText.trim()
+                val payload = if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+                    "https://$trimmed"
+                } else trimmed
+                payload.length
+            }
+            "WIFI" -> {
+                "WIFI:S:${wifiSsid.trim()};T:$wifiSecurity;P:$wifiPassword;;".length
+            }
+            "CONTACT" -> {
+                "MECARD:N:${contactName.trim()};TEL:${contactPhone.trim()};EMAIL:${contactEmail.trim()};;".length
+            }
+            else -> {
+                inputText.trim().length
+            }
+        }
+    }
+    val isOverCapacity = currentPayloadLength > maxCapacity
+    val isNearCapacity = currentPayloadLength in warningThreshold..maxCapacity
+
     // Color options
     val selectedQrColor by viewModel.selectedQrColor.collectAsState()
     val qrBitmap by viewModel.generatedQrBitmap.collectAsState()
@@ -72,6 +97,7 @@ fun GenerateScreen(
     val selectedEyeColor by viewModel.selectedEyeColor.collectAsState()
     val selectedInnerEyeColor by viewModel.selectedInnerEyeColor.collectAsState()
     val isDynamic by viewModel.isDynamicQr.collectAsState()
+    val isTransparentBg by viewModel.isTransparentBg.collectAsState()
 
     Column(
         modifier = modifier
@@ -84,7 +110,7 @@ fun GenerateScreen(
     ) {
         // HEADER TITLE
         Text(
-            text = "Quartz Forge Generator",
+            text = "QR Code Generator",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -93,7 +119,7 @@ fun GenerateScreen(
         )
 
         Text(
-            text = "Craft local QR codes with customizable crystal mineral dyes.",
+            text = "Create, customize, and design professional QR codes instantly.",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp)
@@ -124,7 +150,7 @@ fun GenerateScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Your Finished Core",
+                        text = "Your Generated QR Code",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = primaryColor,
@@ -162,7 +188,7 @@ fun GenerateScreen(
                                 ShareUtils.saveBitmapToGallery(
                                     context = context,
                                     bitmap = qrBitmap!!,
-                                    displayName = "RockQR_",
+                                    displayName = "QuartzQR_",
                                     onShowToast = { msg, type -> viewModel.showToast(msg, type) }
                                 )
                             },
@@ -182,7 +208,7 @@ fun GenerateScreen(
                                 ShareUtils.shareBitmap(
                                     context = context,
                                     bitmap = qrBitmap!!,
-                                    fileName = "rock_qr_code.png",
+                                    fileName = "quartz_qr_code.png",
                                     onShowToast = { msg, type -> viewModel.showToast(msg, type) }
                                 )
                             },
@@ -209,8 +235,8 @@ fun GenerateScreen(
 
                             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 this.type = "text/plain"
-                                putExtra(android.content.Intent.EXTRA_SUBJECT, "Import Rock QR Code: $title")
-                                putExtra(android.content.Intent.EXTRA_TEXT, "Look at my Rock-forged QR code: $webLink")
+                                putExtra(android.content.Intent.EXTRA_SUBJECT, "Import Quartz QR Code: $title")
+                                putExtra(android.content.Intent.EXTRA_TEXT, "Check out my Quartz QR code: $webLink")
                             }
                             context.startActivity(android.content.Intent.createChooser(intent, "Share Companion Web Link"))
                         },
@@ -250,7 +276,7 @@ fun GenerateScreen(
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = "New Code")
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Draft New Core", fontSize = 13.sp)
+                        Text("Create New QR Code", fontSize = 13.sp)
                     }
                 }
             } else {
@@ -260,7 +286,7 @@ fun GenerateScreen(
                 ) {
                     // CATEGORY CHIPS TAB LIST
                     Text(
-                        text = "Select Data Compound",
+                        text = "Select Content Type",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -549,6 +575,83 @@ fun GenerateScreen(
                                     )
                                 }
                             }
+
+                            // Dynamic Input Validation Layer
+                            if (currentPayloadLength > 0) {
+                                val stateColor = when {
+                                    isOverCapacity -> MaterialTheme.colorScheme.error
+                                    isNearCapacity -> Color(0xFFE5A93C) // Clean amber warning color
+                                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                                }
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                                )
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        if (isOverCapacity) {
+                                            Icon(
+                                                imageVector = Icons.Default.Error,
+                                                contentDescription = "Error Limit Exceeded",
+                                                tint = stateColor,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Exceeds QR standard capacity limit.",
+                                                fontSize = 11.sp,
+                                                color = stateColor,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        } else if (isNearCapacity) {
+                                            Icon(
+                                                imageVector = Icons.Default.Warning,
+                                                contentDescription = "High Density Warning",
+                                                tint = stateColor,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "High density. Code may be harder to scan.",
+                                                fontSize = 11.sp,
+                                                color = stateColor,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Optimal Capacity",
+                                                tint = primaryColor.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Payload density level: Optimal",
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = "$currentPayloadLength / $maxCapacity",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = stateColor
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -771,6 +874,57 @@ fun GenerateScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // TRANSPARENT BACKGROUND TOGGLE
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f), RoundedCornerShape(16.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                            .testTag("transparent_bg_toggle_row"),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Opacity,
+                                    contentDescription = "Transparent Background",
+                                    tint = primaryColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Transparent Background",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Text(
+                                text = "Removes the solid background color and sets it to transparent.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                modifier = Modifier.padding(top = 4.dp)
+                                    .testTag("transparent_bg_toggle_desc")
+                            )
+                        }
+                        Switch(
+                            checked = isTransparentBg,
+                            onCheckedChange = {
+                                HapticUtils.vibrate(context, 20)
+                                viewModel.isTransparentBg.value = it
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = primaryColor,
+                                checkedTrackColor = primaryColor.copy(alpha = 0.3f)
+                            ),
+                            modifier = Modifier.testTag("transparent_bg_switch")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     // OUTER EYE RING TINT SELECTOR
                     Text(
                         text = "Outer Eye Ring Tint",
@@ -889,21 +1043,28 @@ fun GenerateScreen(
                     Button(
                         onClick = {
                             HapticUtils.vibrate(context, 50)
-                            viewModel.generateQR()
+                            if (isOverCapacity) {
+                                viewModel.showToast("Cannot generate QR: content length exceeds capacity limit.", CustomToastType.ERROR)
+                            } else {
+                                viewModel.generateQR()
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
                             .testTag("generate_code_button"),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = primaryColor
+                            containerColor = if (isOverCapacity) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) else primaryColor
                         ),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Icon(Icons.Default.Tune, contentDescription = "Forge Key")
+                        Icon(
+                            imageVector = if (isOverCapacity) Icons.Default.ErrorOutline else Icons.Default.Tune,
+                            contentDescription = if (isOverCapacity) "Limit Exceeded" else "Forge Key"
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Forge QR Core",
+                            text = if (isOverCapacity) "Limit Exceeded (Reduce Text)" else "Forge QR Core",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold
                         )

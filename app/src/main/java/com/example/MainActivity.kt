@@ -68,9 +68,7 @@ class MainActivity : ComponentActivity() {
                 colorPresetName = colorPreset
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .rockFractureBackground(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     LiquidGlassBackground(
                         modifier = Modifier.fillMaxSize(),

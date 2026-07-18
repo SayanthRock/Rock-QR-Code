@@ -1,6 +1,6 @@
 {
-  "name": "Rock QR Code",
-  "description": "A luxury, Play Store ready QR Code Generator & Scanner with direct CameraX integration, custom-styled liquid glass designs, local history saving with Room DB, and flexible QR sharing options.",
+  "name": "Quartz QR",
+  "description": "An ultra-clean, elegant QR Code Scanner and Generator for 2026. Features fully offline CameraX decoding, modern minimalist designs, high-tech animated loaders, and customizable standard styles.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

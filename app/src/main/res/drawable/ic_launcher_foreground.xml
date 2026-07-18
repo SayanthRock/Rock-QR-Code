@@ -6,115 +6,161 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Crystalline Rock Prism Frame -->
+    <!-- Top-Left Bracket -->
     <path
-        android:pathData="M54,18 L87,37 L87,71 L54,90 L21,71 L21,37 Z"
-        android:strokeWidth="3.5"
-        android:strokeLineJoin="miter"
-        android:fillColor="#15000000"
-        android:strokeMiterLimit="4">
+        android:pathData="M 24,36 L 24,26 C 24,24.9 24.9,24 26,24 L 36,24"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000">
         <aapt:attr name="android:strokeColor">
             <gradient
-                android:startX="21"
-                android:startY="18"
-                android:endX="87"
-                android:endY="90"
+                android:startX="24"
+                android:startY="24"
+                android:endX="36"
+                android:endY="36"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#FFA000" /> <!-- Sunfire Orange -->
-                <item android:offset="0.5" android:color="#00BDD6" /> <!-- Neon Teal -->
-                <item android:offset="1.0" android:color="#00E5FF" />
+                <item android:offset="0.0" android:color="#00BD9D" />
+                <item android:offset="1.0" android:color="#00FFFF" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Inner decorative mineral shard lines to give visual depth -->
+    <!-- Top-Right Bracket -->
     <path
-        android:pathData="M54,18 L54,34 M21,71 L40,60 M87,71 L68,60"
-        android:strokeColor="#AAFFFFFF"
-        android:strokeWidth="1.2"
-        android:strokeAlpha="0.4"
-        android:strokeLineCap="round" />
+        android:pathData="M 72,24 L 82,24 C 83.1,24 84,24.9 84,26 L 84,36"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="72"
+                android:startY="24"
+                android:endX="84"
+                android:endY="36"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00BD9D" />
+                <item android:offset="1.0" android:color="#00FFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- TOP-LEFT Finder Pattern -->
-    <!-- Outer Ring -->
+    <!-- Bottom-Left Bracket -->
     <path
-        android:pathData="M31,31 h12 v12 h-12 z"
-        android:fillColor="#00BDD6" />
-    <!-- Inner cutout spacer -->
-    <path
-        android:pathData="M33,33 h8 v8 h-8 z"
-        android:fillColor="#0F1113" />
-    <!-- Center solid block -->
-    <path
-        android:pathData="M35,35 h4 v4 h-4 z"
-        android:fillColor="#FFFFFF" />
+        android:pathData="M 24,72 L 24,82 C 24,83.1 24.9,84 26,84 L 36,84"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="24"
+                android:startY="72"
+                android:endX="36"
+                android:endY="84"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00BD9D" />
+                <item android:offset="1.0" android:color="#00FFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- TOP-RIGHT Finder Pattern -->
-    <!-- Outer Ring -->
+    <!-- Bottom-Right Bracket -->
     <path
-        android:pathData="M65,31 h12 v12 h-12 z"
-        android:fillColor="#00BDD6" />
-    <!-- Inner cutout spacer -->
-    <path
-        android:pathData="M67,33 h8 v8 h-8 z"
-        android:fillColor="#0F1113" />
-    <!-- Center solid block -->
-    <path
-        android:pathData="M69,35 h4 v4 h-4 z"
-        android:fillColor="#FFFFFF" />
+        android:pathData="M 72,84 L 82,84 C 83.1,84 84,83.1 84,82 L 84,72"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="72"
+                android:startY="72"
+                android:endX="84"
+                android:endY="84"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00BD9D" />
+                <item android:offset="1.0" android:color="#00FFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- BOTTOM-LEFT Finder Pattern -->
-    <!-- Outer Ring -->
+    <!-- Top-Left Finder Eye (Outer Ring and Inner Core) -->
     <path
-        android:pathData="M31,65 h12 v12 h-12 z"
-        android:fillColor="#FFA000" />
-    <!-- Inner cutout spacer -->
-    <path
-        android:pathData="M33,67 h8 v8 h-8 z"
-        android:fillColor="#0F1113" />
-    <!-- Center solid block -->
-    <path
-        android:pathData="M35,69 h4 v4 h-4 z"
-        android:fillColor="#FFFFFF" />
-
-    <!-- Central Micro QR Rock Matrix Nodes -->
-    <!-- Shard Dot 1 -->
-    <path
-        android:pathData="M52,36 h4 v4 h-4 z"
-        android:fillColor="#00BDD6" />
-    <!-- Shard Dot 2 -->
-    <path
-        android:pathData="M52,44 h4 v4 h-4 z"
-        android:fillColor="#FFA000" />
-    <!-- Shard Dot 3 -->
-    <path
-        android:pathData="M65,52 h4 v4 h-4 z"
-        android:fillColor="#00BDD6" />
-    <!-- Shard Dot 4 -->
-    <path
-        android:pathData="M65,60 h4 v4 h-4 z"
-        android:fillColor="#FFFFFF" />
-    <!-- Shard Dot 5 -->
-    <path
-        android:pathData="M52,68 h4 v4 h-4 z"
-        android:fillColor="#FFA000" />
-    <!-- Shard Dot 6 -->
-    <path
-        android:pathData="M60,68 h4 v4 h-4 z"
-        android:fillColor="#00BDD6" />
-
-    <!-- Center alignment square (bottom-right region) -->
-    <path
-        android:pathData="M68,68 h6 v6 h-6 z"
+        android:pathData="M 32.5,30 H 41.5 C 42.9,30 44,31.1 44,32.5 V 41.5 C 44,42.9 42.9,44 41.5,44 H 32.5 C 31.1,44 30,42.9 30,41.5 V 32.5 C 30,31.1 31.1,30 32.5,30 Z M 33.5,33.5 V 40.5 H 40.5 V 33.5 Z"
         android:fillColor="#FFFFFF" />
     <path
-        android:pathData="M70,70 h2 v2 h-2 z"
-        android:fillColor="#00BDD6" />
+        android:pathData="M 35,35 H 39 V 39 H 35 Z"
+        android:fillColor="#00BD9D" />
 
-    <!-- Shard connection grid -->
+    <!-- Top-Right Finder Eye (Outer Ring and Inner Core) -->
     <path
-        android:pathData="M54,48 L54,58"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:strokeAlpha="0.3" />
+        android:pathData="M 64.5,30 H 73.5 C 74.9,30 76,31.1 76,32.5 V 41.5 C 76,42.9 74.9,44 73.5,44 H 64.5 C 63.1,44 62,42.9 62,41.5 V 32.5 C 62,31.1 63.1,30 64.5,30 Z M 65.5,33.5 V 40.5 H 72.5 V 33.5 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 67,35 H 71 V 39 H 67 Z"
+        android:fillColor="#00BD9D" />
+
+    <!-- Bottom-Left Finder Eye (Outer Ring and Inner Core) -->
+    <path
+        android:pathData="M 32.5,62 H 41.5 C 42.9,62 44,63.1 44,64.5 V 73.5 C 44,74.9 42.9,76 41.5,76 H 32.5 C 31.1,76 30,74.9 30,73.5 V 64.5 C 30,63.1 31.1,62 32.5,62 Z M 33.5,65.5 V 72.5 H 40.5 V 65.5 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 35,67 H 39 V 71 H 35 Z"
+        android:fillColor="#00BD9D" />
+
+    <!-- QR Data Blocks & Accents -->
+    <path
+        android:pathData="M 50,30 H 54 V 34 H 50 Z"
+        android:fillColor="#00FFFF" />
+    <path
+        android:pathData="M 50,38 H 54 V 42 H 50 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 50,66 H 54 V 70 H 50 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 50,74 H 54 V 78 H 50 Z"
+        android:fillColor="#00FFFF" />
+    
+    <path
+        android:pathData="M 58,46 H 62 V 50 H 58 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 58,54 H 62 V 58 H 58 Z"
+        android:fillColor="#00FFFF" />
+    <path
+        android:pathData="M 58,62 H 62 V 66 H 58 Z"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Alignment pattern in bottom-right -->
+    <path
+        android:pathData="M 64,64 H 74 V 74 H 64 Z M 66,66 V 72 H 72 V 66 Z"
+        android:fillColor="#00FFFF" />
+    <path
+        android:pathData="M 68,68 H 70 V 70 H 68 Z"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Sleek Glowing Scan Laser Line -->
+    <path
+        android:pathData="M 20,52 L 88,52"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="20"
+                android:startY="52"
+                android:endX="88"
+                android:endY="52"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0000FFFF" />
+                <item android:offset="0.3" android:color="#FF00FFFF" />
+                <item android:offset="0.5" android:color="#FF00FFCC" />
+                <item android:offset="0.7" android:color="#FF00FFFF" />
+                <item android:offset="1.0" android:color="#0000FFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>

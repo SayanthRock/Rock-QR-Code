@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.QrRecord
 import com.example.ui.theme.LiquidGlassTheme
+import com.example.ui.components.PremiumLoadingAnimation
 import com.example.utils.HapticUtils
 import com.example.viewmodel.CustomToastType
 import com.example.viewmodel.QRViewModel
@@ -599,7 +600,7 @@ fun AnalyticsDashboardSheet(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = primaryColor)
+                    PremiumLoadingAnimation(color = primaryColor)
                 }
             } else {
                 Column(
