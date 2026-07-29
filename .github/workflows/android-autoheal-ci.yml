@@ -27,7 +27,7 @@ jobs:
           cache: gradle
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       # 🧠 AUTO-HEAL STEP 1: Fix permissions
       - name: Fix Gradle permissions
@@ -48,7 +48,7 @@ jobs:
           rm -rf ~/.gradle/wrapper
           if [ -x "$(command -v gradle)" ]; then
             echo "🔧 Regenerating proper gradle-wrapper using system gradle..."
-            gradle wrapper --gradle-version 8.4
+            gradle wrapper --gradle-version 9.3.1
           else
             echo "❌ No local gradle runtime found on host to regenerate."
           fi
