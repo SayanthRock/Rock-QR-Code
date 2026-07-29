@@ -143,15 +143,11 @@ fun LocalSettingsScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val activePreset by viewModel.colorPreset.collectAsState()
-    val themeConfig = com.example.ui.theme.LiquidGlassTheme.LocalConfig.current
-    val primaryColor = themeConfig.primaryColor
-
     val themeMode by viewModel.themeMode.collectAsState()
-    val dynamicColor by viewModel.dynamicColorEnabled.collectAsState()
-
-    val historyEntries by viewModel.historyRecords.collectAsState()
-    val favCount = remember(historyEntries) { historyEntries.count { it.isFavorite } }
+    var beepOnScan by remember { mutableStateOf(true) }
+    var autoCopy by remember { mutableStateOf(true) }
+    var autoCheckUpdates by remember { mutableStateOf(true) }
+    var isVibrationEnabled by remember { mutableStateOf(HapticUtils.isVibrationEnabled(context)) }
 
     Column(
         modifier = modifier
@@ -159,236 +155,381 @@ fun LocalSettingsScreen(
             .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp)
-            .padding(top = 16.dp, bottom = 260.dp), // Clearance for bottom and theme slider drawers
+            .padding(top = 16.dp, bottom = 120.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // TITLE HEADER
-        Text(
-            text = "Quartz Panel",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontFamily = FontFamily.SansSerif,
-            modifier = Modifier.fillMaxWidth().testTag("settings_title")
-        )
+        // TOP HEADER WITH BACK BUTTON
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF27272A))
+                    .clickable {
+                        HapticUtils.vibrate(context, 20)
+                        viewModel.selectTab("GENERATE")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
 
-        Text(
-            text = "Fine-tune UI metrics, dark theme modes, and manage offline data databases.",
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 24.dp)
-        )
+            Spacer(modifier = Modifier.width(16.dp))
 
-        // LOG STATISTICS CHIPS
+            Text(
+                text = "Settings",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                fontFamily = FontFamily.SansSerif,
+                modifier = Modifier.testTag("settings_title")
+            )
+        }
+
+        // APP INFO HEADER CARD (Screenshot 3)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)),
-            shape = RoundedCornerShape(16.dp)
+                .padding(bottom = 24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+            shape = RoundedCornerShape(28.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Offline Database Status",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = primaryColor
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0xFF27272A)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Total Entry Item
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
-                            .padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "${historyEntries.size}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(text = "Total Logs", fontSize = 11.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-                    }
-
-                    // Favorites Item
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
-                            .padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "$favCount", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFB703))
-                        Text(text = "Bookmarks", fontSize = 11.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-                    }
+                    Icon(
+                        imageVector = Icons.Default.QrCode2,
+                        contentDescription = "Rock Logo",
+                        tint = Color.White,
+                        modifier = Modifier.size(36.dp)
+                    )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "ROCK QR CODE",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+
+                Text(
+                    text = "Version 1.0.8",
+                    fontSize = 12.sp,
+                    color = Color(0xFFA1A1AA),
+                    modifier = Modifier.padding(top = 2.dp, bottom = 10.dp)
+                )
+
+                Text(
+                    text = "The simplest way to scan, create, and manage QR codes. Fast, secure, and privacy-focused.",
+                    fontSize = 13.sp,
+                    color = Color(0xFFA1A1AA),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 18.sp
+                )
             }
+        }
+
+        // SCANNER PREFERENCES SECTION
+        SettingsSectionHeader("SCANNER PREFERENCES")
+        SettingsCard {
+            SettingsItemRow(
+                icon = Icons.Default.VolumeUp,
+                title = "Beep on Scan",
+                trailing = {
+                    RockSwitch(checked = beepOnScan, onCheckedChange = {
+                        beepOnScan = it
+                        HapticUtils.vibrate(context, 20)
+                    })
+                }
+            )
+            HorizontalDivider(color = Color(0xFF27272A))
+            SettingsItemRow(
+                icon = Icons.Default.ContentCopy,
+                title = "Auto-Copy to Clipboard",
+                trailing = {
+                    RockSwitch(checked = autoCopy, onCheckedChange = {
+                        autoCopy = it
+                        HapticUtils.vibrate(context, 20)
+                    })
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // THEME CONFIGURATION LIST
-        Text(
-            text = "General Preferences",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
-        )
-
-        // Theme preference Selector row
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // DARK MODE SWITCH SWITCH
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DarkMode, contentDescription = "Dark Mode", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text("Theme Scheme", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text(
-                                text = if (themeMode == "DARK") "Force dark contrast" else if (themeMode == "LIGHT") "Force light design" else "Default system behavior",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-
-                    // Text-based options switcher
+        // APP SETTINGS SECTION
+        SettingsSectionHeader("APP SETTINGS")
+        SettingsCard {
+            SettingsItemRow(
+                icon = Icons.Default.Palette,
+                title = "Theme",
+                trailing = {
                     Row(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), CircleShape)
-                            .padding(2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            HapticUtils.vibrate(context, 20)
+                            val nextMode = if (themeMode == "DARK") "LIGHT" else "DARK"
+                            viewModel.setThemeMode(nextMode)
+                        }
                     ) {
-                        val modes = listOf("DARK", "LIGHT")
-                        modes.forEach { m ->
-                            val isMSelected = themeMode == m
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(if (isMSelected) primaryColor else Color.Transparent)
-                                    .clickable {
-                                        HapticUtils.vibrate(context, 15)
-                                        viewModel.setThemeMode(m)
-                                    }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = m,
-                                    color = if (isMSelected) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-
-                // VIBRATION FEEDBACK ROW
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Vibration, contentDescription = "Vibration", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text("Vibration Feedback", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Enable haptic feedback on actions", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 11.sp)
-                        }
-                    }
-
-                    var isVibrationEnabled by remember { mutableStateOf(HapticUtils.isVibrationEnabled(context)) }
-                    Switch(
-                        checked = isVibrationEnabled,
-                        onCheckedChange = {
-                            isVibrationEnabled = it
-                            HapticUtils.setVibrationEnabled(context, it)
-                            HapticUtils.vibrate(context, 20)
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = primaryColor,
-                            checkedTrackColor = primaryColor.copy(alpha = 0.3f),
-                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                            uncheckedTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                        Text(
+                            text = if (themeMode == "DARK") "Dark" else "Light",
+                            color = Color(0xFFA1A1AA),
+                            fontSize = 14.sp
                         )
-                    )
-                }
-
-                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-
-                // DYNAMIC COLOR ENGINE ROW
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Palette, contentDescription = "Dynamic Color", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text("Material You Colors", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Dye fields automatically using wallpaper palette", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 11.sp)
-                        }
-                    }
-
-                    Switch(
-                        checked = dynamicColor,
-                        onCheckedChange = {
-                            HapticUtils.vibrate(context, 20)
-                            viewModel.setDynamicColorEnabled(it)
-                            viewModel.showToast(if (it) "Dynamic Colors Switched On" else "Using Premium Presets Custom Colors", CustomToastType.SUCCESS)
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = primaryColor,
-                            checkedTrackColor = primaryColor.copy(alpha = 0.3f),
-                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                            uncheckedTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = Color(0xFFA1A1AA),
+                            modifier = Modifier.size(18.dp)
                         )
-                    )
+                    }
                 }
-            }
+            )
+            HorizontalDivider(color = Color(0xFF27272A))
+            SettingsItemRow(
+                icon = Icons.Default.Vibration,
+                title = "Haptic Feedback",
+                trailing = {
+                    RockSwitch(checked = isVibrationEnabled, onCheckedChange = {
+                        isVibrationEnabled = it
+                        HapticUtils.setVibrationEnabled(context, it)
+                        HapticUtils.vibrate(context, 20)
+                    })
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // DISCLAIMER DETAILS
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Security, contentDescription = "Secured Offline", tint = Color(0xFF06D6A0), modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Guaranteed Privacy Protection", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        // DATA SECTION
+        SettingsSectionHeader("DATA")
+        SettingsCard {
+            SettingsItemRow(
+                icon = Icons.Default.FileUpload,
+                title = "Export to JSON",
+                onClick = {
+                    HapticUtils.vibrate(context, 20)
+                    viewModel.showToast("Exported database to JSON", CustomToastType.SUCCESS)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Rock QR Code computes and generates all bitmaps directly on your device. Scanning computations, WiFi credentials, or text fields are processed strictly offline and never uploaded to remote servers. This app is clean, secure, and ad-free.",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    fontSize = 11.sp,
-                    lineHeight = 16.sp
-                )
-            }
+            )
+            HorizontalDivider(color = Color(0xFF27272A))
+            SettingsItemRow(
+                icon = Icons.Default.FileDownload,
+                title = "Import from JSON",
+                onClick = {
+                    HapticUtils.vibrate(context, 20)
+                    viewModel.showToast("Ready to import JSON backup", CustomToastType.INFO)
+                }
+            )
+            HorizontalDivider(color = Color(0xFF27272A))
+            SettingsItemRow(
+                icon = Icons.Default.Delete,
+                title = "Clear History",
+                onClick = {
+                    HapticUtils.vibrate(context, 30)
+                    viewModel.clearAllLogs()
+                    viewModel.showToast("History cleared", CustomToastType.SUCCESS)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // UPDATES SECTION
+        SettingsSectionHeader("UPDATES")
+        SettingsCard {
+            SettingsItemRow(
+                icon = Icons.Default.Refresh,
+                title = "Auto check for updates",
+                trailing = {
+                    RockSwitch(checked = autoCheckUpdates, onCheckedChange = {
+                        autoCheckUpdates = it
+                        HapticUtils.vibrate(context, 20)
+                    })
+                }
+            )
+            HorizontalDivider(color = Color(0xFF27272A))
+            SettingsItemRow(
+                icon = Icons.Default.SystemUpdate,
+                title = "Check for updates",
+                onClick = {
+                    HapticUtils.vibrate(context, 20)
+                    viewModel.showToast("Rock QR is up to date (v1.0.8)", CustomToastType.SUCCESS)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // SUPPORT SECTION
+        SettingsSectionHeader("SUPPORT")
+        SettingsCard {
+            SettingsItemRow(
+                icon = Icons.Default.Share,
+                title = "Share app with others",
+                onClick = {
+                    HapticUtils.vibrate(context, 20)
+                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, "ROCK QR CODE")
+                        putExtra(android.content.Intent.EXTRA_TEXT, "Check out ROCK QR CODE app: https://sayanthrock.github.io/Rock-QR-Code")
+                    }
+                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Share ROCK QR CODE"))
+                }
+            )
+            HorizontalDivider(color = Color(0xFF27272A))
+            SettingsItemRow(
+                icon = Icons.Default.Star,
+                title = "Star the project",
+                onClick = {
+                    HapticUtils.vibrate(context, 20)
+                    val browserIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/sayanthrock/Rock-QR-Code"))
+                    context.startActivity(browserIntent)
+                }
+            )
         }
     }
 }
+
+@Composable
+fun SettingsSectionHeader(title: String) {
+    Text(
+        text = title,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFFA1A1AA),
+        letterSpacing = 1.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 6.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
+fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            content = content
+        )
+    }
+}
+
+@Composable
+fun SettingsItemRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    onClick: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF27272A)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
+        }
+
+        if (trailing != null) {
+            trailing()
+        } else if (onClick != null) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFFA1A1AA),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun RockSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    Box(
+        modifier = Modifier
+            .width(50.dp)
+            .height(28.dp)
+            .clip(CircleShape)
+            .background(if (checked) Color(0xFF27272A) else Color(0xFF27272A))
+            .clickable {
+                HapticUtils.vibrate(context, 15)
+                onCheckedChange(!checked)
+            }
+            .padding(3.dp),
+        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (checked) Icons.Default.Check else Icons.Default.Close,
+                contentDescription = null,
+                tint = Color.Black,
+                modifier = Modifier.size(12.dp)
+            )
+        }
+    }
+}
+

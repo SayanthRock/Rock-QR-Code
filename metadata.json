@@ -1,6 +1,6 @@
 {
-  "name": "Quartz QR",
-  "description": "An ultra-clean, elegant QR Code Scanner and Generator for 2026. Features fully offline CameraX decoding, modern minimalist designs, high-tech animated loaders, and customizable standard styles.",
+  "name": "ROCK QR CODE",
+  "description": "An ultra-clean, elegant QR Code Scanner and Generator matching the sleek dark UI design. Features offline CameraX decoding, modern minimalist controls, and customizable styles.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

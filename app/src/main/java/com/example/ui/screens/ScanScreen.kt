@@ -296,7 +296,7 @@ fun ScanScreen(
                     }
                 }
 
-                // TOP SCREEN INFO BAR
+                // TOP SCREEN INFO BAR & HEADER
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -305,20 +305,66 @@ fun ScanScreen(
                         .align(Alignment.TopCenter),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // TOP HEADER ROW WITH GEAR SETTINGS BUTTON (Screenshot 2)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "ROCK QR CODE",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                                fontFamily = FontFamily.SansSerif,
+                                modifier = Modifier.testTag("scan_title")
+                            )
+                            Text(
+                                text = "Create and scan QR codes",
+                                fontSize = 13.sp,
+                                color = Color(0xFFA1A1AA),
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF27272A))
+                                .clickable {
+                                    HapticUtils.vibrate(context, 20)
+                                    viewModel.selectTab("SETTINGS")
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+
                     Text(
                         text = "Position QR inside the frame",
                         color = Color.White,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.45f), shape = RoundedCornerShape(12.dp))
+                            .background(Color.Black.copy(alpha = 0.55f), shape = RoundedCornerShape(12.dp))
                             .padding(horizontal = 16.dp, vertical = 6.dp)
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
 
                     // FLASH LIGHT SWITCH CAPSULE
+
                     Box(
                         modifier = Modifier
                             .size(50.dp)

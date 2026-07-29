@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
 private val DarkColorScheme =
   darkColorScheme(
@@ -206,7 +207,19 @@ fun MyApplicationTheme(
 
   val animatedColorScheme = animateColorScheme(colorScheme)
 
-  MaterialTheme(colorScheme = animatedColorScheme, typography = Typography, content = content)
+  val themeConfig = LiquidGlassTheme.Config(
+    primaryColor = animatedColorScheme.primary,
+    secondaryColor = animatedColorScheme.secondary,
+    glassBlur = 18.dp,
+    glassOpacity = if (darkTheme) 0.28f else 0.45f,
+    borderAlphaStart = 0.55f,
+    borderAlphaEnd = 0.18f,
+    isDark = darkTheme
+  )
+
+  LiquidGlassTheme.Provider(config = themeConfig) {
+    MaterialTheme(colorScheme = animatedColorScheme, typography = Typography, content = content)
+  }
 }
 
 @Composable

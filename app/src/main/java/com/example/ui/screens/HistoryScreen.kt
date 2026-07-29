@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -36,6 +38,8 @@ import com.example.data.QrRecord
 import com.example.ui.theme.LiquidGlassTheme
 import com.example.ui.components.PremiumLoadingAnimation
 import com.example.utils.HapticUtils
+import com.example.utils.QRGenerator
+
 import com.example.viewmodel.CustomToastType
 import com.example.viewmodel.QRViewModel
 import java.text.SimpleDateFormat
@@ -62,8 +66,10 @@ fun HistoryScreen(
     val isLoadingAnalytics by viewModel.isLoadingAnalytics.collectAsState()
 
     var showClearConfirm by remember { mutableStateOf(false) }
+    var selectedDetailRecord by remember { mutableStateOf<QrRecord?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
+
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -72,118 +78,109 @@ fun HistoryScreen(
                 .padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // TOP ARCHIVE TITLE AND CLEAN BUTTON
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        // TOP HEADER ROW WITH GEAR SETTINGS BUTTON
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
                 Text(
-                    text = "Core Archive",
+                    text = "History",
                     fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
                     fontFamily = FontFamily.SansSerif,
                     modifier = Modifier.testTag("history_title")
                 )
-
-                if (records.isNotEmpty() || filterType != "ALL" || searchQuery.isNotEmpty()) {
-                    IconButton(
-                        onClick = {
-                            HapticUtils.vibrate(context, 40)
-                            showClearConfirm = true
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DeleteSweep,
-                            contentDescription = "Clear All Archives",
-                            tint = Color.Red.copy(alpha = 0.8f)
-                        )
-                    }
-                }
-            }
-
-            Text(
-                text = "Track, review, or bookmark your scanner history cache.",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp)
-            )
-
-            // SEARCH INPUT FILTER BAR
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.searchQuery.value = it },
-                placeholder = { Text("Search logs by title, content, or type...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)) },
-                trailingIcon = if (searchQuery.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { viewModel.searchQuery.value = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear Search", tint = MaterialTheme.colorScheme.onBackground)
-                        }
-                    }
-                } else null,
-                modifier = Modifier.fillMaxWidth().testTag("search_bar"),
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-                    focusedIndicatorColor = primaryColor,
-                    unfocusedIndicatorColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
-                ),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // FILTER PILLS BAR
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                val filters = listOf(
-                    Pair("ALL", "All"),
-                    Pair("SCANNED", "Scanned"),
-                    Pair("GENERATED", "Forged"),
-                    Pair("FAVORITE", "Favs")
+                Text(
+                    text = "Scanned & Generated history",
+                    fontSize = 13.sp,
+                    color = Color(0xFFA1A1AA),
+                    modifier = Modifier.padding(top = 2.dp)
                 )
-
-                filters.forEach { (key, label) ->
-                    val isSelected = filterType == key
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (isSelected) primaryColor.copy(alpha = 0.20f)
-                                else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)
-                            )
-                            .border(
-                                1.dp,
-                                if (isSelected) primaryColor.copy(alpha = 0.50f)
-                                else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f),
-                                RoundedCornerShape(10.dp)
-                            )
-                            .clickable {
-                                HapticUtils.vibrate(context, 15)
-                                viewModel.historyFilterType.value = key
-                            }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = label,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                        )
-                    }
-                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF27272A))
+                    .clickable {
+                        HapticUtils.vibrate(context, 20)
+                        viewModel.selectTab("SETTINGS")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+
+        // SEGMENTED TAB SELECTOR (Scanned vs Generated)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color(0xFF18181B))
+                .padding(4.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val filterScanned = filterType == "SCANNED"
+                val filterGenerated = filterType == "GENERATED" || filterType == "ALL"
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (filterScanned) Color.White else Color.Transparent)
+                        .clickable {
+                            HapticUtils.vibrate(context, 15)
+                            viewModel.historyFilterType.value = "SCANNED"
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Scanned",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (filterScanned) Color.Black else Color(0xFFA1A1AA)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (filterGenerated) Color.White else Color.Transparent)
+                        .clickable {
+                            HapticUtils.vibrate(context, 15)
+                            viewModel.historyFilterType.value = "GENERATED"
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Generated",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (filterGenerated) Color.Black else Color(0xFFA1A1AA)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
 
             // RECORDS EMPTY STATE vs LIST VIEW
             if (records.isEmpty()) {
@@ -250,12 +247,35 @@ fun HistoryScreen(
                             onShowAnalytics = {
                                 HapticUtils.vibrate(context, 35)
                                 viewModel.fetchAnalytics(record)
+                            },
+                            onCardClick = {
+                                selectedDetailRecord = record
                             }
                         )
                     }
                 }
             }
         }
+
+        // QR RECORD DETAIL BOTTOM SHEET
+        if (selectedDetailRecord != null) {
+            QrDetailBottomSheet(
+                record = selectedDetailRecord!!,
+                onDismiss = { selectedDetailRecord = null },
+                onDelete = {
+                    viewModel.deleteRecord(selectedDetailRecord!!)
+                    selectedDetailRecord = null
+                },
+                onCopy = {
+                    HapticUtils.vibrate(context, 20)
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("Copied QR Content", selectedDetailRecord!!.content)
+                    clipboard.setPrimaryClip(clip)
+                    viewModel.showToast("Copied link to clipboard", CustomToastType.SUCCESS)
+                }
+            )
+        }
+
 
         // PURGE CONFIRMATION BOX
         if (showClearConfirm) {
@@ -311,212 +331,406 @@ fun HistoryCardItem(
     onFavoriteToggle: () -> Unit,
     onDelete: () -> Unit,
     onCopyText: (String) -> Unit,
-    onShowAnalytics: () -> Unit
+    onShowAnalytics: () -> Unit,
+    onCardClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val formatter = remember { SimpleDateFormat("MMM d, yyyy - hh:mm a", Locale.getDefault()) }
-    val dateString = remember(record.timestamp) { formatter.format(Date(record.timestamp)) }
-
-    val icon = when (record.type) {
-        "URL" -> Icons.Default.Launch
-        "WIFI" -> Icons.Default.Wifi
-        "CONTACT" -> Icons.Default.Person
-        "EMAIL" -> Icons.Default.Mail
-        "PHONE" -> Icons.Default.Phone
-        else -> Icons.Default.AlternateEmail
-    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(16.dp)
-            )
+            .clickable {
+                HapticUtils.vibrate(context, 20)
+                onCardClick()
+            }
             .testTag("history_record_item"),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
+            containerColor = Color(0xFF18181B)
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // INDICATOR TYPE LOGO WITH BACKDROP
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (record.isScanned) Color(0xFF06D6A0).copy(alpha = 0.10f)
-                        else primaryColor.copy(alpha = 0.10f)
-                    )
-                    .border(
-                        1.dp,
-                        if (record.isScanned) Color(0xFF06D6A0).copy(alpha = 0.3f)
-                        else primaryColor.copy(alpha = 0.3f),
-                        RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = record.type,
-                    tint = if (record.isScanned) Color(0xFF06D6A0) else primaryColor,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            // TITLE AND DETAILS
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = record.title,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 15.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    // SCAN vs FORGED ACCENTS
-                    Text(
-                        text = if (record.isScanned) "SCANNED" else "FORGED",
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.5.sp,
-                        color = if (record.isScanned) Color(0xFF06D6A0).copy(alpha = 0.8f) else primaryColor,
-                        modifier = Modifier
-                            .background(
-                                color = if (record.isScanned) Color(0xFF06D6A0).copy(alpha = 0.08f) else primaryColor.copy(alpha = 0.08f),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-
-                    if (record.isDynamic) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "DYNAMIC",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 0.5.sp,
-                            color = Color(0xFFFFB703),
-                            modifier = Modifier
-                                .background(
-                                    color = Color(0xFFFFB703).copy(alpha = 0.12f),
-                                    shape = RoundedCornerShape(4.dp)
-                                )
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(3.dp))
-
                 Text(
-                    text = record.content,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    fontSize = 12.sp,
+                    text = record.title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text = dateString,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    fontSize = 10.sp
+                    text = record.content,
+                    fontSize = 12.sp,
+                    color = Color(0xFFA1A1AA),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp, bottom = 10.dp)
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Category Badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF3B1825))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = record.type,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFF75C3)
+                        )
+                    }
+
+                    // Source Badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF152B42))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = if (record.isScanned) "SCAN" else "GENERATE",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF38BDF8)
+                        )
+                    }
+
+                    // Time Badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF143224))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "a moment ago",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4ADE80)
+                        )
+                    }
+                }
+            }
+
+            // QR CODE THUMBNAIL IN WHITE SQUARE FRAME
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color.White)
+                    .padding(6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val thumbBitmap = remember(record.content) {
+                    QRGenerator.generate(
+                        text = record.content,
+                        style = record.selectedStyle
+                    )
+                }
+
+                Image(
+                    bitmap = thumbBitmap.asImageBitmap(),
+                    contentDescription = "QR Thumbnail",
+                    modifier = Modifier.fillMaxSize()
                 )
             }
 
-            // ACTIONS BUTTONS COLUMN OR ROW
+        }
+    }
+}
+
+@Composable
+fun QrDetailBottomSheet(
+    record: QrRecord,
+    onDismiss: () -> Unit,
+    onDelete: () -> Unit,
+    onCopy: () -> Unit
+) {
+    val context = LocalContext.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.70f))
+            .clickable(onClick = onDismiss)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .background(Color(0xFF18181B))
+                .clickable(enabled = false) {}
+                .padding(20.dp)
+        ) {
+            // Drag handle pill
+            Box(
+                modifier = Modifier
+                    .width(36.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color(0xFF3F3F46))
+                    .align(Alignment.CenterHorizontally)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Badges row
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // ANALYTICS DASHBOARD ACTION FOR DYNAMIC CODES
-                if (record.isDynamic) {
-                    IconButton(onClick = onShowAnalytics) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF3B1825))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = record.type,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFF75C3)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF152B42))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = if (record.isScanned) "SCAN" else "GENERATE",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF38BDF8)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF143224))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = "a moment ago",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4ADE80)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Header Row (Title + Edit icon left, QR Thumbnail right)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f).padding(end = 12.dp)
+                ) {
+                    Text(
+                        text = record.title,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit Title",
+                        tint = Color(0xFFA1A1AA),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White)
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val thumbBitmap = remember(record.content) {
+                        QRGenerator.generate(
+                            text = record.content,
+                            style = record.selectedStyle
+                        )
+                    }
+
+                    Image(
+                        bitmap = thumbBitmap.asImageBitmap(),
+                        contentDescription = "QR Code",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Content Container Card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color(0xFF27272A))
+                    .padding(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.BarChart,
-                            contentDescription = "View Live Analytics",
-                            tint = Color(0xFFFFB703),
+                            imageVector = Icons.Default.Link,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = record.content,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Secure Connection • HTTPS",
+                                fontSize = 11.sp,
+                                color = Color(0xFFA1A1AA)
+                            )
+                        }
+                    }
+
+                    IconButton(onClick = onCopy) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy Link",
+                            tint = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
+            }
 
-                // COPY ACTIONS
-                IconButton(onClick = { onCopyText(record.content) }) {
-                    Icon(
-                        imageVector = Icons.Outlined.ContentCopy,
-                        contentDescription = "Copy Content",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+            Spacer(modifier = Modifier.height(20.dp))
 
-                // SHARE COMPANION LINK
-                IconButton(onClick = {
+            // Primary Button: Open in Browser
+            Button(
+                onClick = {
                     HapticUtils.vibrate(context, 20)
-                    val rawContent = record.content
-                    val title = record.title
-                    val type = record.type
-                    val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
-
-                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                        this.type = "text/plain"
-                        putExtra(android.content.Intent.EXTRA_SUBJECT, "Import Rock QR Code: $title")
-                        putExtra(android.content.Intent.EXTRA_TEXT, "Look at my Rock-forged QR code: $webLink")
+                    try {
+                        val uri = android.net.Uri.parse(record.content)
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        // Ignore invalid URIs
                     }
-                    context.startActivity(android.content.Intent.createChooser(intent, "Share Companion Web Link"))
-                }) {
-                    Icon(
-                        imageVector = Icons.Outlined.Share,
-                        contentDescription = "Share Web Link",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.size(17.dp)
-                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Open in Browser", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Default.OpenInNew,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Secondary Buttons Row (Delete & Share)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = {
+                        onDelete()
+                        onDismiss()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF27272A),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Delete", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
 
-                // BOOKMARK SWITCH
-                IconButton(onClick = onFavoriteToggle) {
-                    Icon(
-                        imageVector = if (record.isFavorite) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                        contentDescription = "Toggle bookmark",
-                        tint = if (record.isFavorite) Color(0xFFFFB703) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                // ERASE FROM LOG
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Delete Record",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                        modifier = Modifier.size(18.dp)
-                    )
+                Button(
+                    onClick = {
+                        HapticUtils.vibrate(context, 20)
+                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(android.content.Intent.EXTRA_TEXT, record.content)
+                        }
+                        context.startActivity(android.content.Intent.createChooser(intent, "Share QR Code"))
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF27272A),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Share", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun AnalyticsDashboardSheet(

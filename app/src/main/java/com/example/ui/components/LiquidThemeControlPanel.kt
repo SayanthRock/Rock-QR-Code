@@ -38,11 +38,11 @@ data class PresetColorDetail(
 )
 
 val AndroidPresetsInfo = listOf(
-    PresetColorDetail("MIDNIGHT", "Midnight Obsidian", "#9D4EED", "#5A189A", Color(0xFF9D4EED), Color(0xFF5A189A)),
-    PresetColorDetail("ARCTIC", "Arctic Glacier", "#8ECAE6", "#219EBC", Color(0xFF8ECAE6), Color(0xFF219EBC)),
-    PresetColorDetail("OCEAN", "Abyssal Ocean", "#00B4D8", "#03045E", Color(0xFF00B4D8), Color(0xFF03045E)),
-    PresetColorDetail("AURORA", "Aurora Glow", "#00FFCC", "#009688", Color(0xFF00FFCC), Color(0xFF009688)),
-    PresetColorDetail("EMERALD", "Emerald Forest", "#10B981", "#047857", Color(0xFF10B981), Color(0xFF047857))
+    PresetColorDetail("MIDNIGHT", "Prism Violet", "#A855F7", "#06B6D4", Color(0xFFA855F7), Color(0xFF06B6D4)),
+    PresetColorDetail("ARCTIC", "Arctic Frost", "#38BDF8", "#2DD4BF", Color(0xFF38BDF8), Color(0xFF2DD4BF)),
+    PresetColorDetail("OCEAN", "Abyssal Ocean", "#0284C7", "#38BDF8", Color(0xFF0284C7), Color(0xFF38BDF8)),
+    PresetColorDetail("AURORA", "Cyber Solar", "#F97316", "#FBBF24", Color(0xFFF97316), Color(0xFFFBBF24)),
+    PresetColorDetail("EMERALD", "Emerald Jade", "#10B981", "#34D399", Color(0xFF10B981), Color(0xFF34D399))
 )
 
 @OptIn(ExperimentalAnimationApi::class)

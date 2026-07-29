@@ -28,10 +28,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.LiquidGlassTheme
 import com.example.utils.HapticUtils
+import com.example.utils.QRGenerator
 import com.example.utils.ShareUtils
 import com.example.viewmodel.CustomToastType
 import com.example.viewmodel.QRViewModel
@@ -108,22 +110,51 @@ fun GenerateScreen(
             .padding(top = 16.dp, bottom = 120.dp), // Leaves clearance for the floating navigation bar
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // HEADER TITLE
-        Text(
-            text = "QR Code Generator",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = FontFamily.SansSerif,
-            modifier = Modifier.fillMaxWidth().testTag("generate_title")
-        )
+        // TOP HEADER ROW WITH GEAR SETTINGS BUTTON
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "ROCK QR CODE",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    fontFamily = FontFamily.SansSerif,
+                    modifier = Modifier.testTag("generate_title")
+                )
+                Text(
+                    text = "Create and scan QR codes",
+                    fontSize = 13.sp,
+                    color = Color(0xFFA1A1AA),
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
 
-        Text(
-            text = "Create, customize, and design professional QR codes instantly.",
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 20.dp)
-        )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF27272A))
+                    .clickable {
+                        HapticUtils.vibrate(context, 20)
+                        viewModel.selectTab("SETTINGS")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+
 
         // SLIDE ANIMATION ON DISPLAY STATE
         AnimatedContent(
@@ -1051,23 +1082,176 @@ fun GenerateScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .height(56.dp)
                             .testTag("generate_code_button"),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isOverCapacity) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) else primaryColor
+                            containerColor = if (isOverCapacity) Color.Red else Color.White,
+                            contentColor = if (isOverCapacity) Color.White else Color.Black
                         ),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(24.dp)
                     ) {
-                        Icon(
-                            imageVector = if (isOverCapacity) Icons.Default.ErrorOutline else Icons.Default.Tune,
-                            contentDescription = if (isOverCapacity) "Limit Exceeded" else "Forge Key"
+                        Text(
+                            text = if (isOverCapacity) "Limit Exceeded" else "Generate QR",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (isOverCapacity) "Limit Exceeded (Reduce Text)" else "Forge QR Core",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold
+                        Icon(
+                            imageVector = if (isOverCapacity) Icons.Default.ErrorOutline else Icons.Default.ArrowForward,
+                            contentDescription = "Generate",
+                            modifier = Modifier.size(20.dp)
                         )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // PREVIOUSLY CREATED SECTION (Screenshot 1)
+        val historyRecords by viewModel.historyRecords.collectAsState()
+        val latestCreated = remember(historyRecords) {
+            historyRecords.firstOrNull { !it.isScanned } ?: historyRecords.firstOrNull()
+        }
+
+        if (latestCreated != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Previously Created",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                Text(
+                    text = "View All",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFA1A1AA),
+                    modifier = Modifier.clickable {
+                        HapticUtils.vibrate(context, 20)
+                        viewModel.selectTab("HISTORY")
+                    }
+                )
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        HapticUtils.vibrate(context, 20)
+                        viewModel.selectTab("HISTORY")
+                    },
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f).padding(end = 12.dp)
+                    ) {
+                        Text(
+                            text = latestCreated.title,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            text = latestCreated.content,
+                            fontSize = 12.sp,
+                            color = Color(0xFFA1A1AA),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 2.dp, bottom = 10.dp)
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Category Badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF3B1825))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = latestCreated.type,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFFF75C3)
+                                )
+                            }
+
+                            // Source Badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF152B42))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = if (latestCreated.isScanned) "SCAN" else "GENERATE",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF38BDF8)
+                                )
+                            }
+
+                            // Time Badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF143224))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "a moment ago",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4ADE80)
+                                )
+                            }
+                        }
+                    }
+
+                    // QR CODE THUMBNAIL IN WHITE SQUARE FRAME
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White)
+                            .padding(6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val thumbBitmap = remember(latestCreated.content) {
+                            QRGenerator.generate(
+                                text = latestCreated.content,
+                                style = latestCreated.selectedStyle
+                            )
+                        }
+
+                        Image(
+                            bitmap = thumbBitmap.asImageBitmap(),
+                            contentDescription = "QR Thumbnail",
+                            modifier = Modifier.fillMaxSize()
+                        )
+
                     }
                 }
             }

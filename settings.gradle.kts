@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Quartz QR"
+rootProject.name = "ROCK QR CODE"
 
 include(":app")
