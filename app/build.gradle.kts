@@ -32,17 +32,12 @@ android {
         keyPassword = System.getenv("KEY_PASSWORD")
       } else {
         // Fallback to debug configuration if release keystore is missing
-        storeFile = file("${rootDir}/debug.keystore")
-        storePassword = "android"
-        keyAlias = "androiddebugkey"
-        keyPassword = "android"
+        val debugStore = signingConfigs.getByName("debug")
+        storeFile = debugStore.storeFile
+        storePassword = debugStore.storePassword
+        keyAlias = debugStore.keyAlias
+        keyPassword = debugStore.keyPassword
       }
-    }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
     }
   }
 
@@ -54,7 +49,7 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
-      signingConfig = signingConfigs.getByName("debugConfig")
+      // Using default debug signingConfig
     }
   }
   compileOptions {

@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import android.view.WindowManager
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -43,6 +44,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Fix screenshot viewing issues by removing FLAG_SECURE
+        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         setContent {
             val viewModel: QRViewModel = viewModel()
