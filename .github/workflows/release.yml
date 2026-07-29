@@ -70,7 +70,7 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
-       - name: Rename Release APK for Release Assets
+      - name: Rename Release APK for Release Assets
         run: |
           echo "🏷️ Renaming release APK for distribution..."
           mkdir -p app/build/outputs/apk/release
