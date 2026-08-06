@@ -26,7 +26,7 @@ on:
 jobs:
   build:
     name: Validate and Build Rock QR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
 
