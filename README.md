@@ -1,15 +1,15 @@
-# 📱 Chamo QR Code Ecosystem
+# 📱 Rock QR Code Ecosystem
 
 A high-fidelity, dual-platform QR Code suite delivering a premium user experience across both an **offline-first Android client** (Jetpack Compose) and a **luxury companion web app** (GitHub Pages / PWA). 
 
-[![Chamo QR Code CI](https://github.com/SayanthRock/Chamo-QR/actions/workflows/build.yml/badge.svg)](https://github.com/SayanthRock/Chamo-QR/actions/workflows/build.yml)
+[![Rock QR Code CI](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml/badge.svg)](https://github.com/SayanthRock/Rock-QR-Code/actions/workflows/build.yml)
 
 ---
 
 ## 🌐 Live Companion Web App
 
 Experience the premium web suite instantly:
-👉 **[Try the Chamo QR Web Console](https://sayanthrock.github.io/Chamo-QR/)**
+👉 **[Try the Rock QR Web Console](https://sayanthrock.github.io/Rock-QR-Code/)**
 
 *Fully installable Progressive Web App (PWA) with complete offline support, real-time dynamic web links, custom metadata tags, and integrated camera scanner lens.*
 

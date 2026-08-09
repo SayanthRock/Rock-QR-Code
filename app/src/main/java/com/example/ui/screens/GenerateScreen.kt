@@ -120,7 +120,7 @@ fun GenerateScreen(
         ) {
             Column {
                 Text(
-                    text = "Chamo QR",
+                    text = "ROCK QR CODE",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
@@ -262,7 +262,7 @@ fun GenerateScreen(
                             val rawContent = viewModel.inputText.value.ifEmpty { viewModel.wifiSsid.value }
                             val title = viewModel.inputTitle.value.ifEmpty { "Shared Code" }
                             val type = viewModel.inputType.value
-                            val webLink = "https://sayanthrock.github.io/Chamo-QR/share?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
+                            val webLink = "https://sayanthrock.github.io/Rock-QR-Code/share?content=${android.net.Uri.encode(rawContent)}&type=$type&title=${android.net.Uri.encode(title)}"
 
                             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 this.type = "text/plain"

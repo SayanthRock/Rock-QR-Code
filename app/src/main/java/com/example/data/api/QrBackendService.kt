@@ -16,7 +16,7 @@ data class CreateCodeRequest(
 
 data class CreateCodeResponse(
     val code: String,       // Hashed or shortened path code (e.g. "x7p3a")
-    val shortUrl: String,   // Fully qualified dynamic redirection URL (e.g. "https://sayanthrock.github.io/Chamo-QR/redirect?code=x7p3a")
+    val shortUrl: String,   // Fully qualified dynamic redirection URL (e.g. "https://sayanthrock.github.io/Rock-QR-Code/redirect?code=x7p3a")
     val success: Boolean
 )
 

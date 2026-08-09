@@ -172,9 +172,8 @@ jobs:
 
       - name: Rename APK for Release
         run: |
-          echo "🏷️ Renaming app-debug.apk to Rock QR.apk and Chamo QR.apk..."
+          echo "🏷️ Renaming app-debug.apk to Rock QR.apk..."
           cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Rock QR.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Chamo QR.apk"
 
       - name: Upload Build Artifacts
         id: upload-apk
@@ -183,7 +182,6 @@ jobs:
           name: Rock-QR-Artifacts
           path: |
             app/build/outputs/apk/debug/Rock QR.apk
-            app/build/outputs/apk/debug/Chamo QR.apk
             app/build/outputs/apk/debug/app-debug.apk
 
       - name: Add APK to Job Summary
@@ -290,7 +288,6 @@ jobs:
 
           #### 📦 Attached Quality Artifacts:
           - **`Rock QR.apk`**: Dual-branded high-performance release build under Rock branding.
-          - **`Chamo QR.apk`**: Dual-branded stable release build under Chamo branding.
           EOF
 
           echo "✅ Category-based structural release note compiled successfully."
@@ -302,7 +299,6 @@ jobs:
         with:
           files: |
             app/build/outputs/apk/debug/Rock QR.apk
-            app/build/outputs/apk/debug/Chamo QR.apk
           tag_name: ${{ github.ref_name }}
           name: Rock QR ${{ github.ref_name }}
           body_path: release_notes.md
