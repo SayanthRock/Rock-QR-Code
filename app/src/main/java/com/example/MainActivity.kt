@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: android.content.Intent?, viewModel: QRViewModel) {
         intent?.dataString?.let { dataStr ->
-            if (dataStr.contains("sayanthrock.github.io/Chamo-QR")) {
+            if (dataStr.contains("sayanthrock.github.io/Rock-QR-Code")) {
                 viewModel.importFromDeepLink(dataStr)
                 intent.data = null
             }
@@ -231,7 +231,7 @@ fun LocalSettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Chamo QR",
+                    text = "ROCK QR CODE",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
@@ -381,7 +381,7 @@ fun LocalSettingsScreen(
                 title = "Check for updates",
                 onClick = {
                     HapticUtils.vibrate(context, 20)
-                    viewModel.showToast("Chamo QR is up to date (v1.0.8)", CustomToastType.SUCCESS)
+                    viewModel.showToast("Rock QR is up to date (v1.0.8)", CustomToastType.SUCCESS)
                 }
             )
         }
@@ -398,10 +398,10 @@ fun LocalSettingsScreen(
                     HapticUtils.vibrate(context, 20)
                     val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(android.content.Intent.EXTRA_SUBJECT, "Chamo QR")
-                        putExtra(android.content.Intent.EXTRA_TEXT, "Check out Chamo QR app: https://sayanthrock.github.io/Chamo-QR")
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, "ROCK QR CODE")
+                        putExtra(android.content.Intent.EXTRA_TEXT, "Check out ROCK QR CODE app: https://sayanthrock.github.io/Rock-QR-Code")
                     }
-                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Chamo QR"))
+                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Share ROCK QR CODE"))
                 }
             )
             HorizontalDivider(color = Color(0xFF27272A))
@@ -410,7 +410,7 @@ fun LocalSettingsScreen(
                 title = "Star the project",
                 onClick = {
                     HapticUtils.vibrate(context, 20)
-                    val browserIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/sayanthrock/Chamo-QR"))
+                    val browserIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/sayanthrock/Rock-QR-Code"))
                     context.startActivity(browserIntent)
                 }
             )
