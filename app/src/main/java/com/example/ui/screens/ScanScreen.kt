@@ -315,7 +315,7 @@ fun ScanScreen(
                     ) {
                         Column {
                             Text(
-                                text = "ROCK QR CODE",
+                                text = "Chamo QR",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color.White,

@@ -2,7 +2,7 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// 🪨 THE ROCK QR CODE COLOR SECTOR: Mineral and Gemstone Inspired Palette
+// 🪨 THE Chamo QR COLOR SECTOR: Mineral and Gemstone Inspired Palette
 // Malachite Crystalline Gem (Primary scanning/secure color)
 val MalachitePrimary = Color(0xFF00BD9D)  // Luminescent mineral gemstone green-teal
 val MalachitePrimaryVariant = Color(0xFF00D1B2)

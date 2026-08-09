@@ -225,7 +225,7 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
                     } catch (e: Exception) {
                         // Offline local fallback so the user always has a functional result!
                         generatedShortCode = "local_" + System.currentTimeMillis().toString().takeLast(6)
-                        finalPayload = "https://sayanthrock.github.io/Rock-QR-Code/redirect?code=$generatedShortCode"
+                        finalPayload = "https://sayanthrock.github.io/Chamo-QR/redirect?code=$generatedShortCode"
                         showToast("Redirection core forged as local offline fallback", CustomToastType.INFO)
                     }
                 }
@@ -403,7 +403,7 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 // If there's no content parameter, check if we can interpret the whole path or general string
                 val decodedQuery = uri.lastPathSegment
-                if (!decodedQuery.isNullOrBlank() && decodedQuery != "Rock-QR-Code") {
+                if (!decodedQuery.isNullOrBlank() && decodedQuery != "Chamo-QR") {
                     inputText.value = decodedQuery
                     inputType.value = detectQrType(decodedQuery)
                     inputTitle.value = "Web Import"

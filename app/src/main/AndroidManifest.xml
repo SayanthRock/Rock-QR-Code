@@ -37,7 +37,7 @@
                 <data android:scheme="http" />
                 <data android:scheme="https" />
                 <data android:host="sayanthrock.github.io" />
-                <data android:pathPrefix="/Rock-QR-Code/" />
+                <data android:pathPrefix="/Chamo-QR/" />
             </intent-filter>
         </activity>
 

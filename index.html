@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rock QR Code - Luxury Web Suite</title>
+  <title>Chamo QR Code - Luxury Web Suite</title>
   <meta name="description" content="A premium, glassmorphic client-side PWA web app to generate, design, customize, and scan QR codes with dynamic customization and Android companion sync.">
   
   <!-- Manifest & Favicons -->
@@ -110,7 +110,7 @@
           <i data-lucide="qr-code" class="w-5.5 h-5.5 text-white"></i>
         </div>
         <div>
-          <span class="font-display font-bold text-lg tracking-wide bg-gradient-to-r from-white via-gray-200 to-purple-400 bg-clip-text text-transparent">ROCK QR CODE</span>
+          <span class="font-display font-bold text-lg tracking-wide bg-gradient-to-r from-white via-gray-200 to-purple-400 bg-clip-text text-transparent">Chamo QR</span>
           <span class="block text-[10px] uppercase font-bold tracking-widest text-purple-400">Companion Web Suite</span>
         </div>
       </div>
@@ -148,7 +148,7 @@
           Luxurious Companion QR Hub
         </h1>
         <p class="text-sm text-gray-400 leading-relaxed max-w-xl">
-          Instantly build custom high-fidelity QR codes with our dynamic liquid glass engine. Cross-share content between this web console and your <span class="text-purple-400 font-semibold">Rock QR Code Android application</span>.
+          Instantly build custom high-fidelity QR codes with our dynamic liquid glass engine. Cross-share content between this web console and your <span class="text-purple-400 font-semibold">Chamo QR Code Android application</span>.
         </p>
       </div>
       <div class="flex-shrink-0 z-10">
@@ -390,7 +390,7 @@
               When copying the <strong class="text-purple-300">Share Link</strong>, you receive an automated redirection URL. Any person who opens that URL will automatically import your forged QR code structure. Sharing links can also trigger the native scanner in your partner Android App!
             </p>
             <div class="p-2.5 rounded-xl bg-luxury-black/30 border border-white/5 flex items-center justify-between text-xs text-gray-500 gap-4">
-              <span class="truncate text-mono text-[10px]" id="current-web-link-preview">https://sayanthrock.github.io/Rock-QR-Code/share?content=...</span>
+              <span class="truncate text-mono text-[10px]" id="current-web-link-preview">https://sayanthrock.github.io/Chamo-QR/share?content=...</span>
               <button id="btn-copy-raw-link" class="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white transition-all">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
@@ -553,7 +553,7 @@
 
       <!-- Live Release Download Trigger -->
       <div class="flex flex-col sm:flex-row items-center gap-4 z-10">
-        <a id="btn-download-apk-release" href="https://github.com/sayanthrock/Rock-QR-Code/releases" target="_blank" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-purple-900/30 border border-white/10 flex items-center gap-2">
+        <a id="btn-download-apk-release" href="https://github.com/sayanthrock/Chamo-QR/releases" target="_blank" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm transition-all duration-300 shadow-xl shadow-purple-900/30 border border-white/10 flex items-center gap-2">
           <i data-lucide="github" class="w-4 h-4"></i>
           <span>View GitHub Releases</span>
         </a>
@@ -570,11 +570,11 @@
   <footer class="border-t border-white/5 bg-luxury-black/50 py-8 relative">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-xs text-gray-500">
       <div class="space-y-1">
-        <p class="font-bold text-gray-400">Rock QR Code Ecosystem</p>
+        <p class="font-bold text-gray-400">Chamo QR Code Ecosystem</p>
         <p>© 2026 Companion Web Console. Realized on-demand.</p>
       </div>
       <div class="flex items-center justify-center gap-6">
-        <a href="https://github.com/sayanthrock/Rock-QR-Code" target="_blank" class="hover:text-white transition-colors duration-200 flex items-center gap-1.5">
+        <a href="https://github.com/sayanthrock/Chamo-QR" target="_blank" class="hover:text-white transition-colors duration-200 flex items-center gap-1.5">
           <i data-lucide="github" class="w-3.5 h-3.5"></i>
           <span>Ecosystem Repository</span>
         </a>
@@ -668,8 +668,8 @@
         const content = computePayload();
         
         // Match the exact Android companion shared link format:
-        // https://sayanthrock.github.io/Rock-QR-Code/share?content=CONTENT&type=TYPE&title=TITLE
-        const baseShareUrl = "https://sayanthrock.github.io/Rock-QR-Code/share";
+        // https://sayanthrock.github.io/Chamo-QR/share?content=CONTENT&type=TYPE&title=TITLE
+        const baseShareUrl = "https://sayanthrock.github.io/Chamo-QR/share";
         const finalUrl = `${baseShareUrl}?content=${encodeURIComponent(content)}&type=${selectedType}&title=${encodeURIComponent(title)}`;
         return finalUrl;
       }
