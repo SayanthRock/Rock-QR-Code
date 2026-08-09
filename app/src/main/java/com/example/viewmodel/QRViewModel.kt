@@ -321,8 +321,27 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
         }.sortedByDescending { it.timestamp }
     }
 
-    fun saveScannedResult(content: String) {
+    fun saveScannedResult(rawContent: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            var content = rawContent
+
+            // Resolve local dynamic redirect codes instantly!
+            if (content.contains("sayanthrock.github.io/Rock-QR-Code/redirect?code=local_")) {
+                try {
+                    val uri = android.net.Uri.parse(content)
+                    val code = uri.getQueryParameter("code")
+                    if (code != null) {
+                        val currentRecords = repository.allHistory.first()
+                        val record = currentRecords.find { it.shortCode == code }
+                        if (record != null) {
+                            content = record.content // swap redirect link for real target!
+                        }
+                    }
+                } catch(e: Exception) {
+                    // Ignore
+                }
+            }
+
             val type = detectQrType(content)
             val title = when (type) {
                 "URL" -> {
@@ -345,6 +364,37 @@ class QRViewModel(application: Application) : AndroidViewModel(application) {
                     isScanned = true
                 )
                 repository.insertRecord(record)
+            }
+        }
+    }
+
+    fun resolveDynamicRedirect(url: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val uri = android.net.Uri.parse(url)
+                val code = uri.getQueryParameter("code")
+                if (code != null && code.startsWith("local_")) {
+                    val currentRecords = repository.allHistory.first()
+                    val record = currentRecords.find { it.shortCode == code }
+                    if (record != null) {
+                        val targetUrl = record.content
+
+                        kotlinx.coroutines.withContext(Dispatchers.Main) {
+                            showToast("Resolved local dynamic link", CustomToastType.SUCCESS)
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(targetUrl))
+                            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            getApplication<android.app.Application>().startActivity(intent)
+                        }
+
+                        saveScannedResult(targetUrl)
+                    } else {
+                        kotlinx.coroutines.withContext(Dispatchers.Main) {
+                            showToast("Offline link not found on this device", CustomToastType.ERROR)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore
             }
         }
     }
