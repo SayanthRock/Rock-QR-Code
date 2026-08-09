@@ -93,7 +93,11 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: android.content.Intent?, viewModel: QRViewModel) {
         intent?.dataString?.let { dataStr ->
             if (dataStr.contains("sayanthrock.github.io/Rock-QR-Code")) {
-                viewModel.importFromDeepLink(dataStr)
+                if (dataStr.contains("/redirect?code=local_")) {
+                    viewModel.resolveDynamicRedirect(dataStr)
+                } else {
+                    viewModel.importFromDeepLink(dataStr)
+                }
                 intent.data = null
             }
         }
