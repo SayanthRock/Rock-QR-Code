@@ -279,7 +279,8 @@ export const LiquidThemeControlPanel: React.FC<ControlPanelProps> = ({ currentPr
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [isAutoPlaying, currentIndex]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAutoPlaying]);
 
     const activePreset = presetsInfo[currentPreset];
 
