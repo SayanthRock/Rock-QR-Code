@@ -22,3 +22,5 @@ debug.keystore
 /app/build/
 .build-outputs/
 
+node_modules
+.next
